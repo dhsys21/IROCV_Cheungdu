@@ -1,0 +1,16 @@
+__history  
+__recovery
+Win32/
+*.cbproj.local
+*.stat
+*.obj
+*.exe
+*.tds
+*.pch
+*.map
+*.ils
+*.ilf
+*.ild
+*.ilc
+*.#00
+ 
