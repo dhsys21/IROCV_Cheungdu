@@ -63,7 +63,8 @@ void __fastcall TTotalForm::CmdForceStop()
     WriteIROCVValue();
     WritePLCLog("CmdForceStop", "Write IR, OCV Value");
     // Load Cell Serial
-    LoadTrayInfo(tray.trayid);
+    if(LoadTrayInfo(tray.trayid) == false)
+        ReadCellSerial();
     // Write Result File
     WriteResultFile();
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
@@ -72,9 +73,6 @@ void __fastcall TTotalForm::CmdForceStop()
 //---------------------------------------------------------------------------
 void __fastcall TTotalForm::CmdTrayOut()
 {
-    Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_COMP, 0);
-    Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_START, 0);
-
     if(NgCount == tray.cell_count || NgCount > editNgAlarmCount->Text.ToIntDef(10)){
         Form_Error->DisplayErrorMessage("IR/OCV NG ERROR",
 										"There is too many ng cells. Please check it.",
@@ -94,7 +92,8 @@ void __fastcall TTotalForm::CmdTrayOut_Original()
 {
 	BadInfomation();
 	WriteIROCVValue();
-    LoadTrayInfo(tray.trayid);
+    if(LoadTrayInfo(tray.trayid) == false)
+        ReadCellSerial();
 	WriteResultFile();
 //	WriteResultFile_MES2();
 //    WriteResultFile_MES();
@@ -314,7 +313,8 @@ void __fastcall TTotalForm::ProcessIr(AnsiString param)
 		this->RemeasureExcute();
 	}
 
-}//---------------------------------------------------------------------------
+}
+//---------------------------------------------------------------------------
 void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString result)
 {
 	int index = pos-1;

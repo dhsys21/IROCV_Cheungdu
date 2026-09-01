@@ -249,7 +249,7 @@ void __fastcall TBaseForm::WriteTrayLog(AnsiString msg)
 void __fastcall TBaseForm::advPLCInterfaceShowClick(TObject *Sender)
 {
 	Form_PLCInterface->Position = poDesigned;
-	Form_PLCInterface->Left = 500;
+	Form_PLCInterface->Left = 5;
 	Form_PLCInterface->Top = 85;
 	Form_PLCInterface->Visible = true;
     Form_PLCInterface->WindowState = wsNormal;
@@ -400,7 +400,6 @@ void __fastcall TBaseForm::Button5Click(TObject *Sender)
 //    double value = 1986.578;
 //    int32_t ocv_int = static_cast<int32_t>(std::floor(value * 10.0 + 0.5));
 //    Button5->Caption = "v " + IntToStr(ocv_int);
-    nForm[0]->ChangeCellSerialStep(4);
 }
 //---------------------------------------------------------------------------
 

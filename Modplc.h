@@ -39,8 +39,16 @@ const int PLC_D_INTERFACE_START_DEV_NUM	 			=	44000;
 const int PLC_D_INTERFACE_LEN 						= 	100;
 
 const int PLC_D_CELL_SERIAL_NUM                     =	{95000};
-const int PLC_D_CELL_SERIAL_LEN                     =   4100; //* 총 4100 word. 820 * 5번 읽어야 함
+const int PLC_D_CELL_SERIAL_CHANNEL_COUNT           =   400;
+const int PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL       =   10;
+const int PLC_D_CELL_SERIAL_TRAYID_LEN              =   10;
+const int PLC_D_CELL_SERIAL_LEN                     =   PLC_D_CELL_SERIAL_TRAYID_LEN
+                                                        + (PLC_D_CELL_SERIAL_CHANNEL_COUNT
+                                                        * PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
 const int PLC_D_CELL_SERIAL_READLEN                 =   820;
+const int PLC_D_CELL_SERIAL_READCOUNT               =   (PLC_D_CELL_SERIAL_LEN
+                                                        + PLC_D_CELL_SERIAL_READLEN - 1)
+                                                        / PLC_D_CELL_SERIAL_READLEN;
 
 const int PC_D_INTERFACE_START_DEV_NUM1				=	45000;
 const int PC_D_INTERFACE_LEN1	 					= 	70;
@@ -70,11 +78,6 @@ const int PLC_D_IROCV_COMPLETE	    	  	        =   8;
 
 const int PLC_D_IROCV_TRAY_ID   	  		        =   10;
 
-//CELL SERIAL  - Write Start, Write Complete
-const int PLC_D_IROCV_CELL_SERIAL_START            	=   20;
-const int PLC_D_IROCV_CELL_SERIAL_COMP             	=   21;
-const int PLC_D_IROCV_CELL_SERIAL_COUNT             =   22;
-
 // TRAY INFO     256
 const int PLC_D_IROCV_TRAY_CELL_DATA                = 	30;
 
@@ -101,11 +104,6 @@ const int PC_D_IROCV_IR_MIN							=   11;
 const int PC_D_IROCV_IR_MAX							=   13;
 const int PC_D_IROCV_OCV_MIN						=   15;
 const int PC_D_IROCV_OCV_MAX						=   17;
-
-// CELL SERIAL - Read Start, Read Complete
-const int PC_D_IROCV_CELL_SERIAL_START              =   20;
-const int PC_D_IROCV_CELL_SERIAL_COMP               =   21;
-const int PC_D_IROCV_CELLID_BYPASS	                =   22;
 
 // OK/NG - D45030
 const int PC_D_IROCV_MEASURE_OK_NG			   		=	30;
@@ -196,6 +194,8 @@ private:	// User declarations
 	void __fastcall PLC_DataChange(int subCommand, int address, int devCode, int devLen);
 	void __fastcall PLC_Recv_Interface();
     void __fastcall PLC_Recv_Interface_CellSerial(int index, int wordsToRead);
+    int __fastcall GetCellSerialReadWords(int index);
+    void __fastcall ResetCellSerialRead();
 
 	PLC_DATA plc_Data;
 	AnsiString plc_Read, plc_Read_Temp;
@@ -239,6 +239,9 @@ public:		// User declarations
     AnsiString __fastcall GetCellSrial(int plc_address, int index, int size);
     AnsiString __fastcall GetCellSrialTrayId(int plc_address, int size);
     double __fastcall GetCellSrialValue(int plc_address);
+    void __fastcall StartCellSerialRead();
+    bool __fastcall IsCellSerialReadComplete();
+    bool __fastcall IsCellSerialReadActive();
 
     AnsiString __fastcall GetPlcValue(int plc_address, int size);
     double __fastcall GetPlcValue(int plc_address);
@@ -257,6 +260,9 @@ public:		// User declarations
     //* PLC DATA
     int currentReadTask;
     int CellSerialIndex;
+    bool CellSerialReadRequested;
+    bool CellSerialReadActive;
+    bool CellSerialReadComplete;
 	unsigned char plc_Interface_Data[PLC_D_INTERFACE_LEN][2];
     unsigned char plc_Interface_Cell_Serial[PLC_D_CELL_SERIAL_LEN][2];
     //* PC DATA

@@ -9,7 +9,6 @@
 #define LOG_PATH                    APP_PATH"Log\\"
 #define TRAY_PATH                   APP_PATH"Tray\\"
 #define NG_PATH                     APP_PATH"NGPP\\"
-#define TRAY_PATH2                  "D:\\CELL_SERIAL\\Data\\"
 
 //---------------------------------------------------------------------------
 //	Cell Serial ÀÐ±â

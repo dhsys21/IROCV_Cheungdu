@@ -5,7 +5,7 @@ object Form_PLCInterface: TForm_PLCInterface
   BorderStyle = bsSingle
   Caption = 'PLC Interface'
   ClientHeight = 861
-  ClientWidth = 1297
+  ClientWidth = 1082
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -28,7 +28,7 @@ object Form_PLCInterface: TForm_PLCInterface
   object GroupBox_PLC_PC: TGroupBox
     Left = 2
     Top = 50
-    Width = 1290
+    Width = 1071
     Height = 814
     Caption = 'PLC - PC INTERFACE'
     Font.Charset = DEFAULT_CHARSET
@@ -38,11 +38,11 @@ object Form_PLCInterface: TForm_PLCInterface
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 0
-    OnDblClick = GroupBox_PLC_PCDblClick
+    OnClick = GroupBox_PLC_PCClick
     object ListView_PLC: TListView
-      Left = 16
+      Left = 15
       Top = 32
-      Width = 630
+      Width = 520
       Height = 769
       Columns = <
         item
@@ -51,11 +51,11 @@ object Form_PLCInterface: TForm_PLCInterface
         end
         item
           Caption = 'PLC_Name'
-          Width = 200
+          Width = 180
         end
         item
           Caption = 'PLC_Value'
-          Width = 290
+          Width = 200
         end>
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -70,22 +70,22 @@ object Form_PLCInterface: TForm_PLCInterface
       ViewStyle = vsReport
     end
     object ListView_PC: TListView
-      Left = 652
+      Left = 539
       Top = 32
-      Width = 630
+      Width = 520
       Height = 769
       Columns = <
         item
           Caption = 'PC_Address'
-          Width = 116
+          Width = 120
         end
         item
           Caption = 'PC_Name'
-          Width = 200
+          Width = 180
         end
         item
           Caption = 'PC_Value'
-          Width = 290
+          Width = 200
         end>
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -101,7 +101,7 @@ object Form_PLCInterface: TForm_PLCInterface
     end
   end
   object AdvSmoothButton_Close: TAdvSmoothButton
-    Left = 1181
+    Left = 966
     Top = 4
     Width = 100
     Height = 40
@@ -136,39 +136,71 @@ object Form_PLCInterface: TForm_PLCInterface
     TMSStyle = 8
   end
   object Panel1: TPanel
-    Left = 48
-    Top = 280
-    Width = 721
-    Height = 313
+    Left = 1090
+    Top = 8
+    Width = 408
+    Height = 845
     BorderStyle = bsSingle
+    Color = 15790320
+    ParentBackground = False
     TabOrder = 2
     Visible = False
     object Label1: TLabel
-      Left = 300
-      Top = 8
-      Width = 70
+      Left = 16
+      Top = 12
+      Width = 78
       Height = 19
       Caption = 'PLC TEST'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -16
       Font.Name = 'Tahoma'
-      Font.Style = []
+      Font.Style = [fsBold, fsUnderline]
       ParentFont = False
     end
+    object lblConnection: TLabel
+      Left = 224
+      Top = 15
+      Width = 153
+      Height = 16
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'PC PLC : DISCONNECTED'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clRed
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblTestStatus: TLabel
+      Left = 16
+      Top = 680
+      Width = 361
+      Height = 42
+      AutoSize = False
+      Caption = 'Select a test item.'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clNavy
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      WordWrap = True
+    end
     object GroupBox1: TGroupBox
-      Left = 447
-      Top = 50
-      Width = 257
-      Height = 250
-      Caption = 'IR/OCV Value'
+      Left = 10
+      Top = 438
+      Width = 382
+      Height = 226
+      Caption = 'IR / OCV Result Data (400 CH)'
       TabOrder = 0
       object Label5: TLabel
-        Left = 169
-        Top = 40
-        Width = 48
+        Left = 16
+        Top = 31
+        Width = 79
         Height = 16
-        Caption = 'IR Value'
+        Caption = 'IR Base Value'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -177,11 +209,11 @@ object Form_PLCInterface: TForm_PLCInterface
         ParentFont = False
       end
       object Label6: TLabel
-        Left = 156
-        Top = 104
-        Width = 61
+        Left = 16
+        Top = 68
+        Width = 92
         Height = 16
-        Caption = 'OCV Value'
+        Caption = 'OCV Base Value'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -189,43 +221,111 @@ object Form_PLCInterface: TForm_PLCInterface
         Font.Style = []
         ParentFont = False
       end
+      object Label8: TLabel
+        Left = 199
+        Top = 103
+        Width = 24
+        Height = 13
+        Caption = 'STEP'
+      end
+      object Label9: TLabel
+        Left = 16
+        Top = 132
+        Width = 345
+        Height = 26
+        AutoSize = False
+        Caption = 'IR raw = Base x 100, OCV raw = Base x 10 + channel STEP'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clGrayText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        WordWrap = True
+      end
       object editIR: TEdit
-        Left = 39
-        Top = 62
-        Width = 178
+        Left = 160
+        Top = 27
+        Width = 201
         Height = 21
         TabOrder = 0
         Text = '16.5'
       end
       object editOCV: TEdit
-        Left = 39
-        Top = 126
-        Width = 178
+        Left = 160
+        Top = 64
+        Width = 201
         Height = 21
         TabOrder = 1
         Text = '3100.1'
       end
-      object btnWriteIrOcvValue: TButton
-        Left = 104
-        Top = 153
-        Width = 113
-        Height = 40
-        Caption = 'Write IROCV Value'
+      object chkChannelIncrement: TCheckBox
+        Left = 16
+        Top = 103
+        Width = 177
+        Height = 17
+        Caption = 'Increment each channel'
+        Checked = True
+        State = cbChecked
         TabOrder = 2
+      end
+      object editIncrement: TEdit
+        Left = 242
+        Top = 99
+        Width = 119
+        Height = 21
+        TabOrder = 3
+        Text = '1'
+      end
+      object btnWriteIrOcvValue: TButton
+        Left = 220
+        Top = 166
+        Width = 141
+        Height = 42
+        Caption = 'APPLY 400 CH'
+        TabOrder = 4
         OnClick = btnWriteIrOcvValueClick
       end
     end
     object GroupBox2: TGroupBox
-      Left = 8
-      Top = 188
-      Width = 434
-      Height = 112
-      Caption = 'IROCV NG Value'
+      Left = 10
+      Top = 267
+      Width = 382
+      Height = 160
+      Caption = 'IROCV NG Channels'
       TabOrder = 1
+      object Label7: TLabel
+        Left = 16
+        Top = 23
+        Width = 345
+        Height = 16
+        AutoSize = False
+        Caption = 'Channel or range example : 1,3,5-10,400'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clGrayText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object lblNgStatus: TLabel
+        Left = 16
+        Top = 119
+        Width = 345
+        Height = 18
+        AutoSize = False
+        Caption = 'Not applied'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clNavy
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
       object editIrOcvNg: TEdit
         Left = 16
-        Top = 30
-        Width = 401
+        Top = 44
+        Width = 345
         Height = 21
         TabOrder = 0
         Text = 
@@ -233,28 +333,46 @@ object Form_PLCInterface: TForm_PLCInterface
           '8,379,400'
       end
       object btnWriteNgValue: TButton
-        Left = 304
-        Top = 65
-        Width = 113
-        Height = 40
-        Caption = 'Write NG Value'
+        Left = 16
+        Top = 75
+        Width = 105
+        Height = 32
+        Caption = 'APPLY'
         TabOrder = 1
         OnClick = btnWriteNgValueClick
       end
+      object btnClearNg: TButton
+        Left = 128
+        Top = 75
+        Width = 105
+        Height = 32
+        Caption = 'CLEAR (ALL OK)'
+        TabOrder = 2
+        OnClick = btnClearNgClick
+      end
+      object btnAllNg: TButton
+        Left = 240
+        Top = 75
+        Width = 121
+        Height = 32
+        Caption = 'ALL NG'
+        TabOrder = 3
+        OnClick = btnAllNgClick
+      end
     end
     object GroupBox3: TGroupBox
-      Left = 8
+      Left = 10
       Top = 47
-      Width = 434
-      Height = 135
-      Caption = 'Write Value'
+      Width = 382
+      Height = 208
+      Caption = 'PC Word Read / Write'
       TabOrder = 2
       object Label2: TLabel
         Left = 16
         Top = 22
-        Width = 55
+        Width = 101
         Height = 16
-        Caption = 'ADDRESS'
+        Caption = 'DEVICE ADDRESS'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -264,10 +382,10 @@ object Form_PLCInterface: TForm_PLCInterface
       end
       object Label3: TLabel
         Left = 16
-        Top = 75
-        Width = 37
+        Top = 81
+        Width = 78
         Height = 16
-        Caption = 'VALUE'
+        Caption = 'WORD VALUE'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -275,54 +393,93 @@ object Form_PLCInterface: TForm_PLCInterface
         Font.Style = []
         ParentFont = False
       end
+      object lblWordArea: TLabel
+        Left = 16
+        Top = 142
+        Width = 345
+        Height = 42
+        AutoSize = False
+        Caption = 'Address area is detected automatically.'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clNavy
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        WordWrap = True
+      end
       object cbAddress: TComboBox
         Left = 16
         Top = 44
-        Width = 225
+        Width = 345
         Height = 21
         TabOrder = 0
-        Text = '45000'
+        Text = 'D45001 - STAGE AUTO READY'
         Items.Strings = (
-          '45000'
-          '45001'
-          '45002'
-          '45003'
-          '45004'
-          '45005'
-          '45006'
-          '45007'
-          '45008'
-          '45009'
-          '45010'
-          '45020'
-          '45021'
-          '')
+          'D45000 - HEART BEAT'
+          'D45001 - STAGE AUTO READY'
+          'D45002 - PC ERROR'
+          'D45003 - TRAY OUT'
+          'D45004 - PROB OPEN'
+          'D45005 - PROB CLOSE'
+          'D45006 - MEASURING'
+          'D45007 - NG ALARM'
+          'D45008 - WRITE COMPLETE'
+          'D45009 - REMEASURE'
+          'D45010 - NG COUNT'
+          'D45011 - IR MIN LOW WORD'
+          'D45013 - IR MAX LOW WORD'
+          'D45015 - OCV MIN LOW WORD'
+          'D45017 - OCV MAX LOW WORD'
+          'D45030 - OK/NG WORD #1'
+          'D45070 - IR WORD #1'
+          'D46000 - OCV WORD #1'
+          'D47000 - RESULT CODE #1')
       end
       object editValue: TEdit
         Left = 16
-        Top = 98
-        Width = 225
+        Top = 101
+        Width = 113
         Height = 21
         TabOrder = 1
         Text = '1'
       end
       object btnWriteValue: TButton
-        Left = 247
-        Top = 56
-        Width = 83
-        Height = 54
-        Caption = 'Write Value'
+        Left = 208
+        Top = 94
+        Width = 73
+        Height = 34
+        Caption = 'WRITE'
         TabOrder = 2
         OnClick = btnWriteValueClick
       end
-      object Button1: TButton
-        Left = 336
-        Top = 56
-        Width = 83
-        Height = 54
-        Caption = 'Write Ocv'
+      object btnReadValue: TButton
+        Left = 133
+        Top = 94
+        Width = 69
+        Height = 34
+        Caption = 'READ'
         TabOrder = 3
-        OnClick = Button1Click
+        OnClick = btnReadValueClick
+      end
+      object btnSetZero: TButton
+        Left = 287
+        Top = 94
+        Width = 34
+        Height = 34
+        Caption = '0'
+        TabOrder = 4
+        OnClick = btnSetPresetClick
+      end
+      object btnSetOne: TButton
+        Tag = 1
+        Left = 327
+        Top = 94
+        Width = 34
+        Height = 34
+        Caption = '1'
+        TabOrder = 5
+        OnClick = btnSetPresetClick
       end
     end
   end

@@ -265,7 +265,6 @@ object TotalForm: TTotalForm
       ParentShowHint = False
       ShowHint = False
       Transparent = True
-      OnDblClick = lblTitleDblClick
     end
     object pConInfo: TPanel
       Left = 11
@@ -996,24 +995,6 @@ object TotalForm: TTotalForm
           OnKeyDown = editTrayIdKeyDown
           ExplicitHeight = 26
         end
-      end
-      object chkCellIdBypass: TCheckBox
-        Left = 294
-        Top = 5
-        Width = 172
-        Height = 25
-        Caption = 'CELL ID BYPASS'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlue
-        Font.Height = -17
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = False
-        TabOrder = 6
-        Visible = False
-        OnMouseUp = chkBypassMouseUp
       end
     end
     object btnRemeasureInfo: TAdvSmoothButton

@@ -167,27 +167,6 @@ bool __fastcall TTotalForm::ReadCellInfo()
 	delete ini;
 }
 //---------------------------------------------------------------------------
-bool __fastcall TTotalForm::LoadTrayInfo(AnsiString trayID)
-{
-	AnsiString filename;
-	filename = (UnicodeString)TRAY_PATH2 + trayID + ".Tray";
-    WritePLCLog("Read CELL SERIAL Filename", filename);
-	if(FileExists(filename)){
-		TIniFile *ini;
-
-		ini = new TIniFile(filename);
-		for(int i = 0; i < MAXCHANNEL; i++)
-		{
-			tray.cell_serial[i] = ini->ReadString(i + 1, "CELL_SERIAL", "-");
-		}
-
-		delete ini;
-	}
-	else return false;
-
-	return true;
-}
-//---------------------------------------------------------------------------
 // 재측정 정보 읽고 쓰기
 void __fastcall TTotalForm::ReadRemeasureInfo()
 {
@@ -414,7 +393,6 @@ void __fastcall TTotalForm::WriteResultFile()
 		ch = IntToStr(i+1);
 
 		cell_id = tray.cell_serial[i];
-        //cell_id = m_sCell_Serial[i];
 		ir = FormatFloat("0.00", tray.after_value[i]);
 		ocv = FormatFloat("0.0", tray.ocv_value[i]);
 

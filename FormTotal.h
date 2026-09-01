@@ -328,7 +328,6 @@ __published:	// IDE-managed Components
 	TAdvSmoothButton *btnDisConnectIROCV;
 	TGroupBox *GroupBox6;
 	TEdit *editModelName;
-	TCheckBox *chkCellIdBypass;
 	TPanel *pPassword;
 	TPanel *Panel61;
 	TEdit *PassEdit;
@@ -392,7 +391,6 @@ __published:	// IDE-managed Components
 	void __fastcall pReadyClick(TObject *Sender);
 	void __fastcall chkUseAverageClick(TObject *Sender);
 	void __fastcall btnDisConnectIROCVClick(TObject *Sender);
-	void __fastcall lblTitleDblClick(TObject *Sender);
 	void __fastcall PasswordBtnClick(TObject *Sender);
 	void __fastcall cancelBtn2Click(TObject *Sender);
 	void __fastcall PassEditKeyPress(TObject *Sender, System::WideChar &Key);
@@ -483,17 +481,10 @@ private:	// User declarations
     int NgCount;
     //* CELL SERIAL
     int nReadCellCountTime;
-    int nReadCellSerialCount;
-    AnsiString m_sTrayID, m_sCell_Serial[MAXCHANNEL];
-    bool m_bReadCellSerial;
-    int nCellSerialStep;
-    void __fastcall InitCellSerial();
-    void __fastcall ReadCellSerial2();
-    bool __fastcall CheckTrayInfo(AnsiString trayID);
+    int __fastcall ReadCellSerial();
     bool __fastcall LoadTrayInfo(AnsiString trayID);
     void __fastcall SaveTrayInfo(AnsiString trayID);
     void __fastcall DeleteTrayInfo(AnsiString trayID);
-    void __fastcall WriteTrayLog(AnsiString msg);
 public:		// User declarations
 
 	void __fastcall InitMeasureForm();
@@ -533,8 +524,8 @@ public:		// User declarations
 	void __fastcall ResponseAutoTestFinish();
 	void __fastcall ReadchannelMapping();
 
-    //* CELL SERIAL STEP
-    void __fastcall ChangeCellSerialStep(int nstep);
+    void __fastcall AcceptCellSerialData();
+    void __fastcall RetryCellSerialRead();
 
 //---------------------------------------------------------------------------
 // PLC

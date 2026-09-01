@@ -150,13 +150,11 @@ void __fastcall TTotalForm::Initialization()
 {
 	PLCInitialization();
 	this->InitTrayStruct();
-
-    InitCellSerial();
+    nReadCellCountTime = 0;
 
 //    if(m_Auto)
 	nSection = STEP_WAIT;
 	nStep = 0;
-    nCellSerialStep = 0;
     start_delay_time = 0;
     max_delay_time = editMaxDelayTime->Text.ToIntDef(50);
 
@@ -175,10 +173,6 @@ void __fastcall TTotalForm::PLCInitialization()
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_REMEASURE, 0);
 	Mod_PLC->SetValue(PC_D_IROCV_NG_COUNT, 0);
-
-    Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_COMP, 0);
-    Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_START, 0);
-    Mod_PLC->SetValue(PC_D_IROCV_CELLID_BYPASS, 0);
 
 	for(int i = 0; i < 25; i++)
 	{
@@ -1294,7 +1288,8 @@ void __fastcall TTotalForm::RemeasureExcute()
 //	}
 //	retest.re_excute = false;
 //	CmdForceStop();
-//}
+//}
+
 //---------------------------------------------------------------------------
 void __fastcall TTotalForm::ModChange()
 {
@@ -1830,12 +1825,6 @@ void __fastcall TTotalForm::Timer_AutoInspectionTimer(TObject *Sender)
 		WritePLCLog("IROCV STAGE AUTO/MANUAL", IROCVStage);
 	}
 
-    if(chkCellIdBypass->Checked == true){
-        Mod_PLC->SetValue(PC_D_IROCV_CELLID_BYPASS, 1);
-    }else{
-        Mod_PLC->SetValue(PC_D_IROCV_CELLID_BYPASS, 0);
-    }
-
 	switch(nSection)
 	{
 		case STEP_WAIT:
@@ -1990,17 +1979,17 @@ void __fastcall TTotalForm::AutoInspection_Wait()
 					DisplayProcess(sProbeDown, "AutoInspection_Wait", " PROBE IS CLOSED ... ");
 					Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
 
-                    WriteCommLog("AutoInspection_Wait", "PC_INTERFACE_PROB_CLOSE ...");
+					WriteCommLog("AutoInspection_Wait", "PC_INTERFACE_PROB_CLOSE ...");
 					WritePLCLog("AutoInspection_Wait", "PC_D_IROCV_PROB_CLOSE = 1");
-
-//					nSection = STEP_MEASURE;
-//					nStep = 0;
 
 					nStepCount = 0;
 					start_delay_time = 0;
 
+                    Mod_PLC->StartCellSerialRead();
+                    nReadCellCountTime = 0;
+                    DisplayProcess(sBarcode, "AutoInspection_Wait", " Reading Cell ID data ... ");
+                    WritePLCLog("AutoInspection_Wait", "Start reading CELL SERIAL data.");
                     nStep = 4;
-                    nCellSerialStep = 0;
 				}
 			}
 			else
@@ -2010,11 +1999,72 @@ void __fastcall TTotalForm::AutoInspection_Wait()
 			}
 			break;
         case 4:
-            ReadCellSerial2();
-        	break;
+        {
+            if(Mod_PLC->IsCellSerialReadComplete()){
+                int nCellSerial = ReadCellSerial();
+                if(nCellSerial == tray.cell_count){
+                    SaveTrayInfo(tray.trayid);
+                    WritePLCLog("AutoInspection_Wait",
+                        "CELL SERIAL Read Complete. CellSerial : "
+                        + IntToStr(nCellSerial) + ", CellData : "
+                        + IntToStr(tray.cell_count));
+                    nSection = STEP_MEASURE;
+                    nStep = 0;
+                }
+                else{
+                    WritePLCLog("AutoInspection_Wait",
+                        "CELL SERIAL Count Error. CellSerial : "
+                        + IntToStr(nCellSerial) + ", CellData : "
+                        + IntToStr(tray.cell_count));
+                    Form_CellIdError->DisplayErrorMessage(this->Tag);
+                    nStep = 5;
+                }
+            }
+            else{
+                nReadCellCountTime++;
+                if(nReadCellCountTime > 50){
+                    WritePLCLog("AutoInspection_Wait", "CELL SERIAL Read Timeout.");
+                    Form_CellIdError->DisplayErrorMessage(this->Tag);
+                    nStep = 5;
+                }
+            }
+            break;
+        }
+        case 5:
+            // Wait for SAVE or CANCEL on FormCellIdError.
+            break;
 		default:
 			break;
 	}
+}
+//---------------------------------------------------------------------------
+int __fastcall TTotalForm::ReadCellSerial()
+{
+    int nCellSerial = 0;
+    for(int i = 0; i < MAXCHANNEL; i++){
+        tray.cell_serial[i] = Mod_PLC->GetCellSrial(
+            PLC_D_IROCV_CELL_SERIAL, i, PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
+        if(tray.cell_serial[i].IsEmpty() == false) nCellSerial++;
+    }
+    return nCellSerial;
+}
+//---------------------------------------------------------------------------
+void __fastcall TTotalForm::AcceptCellSerialData()
+{
+    ReadCellSerial();
+    SaveTrayInfo(tray.trayid);
+    WritePLCLog("AutoInspection_Wait",
+        "CELL SERIAL Error Override - Save current data.");
+    nSection = STEP_MEASURE;
+    nStep = 0;
+}
+//---------------------------------------------------------------------------
+void __fastcall TTotalForm::RetryCellSerialRead()
+{
+    Mod_PLC->StartCellSerialRead();
+    nReadCellCountTime = 0;
+    nStep = 4;
+    WritePLCLog("AutoInspection_Wait", "Retry reading CELL SERIAL data.");
 }
 //---------------------------------------------------------------------------
 void __fastcall TTotalForm::AutoInspection_Measure()
@@ -2341,126 +2391,6 @@ void __fastcall TTotalForm::ShowPLCSignal(TAdvSmoothPanel *advPanel, bool bOn)
 //---------------------------------------------------------------------------
 //  CELL SERIAL 처리
 //---------------------------------------------------------------------------
-void __fastcall TTotalForm::InitCellSerial()
-{
-    m_bReadCellSerial = false;
-    nReadCellCountTime = 0;
-    nReadCellSerialCount = 0;
-    m_sTrayID = "";
-    for(int i = 0; i < MAXCHANNEL; i++)
-    	m_sCell_Serial[i] = "";
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::ChangeCellSerialStep(int nstep)
-{
-    nCellSerialStep = nstep;
-    nReadCellCountTime = 0;
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::ReadCellSerial2()
-{
-    int nCellSerial = 0;
-    int nCellSerialCount = 0;
-
-    AnsiString trayID, trayid;
-    trayID = Mod_PLC->GetCellSrialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
-    trayid = Mod_PLC->GetString(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_ID, 10);
-
-    switch(nCellSerialStep){
-        case 0:
-            if(chkCellIdBypass->Checked == true){
-                nCellSerialStep = 3;
-                WriteTrayLog("CELL SERIAL bypass.");
-            }
-            else if(Mod_PLC->GetPlcValue(PLC_D_IROCV_CELL_SERIAL_START) == 1){
-                nCellSerialStep = 1;
-                WriteTrayLog("CELL SERIAL START is ON");
-            }
-            else if(CheckTrayInfo(trayID) == true || CheckTrayInfo(trayid) == true){
-                nCellSerialStep = 3;
-                WriteTrayLog("CELL SERIAL File is already exist.");
-            }
-            else{
-                WriteTrayLog("Waiting CELL SERIAL START signal...");
-            }
-        	break;
-        case 1:
-            Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_START, 1);
-            nCellSerialCount = Mod_PLC->GetPlcValue(PLC_D_IROCV_CELL_SERIAL_COUNT);
-            //trayID = Mod_PLC->GetCellSrialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
-
-            for(int i = 0; i < MAXCHANNEL; i++){
-                m_sCell_Serial[i] = Mod_PLC->GetCellSrial(PLC_D_IROCV_CELL_SERIAL, i, 10);
-                if(m_sCell_Serial[i].IsEmpty() == false) nCellSerial++;
-            }
-
-            nReadCellCountTime++;
-            if(trayID.IsEmpty() == false && (nCellSerialCount == nCellSerial
-            	|| chkCellIdBypass->Checked == true)){
-                Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_COMP, 1);
-                SaveTrayInfo(trayID);
-                nCellSerialStep = 2;
-                WriteTrayLog("READING CELL SERIAL is OK");
-            }
-            else if(nCellSerialCount != nCellSerial && nReadCellCountTime > 6){
-                if(Form_CellIdError->Visible == false){
-                	Form_CellIdError->DisplayErrorMessage(this->Tag);
-                	WriteTrayLog("Cell Id error. The number of cell IDs is different.");
-                }
-                nReadCellCountTime = 0;
-            }
-            else{
-                Panel_State->Caption = "Reading Cell Serial Data...";
-            }
-            break;
-        case 2:
-            if(Mod_PLC->GetPlcValue(PLC_D_IROCV_CELL_SERIAL_COMP) == 1){
-                Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_COMP, 0);
-                Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_START, 0);
-                WriteTrayLog("CELL SERIAL COMPLETE is ON");
-            }
-            else{
-                Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_COMP, 1);
-                WriteTrayLog("Waiting CELL SERIAL COMPLETE signal...");
-            }
-
-            if(Mod_PLC->GetValue(PC_D_IROCV_CELL_SERIAL_START) == 0
-                && Mod_PLC->GetValue(PC_D_IROCV_CELL_SERIAL_COMP) == 0){
-                WriteTrayLog("CELL SERIAL SIGNAL is OFF");
-                nCellSerialStep = 3;
-            } 
-            break;
-        case 3:
-            WriteTrayLog("go to [STEP_MEASURE]");
-
-            nSection = STEP_MEASURE;
-            nStep = 0;
-            nCellSerialStep = 0;
-            break;
-        case 4:
-        	//* cell id 갯수가 다를 때 에러창을 띄우고,
-            //* 그 창에서 [save] 버튼을 눌렀을 때 넘어오는 코드
-            Mod_PLC->SetValue(PC_D_IROCV_CELL_SERIAL_COMP, 1);
-            SaveTrayInfo(trayID);
-            WriteTrayLog("READING CELL SERIAL is OK.(buyt The number of cell IDs is different.)");
-
-            nCellSerialStep = 2;
-            break;
-        default:
-            break;
-    }
-}
-//---------------------------------------------------------------------------
-bool __fastcall TTotalForm::CheckTrayInfo(AnsiString trayID)
-{
-	ForceDirectories((AnsiString)TRAY_PATH);
-	AnsiString str = (AnsiString)TRAY_PATH + trayID + ".Tray";
-
-	if(FileExists(str)) return true;
-
-	return false;
-}
-//---------------------------------------------------------------------------
 bool __fastcall TTotalForm::LoadTrayInfo(AnsiString trayID)
 {
 	AnsiString filename;
@@ -2493,11 +2423,9 @@ void __fastcall TTotalForm::SaveTrayInfo(AnsiString trayID)
 
 //	ini->WriteString("TRAY INFO", "CELL MODEL", m_sCellModel);
 //	ini->WriteString("TRAY INFO", "LOT NUMBER", m_sLOTNumber);
-	WriteTrayLog("CELL SERIAL Tray ID : " + trayID);
 	for(int i = 0; i < 400; i++)
 	{
-		ini->WriteString(i, "CELL_SERIAL", m_sCell_Serial[i]);
-		WriteTrayLog("CELL SERIAL Save : " + IntToStr(i + 1) + " - " + m_sCell_Serial[i]);
+		ini->WriteString(i, "CELL_SERIAL", tray.cell_serial[i]);
 	}
 	delete ini;
 }
@@ -2507,47 +2435,6 @@ void __fastcall TTotalForm::DeleteTrayInfo(AnsiString trayID)
     DeleteFile((AnsiString)TRAY_PATH + trayID + ".Tray");
 }
 //---------------------------------------------------------------------------
-void __fastcall TTotalForm::WriteTrayLog(AnsiString msg)
-{
-	AnsiString str, dir;
-	int file_handle;
-
-	dir = (AnsiString)LOG_PATH;
-    dir += Now().FormatString("yyyymmdd") + "\\";
-	ForceDirectories((AnsiString)dir);
-
-	str = dir + "CELL_" + Now().FormatString("yymmdd-hh") + ".log";
-
-	if(FileExists(str))
-		file_handle = FileOpen(str, fmOpenWrite);
-	else{
-		file_handle = FileCreate(str);
-	}
-
-	FileSeek(file_handle, 0, 2);
-
-	str = Now().FormatString("yyyy-mm-dd hh:nn:ss> ") + msg + "\n";
-	FileWrite(file_handle, str.c_str(), str.Length());
-
-	FileClose(file_handle);
-
-    //* Panel_State에 메세지 표시
-    Panel_State->Caption = msg;
-}
-//---------------------------------------------------------------------------
-
-
-
-
-void __fastcall TTotalForm::lblTitleDblClick(TObject *Sender)
-{
-    chkCellIdBypass->Visible = !chkCellIdBypass->Visible;
-}
-//---------------------------------------------------------------------------
-
-
-
-
 void __fastcall TTotalForm::rbSpeedFastClick(TObject *Sender)
 {
     TRadioButton *rb = (TRadioButton*)Sender;

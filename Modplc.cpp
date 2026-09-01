@@ -56,8 +56,7 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
 
     PLC_Write_Result = false; //voltage, current 값은 필요 시에만 쓰기를 한다.
-    CellSerialIndex = 0;
-    currentReadTask = nSTANDARD;
+    ResetCellSerialRead();
     currentWriteTask = nPCDATA;
 }
 //---------------------------------------------------------------------------
@@ -98,8 +97,44 @@ void __fastcall TMod_PLC::PLC_Initialization()
 	plc_Read = "";
 	plc_ReadCount = 0;
 	plc_ReadFlag = true;
+    ResetCellSerialRead();
 
 	Timer_PLC_WriteMsg->Enabled = true;
+}
+//---------------------------------------------------------------------------
+void __fastcall TMod_PLC::ResetCellSerialRead()
+{
+    CellSerialIndex = 0;
+    currentReadTask = nSTANDARD;
+    CellSerialReadRequested = false;
+    CellSerialReadActive = false;
+    CellSerialReadComplete = false;
+    memset(plc_Interface_Cell_Serial, 0,
+        sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
+}
+//---------------------------------------------------------------------------
+void __fastcall TMod_PLC::StartCellSerialRead()
+{
+    CellSerialReadComplete = false;
+    CellSerialReadRequested = true;
+}
+//---------------------------------------------------------------------------
+bool __fastcall TMod_PLC::IsCellSerialReadComplete()
+{
+    return CellSerialReadComplete;
+}
+//---------------------------------------------------------------------------
+bool __fastcall TMod_PLC::IsCellSerialReadActive()
+{
+    return CellSerialReadRequested || CellSerialReadActive;
+}
+//---------------------------------------------------------------------------
+int __fastcall TMod_PLC::GetCellSerialReadWords(int index)
+{
+    int remaining = PLC_D_CELL_SERIAL_LEN - (index * PLC_D_CELL_SERIAL_READLEN);
+    if(remaining <= 0) return 0;
+    if(remaining > PLC_D_CELL_SERIAL_READLEN) return PLC_D_CELL_SERIAL_READLEN;
+    return remaining;
 }
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::PC_Initialization()
@@ -298,6 +333,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCConnect(TObject *Sender, TCustomWinSoc
 void __fastcall TMod_PLC::ClientSocket_PLCDisconnect(TObject *Sender, TCustomWinSocket *Socket)
 
 {
+    ResetCellSerialRead();
     if(bClose) bClose = false;
 	else Timer_PLC_AutoConnect->Enabled = true;
 }
@@ -307,6 +343,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCError(TObject *Sender, TCustomWinSocke
           TErrorEvent ErrorEvent, int &ErrorCode)
 {
     ErrorCode = 0;
+	ResetCellSerialRead();
 	Socket->Close();
 }
 //---------------------------------------------------------------------------
@@ -337,16 +374,44 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
                 {
                     case nSTANDARD:
                         PLC_Recv_Interface();
-                        if(GetPlcValue(PLC_D_IROCV_CELL_SERIAL_START) == 1 && GetValue(PC_D_IROCV_CELL_SERIAL_COMP) == 0)
-                        	currentReadTask = nCELLSERIAL;
+                        if(CellSerialReadRequested){
+                            memset(plc_Interface_Cell_Serial, 0,
+                                sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
+                            CellSerialIndex = 0;
+                            CellSerialReadRequested = false;
+                            CellSerialReadActive = true;
+                            currentReadTask = nCELLSERIAL;
+                        }
+                        else{
+                            currentReadTask = nSTANDARD;
+                        }
                         break;
-                    case nCELLSERIAL:  // 820워드를 5번에 나눠서 읽음
-                        int wordsRead = PLC_D_CELL_SERIAL_READLEN;
+                    case nCELLSERIAL:
+                        int wordsRead = GetCellSerialReadWords(CellSerialIndex);
                         PLC_Recv_Interface_CellSerial(CellSerialIndex, wordsRead);
+
+                        if(CellSerialReadRequested){
+                            memset(plc_Interface_Cell_Serial, 0,
+                                sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
+                            CellSerialIndex = 0;
+                            CellSerialReadRequested = false;
+                            CellSerialReadActive = true;
+                            CellSerialReadComplete = false;
+                            currentReadTask = nCELLSERIAL;
+                            break;
+                        }
+
                         CellSerialIndex++;
 
-                        if(CellSerialIndex >= 5) CellSerialIndex = 0;
-                        currentReadTask = nSTANDARD;
+                        if(CellSerialIndex >= PLC_D_CELL_SERIAL_READCOUNT){
+                            CellSerialIndex = 0;
+                            CellSerialReadActive = false;
+                            CellSerialReadComplete = true;
+                            currentReadTask = nSTANDARD;
+                        }
+                        else{
+                            currentReadTask = nCELLSERIAL;
+                        }
                         break;
                 }
 //				if(plc_index == PLC_INDEX_INTERFACE) PLC_Recv_Interface();
@@ -375,9 +440,10 @@ void __fastcall TMod_PLC::Timer_PLC_WriteMsgTimer(TObject *Sender)
                 case nSTANDARD:
                     PLC_DataChange(0, PLC_D_INTERFACE_START_DEV_NUM, DEVCODE_D, PLC_D_INTERFACE_LEN);
                     break;
-                case nCELLSERIAL: // 한번에 820 word만 요청
+                case nCELLSERIAL:
                     startAddress = PLC_D_CELL_SERIAL_NUM + (CellSerialIndex * PLC_D_CELL_SERIAL_READLEN);
-                    PLC_DataChange(0, startAddress, DEVCODE_D, PLC_D_CELL_SERIAL_READLEN);
+                    PLC_DataChange(0, startAddress, DEVCODE_D,
+                        GetCellSerialReadWords(CellSerialIndex));
                     break;
                 default:
                 	break;
@@ -444,7 +510,7 @@ void __fastcall TMod_PLC::PLC_Recv_Interface_CellSerial(int index, int wordsToRe
     for(int i = 0; i < wordsToRead; i++)
     {
         int destIndex = i + (index * PLC_D_CELL_SERIAL_READLEN);
-        if(destIndex >= PLC_D_CELL_SERIAL_LEN) break; // 4200 이상이면 중단. overflow 방지
+        if(destIndex >= PLC_D_CELL_SERIAL_LEN) break;
 
         plc_Interface_Cell_Serial[destIndex][0] = StrToInt("0x" + plc_Read.SubString(23 + num, 2));
         plc_Interface_Cell_Serial[destIndex][1] = StrToInt("0x" + plc_Read.SubString(23 + num + 2, 2));

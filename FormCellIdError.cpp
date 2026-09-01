@@ -77,15 +77,14 @@ void __fastcall TForm_CellIdError::SaveErrorLog(AnsiString msg1, AnsiString msg2
 //---------------------------------------------------------------------------
 void __fastcall TForm_CellIdError::btnSAVEClick(TObject *Sender)
 {
-    //* case 4 => save data anyway
-    BaseForm->nForm[stage]->ChangeCellSerialStep(4);
-
+    BaseForm->nForm[stage]->AcceptCellSerialData();
     timerErrorOff->Enabled = true;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm_CellIdError::btnCANCELClick(TObject *Sender)
 {
+    BaseForm->nForm[stage]->RetryCellSerialRead();
     timerErrorOff->Enabled = true;
 }
 //---------------------------------------------------------------------------
