@@ -80,10 +80,16 @@ void __fastcall TForm_NgCountError::SaveErrorLog(AnsiString title, AnsiString ms
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::btnTrayOutClick(TObject *Sender)
 {
+    timerErrorOff->Enabled = true;
+
     Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
 	Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 1);
 	BaseForm->nForm[stage]->WritePLCLog("TRAY OUT", "NG TRAY OUT");
-	timerErrorOff->Enabled = true;
+
+    //* 2026 09 18 ng count error
+    BaseForm->nForm[stage]->nStep = 0;
+	BaseForm->nForm[stage]->nSection = STEP_FINISH;
+
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::btnOKClick(TObject *Sender)

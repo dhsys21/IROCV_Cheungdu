@@ -85,6 +85,10 @@ void __fastcall TTotalForm::CmdTrayOut()
         DisplayStatus(nFinish);
         WritePLCLog("CmdTrayOut", "IROCV TRAY OUT = 1");
 		Panel_State->Caption = " IROCV Tray Out ... ";
+
+        //* 2026 09 18 ng count error
+        nStep = 0;
+		nSection = STEP_FINISH;
 	}
 }
 //---------------------------------------------------------------------------

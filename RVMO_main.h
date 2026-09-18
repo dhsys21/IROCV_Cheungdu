@@ -62,14 +62,9 @@ __published:	// IDE-managed Components
 	TPanel *pstepInfo1;
 	TRadioButton *rbKorean;
 	TRadioButton *rbEnglish;
-	TGroupBox *GroupBox2;
-	TButton *Button1;
-	TButton *Button5;
-	TButton *btnNgCountErr;
 	TRadioButton *rbChinese;
 	TAdvSmoothButton *btnViewLog;
 	TAdvSmoothButton *btnViewData;
-	TCheckBox *chkTest;
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall ClockTimerTimer(TObject *Sender);
@@ -84,12 +79,8 @@ __published:	// IDE-managed Components
 	void __fastcall PassEditKeyPress(TObject *Sender, System::WideChar &Key);
 	void __fastcall rbKoreanClick(TObject *Sender);
 	void __fastcall pstepInfo1Click(TObject *Sender);
-	void __fastcall btnNgCountErrClick(TObject *Sender);
-	void __fastcall Label1Click(TObject *Sender);
 	void __fastcall btnViewLogClick(TObject *Sender);
 	void __fastcall btnViewDataClick(TObject *Sender);
-	void __fastcall Button1Click(TObject *Sender);
-	void __fastcall Button5Click(TObject *Sender);
 
 
 private:	// User declarations

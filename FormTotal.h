@@ -408,6 +408,7 @@ private:	// User declarations
 
 	void __fastcall MakePanel(AnsiString type);
 	bool __fastcall ErrorCheck();
+	void __fastcall RefreshStageStatusImage();
 	//void __fastcall DisplayStatus(int status);
     void __fastcall DisplayProcess(int status, AnsiString Status_Step, AnsiString msg, bool bError = false);
     void __fastcall DisplayError(AnsiString msg, bool bError = false);

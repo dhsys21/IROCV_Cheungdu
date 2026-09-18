@@ -306,7 +306,6 @@ void __fastcall TBaseForm::FormCloseQuery(TObject *Sender, bool &CanClose)
 	CanClose = false;
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TBaseForm::PasswordBtnClick(TObject *Sender)
 {
     if(PassEdit->Text == "0000"){
@@ -317,7 +316,6 @@ void __fastcall TBaseForm::PasswordBtnClick(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TBaseForm::cancelBtn2Click(TObject *Sender)
 {
     pPassword->Visible = false;
@@ -331,7 +329,6 @@ void __fastcall TBaseForm::PassEditKeyPress(TObject *Sender, System::WideChar &K
 	}
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TBaseForm::rbKoreanClick(TObject *Sender)
 {
     TRadioButton *rbt = (TRadioButton *)Sender;
@@ -341,7 +338,6 @@ void __fastcall TBaseForm::rbKoreanClick(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TBaseForm::pstepInfo1Click(TObject *Sender)
 {
     Form_Language->Visible = !Form_Language->Visible;
@@ -351,22 +347,6 @@ void __fastcall TBaseForm::pstepInfo1Click(TObject *Sender)
 	Form_Language->Top = 85;
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TBaseForm::btnNgCountErrClick(TObject *Sender)
-{
-    Form_Error->DisplayErrorMessage("IR/OCV NG ERROR",
-										"There is too many ng cells. Please check it.",
-										"Select [Tray Out] or [Restart]");
-    Form_Error->Tag = this->Tag;
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TBaseForm::Label1Click(TObject *Sender)
-{
-    GroupBox2->Visible = !GroupBox2->Visible;
-}
-//---------------------------------------------------------------------------
-
 void __fastcall TBaseForm::btnViewLogClick(TObject *Sender)
 {
     OpenFolder(LOG_PATH);
@@ -385,21 +365,5 @@ void __fastcall TBaseForm::OpenFolder(UnicodeString path)
 //---------------------------------------------------------------------------
 
 
-void __fastcall TBaseForm::Button1Click(TObject *Sender)
-{
-//    double irvalue = 12.92;
-//    int32_t ir_int = static_cast<int32_t>(std::floor(irvalue * 100.0 + 0.5));
-//    Button1->Caption = "r " + IntToStr(ir_int);
-    if(Form_CellIdError->Visible == false)
-	    Form_CellIdError->DisplayErrorMessage(0);
-}
-//---------------------------------------------------------------------------
 
-void __fastcall TBaseForm::Button5Click(TObject *Sender)
-{
-//    double value = 1986.578;
-//    int32_t ocv_int = static_cast<int32_t>(std::floor(value * 10.0 + 0.5));
-//    Button5->Caption = "v " + IntToStr(ocv_int);
-}
-//---------------------------------------------------------------------------
 

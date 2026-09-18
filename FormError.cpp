@@ -101,10 +101,15 @@ void __fastcall TForm_Error::Timer_BringToFrontTimer(TObject *Sender)
 
 void __fastcall TForm_Error::btnTrayOutClick(TObject *Sender)
 {
+    timerErrorOff->Enabled = true;
+
 	Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 0);
 	Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data,  PC_D_IROCV_TRAY_OUT, 1);
 	BaseForm->nForm[this->Tag]->WritePLCLog("TRAY OUT", "NG TRAY OUT");
-	timerErrorOff->Enabled = true;
+
+    //* 2026 09 18 ng count error
+    BaseForm->nForm[this->Tag]->nStep = 0;
+	BaseForm->nForm[this->Tag]->nSection = STEP_FINISH;
 }
 //---------------------------------------------------------------------------
 

@@ -196,6 +196,30 @@ void __fastcall TTotalForm::DisplayError(AnsiString msg, bool bError)
 }
 //---------------------------------------------------------------------------
 // 메인화면 검사 진행 표시
+void __fastcall TTotalForm::RefreshStageStatusImage()
+{
+    // Connection state overrides only the image, not the production sequence.
+    int imageStatus = nNoAnswer;
+    if(Client->Active && Client->Socket->Connected)
+    {
+        imageStatus = stage.alarm_status;
+        if(stage.arl == nLocal && imageStatus < nOpbox)
+            imageStatus = nManual;
+        else if(imageStatus == nNoAnswer)
+        {
+            if(nSection == STEP_MEASURE)
+                imageStatus = tray.ams && !tray.amf ? nRUN : nREADY;
+            else if(nSection == STEP_FINISH)
+                imageStatus = nFinish;
+            else
+                imageStatus = nStep == 0 ? nVacancy : nREADY;
+        }
+    }
+
+    if(imageStatus >= nNoAnswer && imageStatus <= nEmergency)
+        StatusImage->Picture = BaseForm->statusImage[imageStatus]->Picture;
+}
+//---------------------------------------------------------------------------
 void __fastcall TTotalForm::DisplayStatus(int status)
 {
 	AnsiString img_path;
@@ -217,14 +241,13 @@ void __fastcall TTotalForm::DisplayStatus(int status)
 	}
 	else if (status < nOpbox){
 		stage.alarm_status = nManual;
+		RefreshStageStatusImage();
 		return;
 	}
 
 	stage.alarm_status = status;
 
-    if(status >=0 && status <=12){
-		StatusImage->Picture = BaseForm->statusImage[status]->Picture;
-	}
+    RefreshStageStatusImage();
 
 	if(GrpError->Visible){
 		GrpError->BringToFront();

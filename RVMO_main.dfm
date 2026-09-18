@@ -8,7 +8,7 @@ object BaseForm: TBaseForm
   VertScrollBar.Range = 300
   VertScrollBar.Visible = False
   BorderIcons = [biSystemMenu, biMinimize]
-  Caption = 'IR/OCV (Ver.260901 001)'
+  Caption = 'IR/OCV (Ver.260918 001)'
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -464,7 +464,6 @@ object BaseForm: TBaseForm
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
-    OnClick = Label1Click
   end
   object lblLineNo: TLabel
     Left = 161
@@ -6089,55 +6088,6 @@ object BaseForm: TBaseForm
       OnClick = rbKoreanClick
     end
   end
-  object GroupBox2: TGroupBox
-    Left = 381
-    Top = 15
-    Width = 428
-    Height = 38
-    TabOrder = 11
-    Visible = False
-    object Button1: TButton
-      Left = 169
-      Top = 6
-      Width = 75
-      Height = 25
-      Caption = 'Button1'
-      TabOrder = 0
-      OnClick = Button1Click
-    end
-    object Button5: TButton
-      Left = 88
-      Top = 6
-      Width = 75
-      Height = 25
-      Caption = 'Button1'
-      TabOrder = 1
-      OnClick = Button5Click
-    end
-    object btnNgCountErr: TButton
-      Left = 7
-      Top = 6
-      Width = 75
-      Height = 25
-      Caption = 'ng count err'
-      TabOrder = 2
-      OnClick = btnNgCountErrClick
-    end
-    object chkTest: TCheckBox
-      Left = 255
-      Top = 10
-      Width = 167
-      Height = 17
-      Caption = 'CELL INFO TEST'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -19
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      TabOrder = 3
-    end
-  end
   object btnViewLog: TAdvSmoothButton
     Left = 1471
     Top = 6
@@ -6168,7 +6118,7 @@ object BaseForm: TBaseForm
     Caption = 'LOG'
     Color = clWhite
     ParentFont = False
-    TabOrder = 12
+    TabOrder = 11
     Version = '2.1.1.5'
     OnClick = btnViewLogClick
     TMSStyle = 8
@@ -6203,7 +6153,7 @@ object BaseForm: TBaseForm
     Caption = 'DATA'
     Color = clWhite
     ParentFont = False
-    TabOrder = 13
+    TabOrder = 12
     Version = '2.1.1.5'
     OnClick = btnViewDataClick
     TMSStyle = 8

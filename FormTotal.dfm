@@ -862,7 +862,7 @@ object TotalForm: TTotalForm
       object chkCycle: TCheckBox
         Left = 112
         Top = 5
-        Width = 73
+        Width = 122
         Height = 25
         Caption = 'TEST MODE'
         Font.Charset = DEFAULT_CHARSET
@@ -878,7 +878,7 @@ object TotalForm: TTotalForm
         OnMouseUp = chkBypassMouseUp
       end
       object chkBypass: TCheckBox
-        Left = 198
+        Left = 240
         Top = 5
         Width = 86
         Height = 25
@@ -6612,7 +6612,7 @@ object TotalForm: TTotalForm
       NumbersOnly = True
       ParentFont = False
       TabOrder = 13
-      Text = '50'
+      Text = '1'
       Visible = False
     end
   end
@@ -6760,7 +6760,7 @@ object TotalForm: TTotalForm
     OnDisconnect = ClientDisconnect
     OnRead = ClientRead
     OnError = ClientError
-    Left = 632
+    Left = 624
     Top = 176
   end
   object ReContactTimer: TTimer
@@ -6774,25 +6774,25 @@ object TotalForm: TTotalForm
     Enabled = False
     Interval = 100
     OnTimer = SendTimerTimer
-    Left = 742
-    Top = 8
+    Left = 622
+    Top = 376
   end
   object StatusTimer: TTimer
     OnTimer = StatusTimerTimer
-    Left = 632
+    Left = 624
     Top = 120
   end
   object rxTimer: TTimer
     Interval = 10
     OnTimer = rxTimerTimer
-    Left = 694
-    Top = 120
+    Left = 710
+    Top = 152
   end
   object Timer_AutoInspection: TTimer
     Interval = 200
     OnTimer = Timer_AutoInspectionTimer
-    Left = 708
-    Top = 72
+    Left = 772
+    Top = 8
   end
   object Timer_PLCConnect: TTimer
     Enabled = False
@@ -6801,11 +6801,11 @@ object TotalForm: TTotalForm
     Top = 8
   end
   object TrayDownTimer: TTimer
-    Left = 640
+    Left = 624
     Top = 240
   end
   object TrayUpTimer: TTimer
-    Left = 648
-    Top = 304
+    Left = 624
+    Top = 312
   end
 end

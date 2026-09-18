@@ -46,7 +46,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	MakePanel(BaseForm->lblLineNo->Caption);
 //	this->ScaleBy(60,100);
 	start_delay_time = 0;
-    max_delay_time = 100;
+    max_delay_time = 1;
 
     pProcess[0] = pReady;
 	pProcess[1] = pTrayIn;
@@ -94,6 +94,9 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
 	pback->Width = 620;
 	this->Width = pback->Width + 10;
 	this->Height = pback->Height;
+
+    pnlConfig->Width = 600;
+    pnlConfig->Height = 464;
 
 	this->ReadCaliboffset();                      //20171202 개별보정을 위해 추가
 
@@ -227,6 +230,7 @@ void __fastcall TTotalForm::ClientConnect(TObject *Sender,
 	}
 	OldSenCmd = "NONE";
 	SendTimer->Enabled = true;
+	RefreshStageStatusImage();
 }
 //---------------------------------------------------------------------------
 void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
@@ -234,6 +238,7 @@ void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
 {
 	pConInfo->Font->Color = clRed;
 	pConInfo->Caption = "Connection...";
+	RefreshStageStatusImage();
 }
 //---------------------------------------------------------------------------
 void __fastcall TTotalForm::ClientError(TObject *Sender,
@@ -244,6 +249,7 @@ void __fastcall TTotalForm::ClientError(TObject *Sender,
 	pConInfo->Caption = str;
 	ErrorCode = 0;
 	Socket->Close();
+	RefreshStageStatusImage();
 }
 //---------------------------------------------------------------------------
 void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
@@ -253,7 +259,7 @@ void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
 	pConInfo->Caption = "Connection failed.";
 	ReContactTimer->Enabled = true;
 	sock = NULL;
-	//this->DisplayStatus(nNoAnswer);
+	RefreshStageStatusImage();
 }
 //---------------------------------------------------------------------------
 // 재접속 타이머
@@ -787,6 +793,7 @@ void __fastcall TTotalForm::BadListDrawItem(TCustomListView *Sender,
 
 void __fastcall TTotalForm::StatusTimerTimer(TObject *Sender)
 {
+	RefreshStageStatusImage();
 	if(stage.now_status != stage.alarm_status){
 		stage.now_status = stage.alarm_status;
 		stage.alarm_cnt = 0;
@@ -1842,17 +1849,12 @@ void __fastcall TTotalForm::Timer_AutoInspectionTimer(TObject *Sender)
 bool __fastcall TTotalForm::ErrorCheck()
 {
     DisplayError("");
-    if(!Client->Active)
+    if(!Client->Active || !Client->Socket->Connected)
 	{
+        RefreshStageStatusImage();
         DisplayError("IR/OCV Connection Fail.");
     	return true;
 	}
-    else {
-		if(stage.alarm_status == nNoAnswer){
-			DisplayStatus(nVacancy);
-			DisplayProcess(sReady, "AutoInspection_Wait", " IR/OCV is ready... ");
-		}
-    }
 
 
 	if(!Mod_PLC->ClientSocket_PC->Active || !Mod_PLC->ClientSocket_PLC->Active)
@@ -1943,7 +1945,7 @@ void __fastcall TTotalForm::AutoInspection_Wait()
 		case 2:
             DisplayStatus(nREADY);
 			tray.cell_count = 0;
-            if(BaseForm->chkTest->Checked == false){
+            if(chkCycle->Checked == false){
                 for(int i = 0; i < 25; i++)
                 {
                     for(int j = 0; j < 16; j++)
@@ -2141,9 +2143,11 @@ void __fastcall TTotalForm::AutoInspection_Measure()
 				DisplayProcess(sProbeOpen, "AutoInspection_Measure", " PLC - PROBE IS OPEN ... ");
 				WriteCommLog("AutoInspection_Measure", "IR/OCV Finish... ");
 
+                //* 2026 09 18 ng count error
+                nStep = 99;
 				CmdTrayOut();                                  // badinformation, writeresultfile, trayout
-				nStep = 0;
-				nSection = STEP_FINISH;
+//              nStep = 0;
+//				nSection = STEP_FINISH;
 			}
 			break;
 		default:
