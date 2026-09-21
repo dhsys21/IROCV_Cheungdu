@@ -62,7 +62,7 @@ void __fastcall TMeasureInfoForm::MakePanel(AnsiString type)
 
 			SetOption(pir[index], nx, ny, nw, nh-1, index);
 			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index+LINECOUNT)%LINECOUNT);
+			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
 			pocv[index]->Color = pnormal2->Color;
 			pocv[index]->ParentBackground = false;
 			pir[index]->ParentBackground = false;
@@ -94,7 +94,7 @@ void __fastcall TMeasureInfoForm::MakePanel(AnsiString type)
 
 			SetOption(pir[index], nx, ny, nw, nh-1, index);
 			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index+LINECOUNT)%LINECOUNT);
+			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
 			pocv[index]->Color = pnormal2->Color;
 			pocv[index]->ParentBackground = false;
 			pir[index]->ParentBackground = false;
@@ -126,7 +126,7 @@ void __fastcall TMeasureInfoForm::MakePanel(AnsiString type)
 
 			SetOption(pir[index], nx, ny, nw, nh-1, index);
 			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index+LINECOUNT)%LINECOUNT);
+			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
 			pocv[index]->Color = pnormal2->Color;
 			pocv[index]->ParentBackground = false;
 			pir[index]->ParentBackground = false;
@@ -157,7 +157,7 @@ void __fastcall TMeasureInfoForm::MakePanel(AnsiString type)
 
 			SetOption(pir[index], nx, ny, nw, nh-1, index);
 			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index+LINECOUNT)%LINECOUNT);
+			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
 			pocv[index]->Color = pnormal2->Color;
 			pocv[index]->ParentBackground = false;
 			pir[index]->ParentBackground = false;
@@ -312,13 +312,14 @@ void __fastcall TMeasureInfoForm::SetUIOption(TPanel *pnl, int nx, int ny, int n
 	pnl->BorderWidth = 0;
 }
 //---------------------------------------------------------------------------
-void __fastcall TMeasureInfoForm::DisplayIrValue(int index, TColor clr, AnsiString caption)
+void __fastcall TMeasureInfoForm::DisplayIrValue(int index, TColor clr, AnsiString caption, bool measured)
 {
+	if(index < 0 || index >= MAXCHANNEL) return;
 	pir[index]->Caption = caption;
 
-	if(caption != "" || caption == "-" || caption != NULL)
-		IrChart->Series[0]->YValue[index + 1] = 0;
-	else IrChart->Series[0]->YValue[index + 1] = BaseForm->StringToDouble(caption, 0);
+    // 채널번호를 IR 측정값으로 그래프에 넣지 않는다. 차트도 0-based index.
+    if(index < IrChart->Series[0]->Count())
+        IrChart->Series[0]->YValue[index] = measured ? BaseForm->StringToDouble(caption, 0) : 0;
 
 	if(clr == cl_line->Color)pir[index]->Color = pnormal1->Color;
 	else pir[index]->Color = clr;
@@ -329,13 +330,13 @@ void __fastcall TMeasureInfoForm::DisplayIrValue(int index, AnsiString caption)
 	pir[index]->Caption = caption;
 }
 //---------------------------------------------------------------------------
-void __fastcall TMeasureInfoForm::DisplayOcvValue(int index, TColor clr, AnsiString caption)
+void __fastcall TMeasureInfoForm::DisplayOcvValue(int index, TColor clr, AnsiString caption, bool measured)
 {
+    if(index < 0 || index >= MAXCHANNEL) return;
     pocv[index]->Caption = caption;
 
-	if(caption != "" || caption == "-" || caption != NULL)
-		OcvChart->Series[0]->YValue[index] = 0;
-	else OcvChart->Series[0]->YValue[index] = BaseForm->StringToDouble(caption, 0);
+    if(index < OcvChart->Series[0]->Count())
+        OcvChart->Series[0]->YValue[index] = measured ? BaseForm->StringToDouble(caption, 0) : 0;
 
 	if(clr == cl_line->Color)pocv[index]->Color = pnormal2->Color;
 	else pocv[index]->Color = clr;
@@ -483,6 +484,8 @@ void __fastcall TMeasureInfoForm::Panel35Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 {
+    // [CELL SERIAL 공통] PROBE OPEN이 먼저 와도 최종 시리얼/결과 저장 완료 전에는 다음 회차로 가지 않는다.
+    if(BaseForm->nForm[stage]->IsWaitingForResultSave()) return;
 	switch(nStep)
 	{
 		case 0:
@@ -775,7 +778,7 @@ void __fastcall TMeasureInfoForm::advBtnRemeasureClick(TObject *Sender)
 void __fastcall TMeasureInfoForm::advRemeasureTrayOutClick(TObject *Sender)
 {
 	// tray_out on
-	BaseForm->nForm[0]->CmdTrayOut();
+	BaseForm->nForm[0]->ForceTrayOut();
 	this->Close();
 }
 //---------------------------------------------------------------------------

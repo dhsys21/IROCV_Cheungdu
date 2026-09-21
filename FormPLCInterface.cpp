@@ -1,4 +1,4 @@
-Ôªø#pragma link "AdvSmoothButton"
+#pragma link "AdvSmoothButton"
 //---------------------------------------------------------------------------
 
 #include <vcl.h>
@@ -57,6 +57,8 @@ __fastcall TForm_PLCInterface::TForm_PLCInterface(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TForm_PLCInterface::SetListViewPLC()
 {
+	ListView_PLC->Items->Clear();
+	const int channelStep = GetDisplayChannelStep();
 	// PLC - IR/OCV
 	AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_HEART_BEAT), "PLC HEART BEAT");
 	AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_IROCV_AUTO_MANUAL), "PLC AUTO MANUAL");
@@ -77,12 +79,15 @@ void __fastcall TForm_PLCInterface::SetListViewPLC()
     //* CELL SERIAL DATA
     AddListView(ListView_PLC, "D" + IntToStr(PLC_D_CELL_SERIAL_NUM + PLC_D_IROCV_CELL_SERIAL_TRAYID), "CELL SERIAL TRAY ID");
 
-    for(int i = 0; i < 20; i++)
-       AddListView(ListView_PLC, "D" + IntToStr(PLC_D_CELL_SERIAL_NUM + PLC_D_IROCV_CELL_SERIAL + (i * 10 * 20)), "CELL SERIAL #" + IntToStr(i * 20 + 1));
+    // Ω√∏ÆæÛ¿∫ √§≥Œ¥Á 10øˆµÂ. ø‰æ‡/¿¸√º ∏µÂ ∏µŒ Ω«¡¶ √§≥Œ¿« ¡÷º“∏¶ «•Ω√«—¥Ÿ.
+    for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+       AddListView(ListView_PLC, "D" + IntToStr(PLC_D_CELL_SERIAL_NUM + PLC_D_IROCV_CELL_SERIAL + channel * PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL), "CELL SERIAL #" + IntToStr(channel + 1));
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_PLCInterface::SetListViewPC()
 {
+	ListView_PC->Items->Clear();
+	const int channelStep = GetDisplayChannelStep();
 	// PC - IR/OCV
 	AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_START_DEV_NUM1 + PC_D_HEART_BEAT), "PC HEART BEAT");
 	AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_START_DEV_NUM1 + PC_D_IROCV_ERROR), "PC ERROR");
@@ -105,15 +110,42 @@ void __fastcall TForm_PLCInterface::SetListViewPC()
 	for(int i = 0; i < 25; i++)
 		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_START_DEV_NUM1 + PC_D_IROCV_MEASURE_OK_NG + i), "IR/OCV OK/NG DATA #" + IntToStr(i + 1));
 
-    for(int i = 0; i < 20; i++){
-        AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_IR_RESULT + PC_D_IROCV_RESULT_CODE + (i * 20)), "IR/OCV NG CODE #" + IntToStr(i * 20 + 1));
+    for(int channel = 0; channel < MAXCHANNEL; channel += channelStep){
+        AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_IR_RESULT + PC_D_IROCV_RESULT_CODE + channel), "IR/OCV NG CODE #" + IntToStr(channel + 1));
     }
 
-    for(int i = 0; i < 20; i++)
-		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_IR + PC_D_IROCV_IR_VALUE + (i * 2 * 20)), "IR VALUE #" + IntToStr(i * 20 + 1));
+    for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_IR + PC_D_IROCV_IR_VALUE + channel * 2), "IR VALUE #" + IntToStr(channel + 1));
 
-	for(int i = 0; i < 20; i++)
-		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_OCV + PC_D_IROCV_OCV_VALUE + (i * 2 * 20)), "OCV VALUE #" + IntToStr(i * 20 + 1));
+	for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_OCV + PC_D_IROCV_OCV_VALUE + channel * 2), "OCV VALUE #" + IntToStr(channel + 1));
+}
+//---------------------------------------------------------------------------
+// «•Ω√«“ √§≥Œ ∞£∞›. PLC µ•¿Ã≈Õ ¿⁄√º≥™ ¿–±‚/æ≤±‚ ≈ÎΩ≈ π¸¿ß¥¬ ∫Ø∞Ê«œ¡ˆ æ ¥¬¥Ÿ.
+int __fastcall TForm_PLCInterface::GetDisplayChannelStep()
+{
+    return chkShowAll->Checked ? 1 : 20;
+}
+//---------------------------------------------------------------------------
+// Show all ¿¸»Ø: ∏Ò∑œ∞˙ ∞™¿« «‡ º¯º≠∏¶ «‘≤≤ ¥ŸΩ√ ∏∏µÁ¥Ÿ. ≈◊Ω∫∆Æ ∆–≥Œ «•Ω√ ªÛ≈¬¥¬ ¿Ø¡ˆ«—¥Ÿ.
+void __fastcall TForm_PLCInterface::chkShowAllClick(TObject *Sender)
+{
+    const bool timerEnabled = Timer_Update->Enabled;
+    Timer_Update->Enabled = false;
+    ListView_PLC->Items->BeginUpdate();
+    ListView_PC->Items->BeginUpdate();
+    try
+    {
+        SetListViewPLC();
+        SetListViewPC();
+        Timer_UpdateTimer(Sender);
+    }
+    __finally
+    {
+        ListView_PC->Items->EndUpdate();
+        ListView_PLC->Items->EndUpdate();
+        Timer_Update->Enabled = timerEnabled;
+    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_PLCInterface::AddListView(TListView *list, AnsiString address, AnsiString name)
@@ -138,89 +170,101 @@ void __fastcall TForm_PLCInterface::FormClose(TObject *Sender, TCloseAction &Act
 //---------------------------------------------------------------------------
 void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
 {
-	int index;
-	if(Mod_PLC->ClientSocket_PC->Active)
+	const int channelStep = GetDisplayChannelStep();
+	// ¿¸√º «•Ω√ Ω√ø°µµ «‡∫∞ ¿Á±◊∏Æ±‚∏¶ ∏æ∆º≠ Ω∫≈©∑— ¡ﬂ ±Ù∫˝¿”¿ª ¡Ÿ¿Œ¥Ÿ.
+	ListView_PLC->Items->BeginUpdate();
+	ListView_PC->Items->BeginUpdate();
+	try
 	{
-		lblConnection->Caption = "PC PLC : CONNECTED";
-		lblConnection->Font->Color = clGreen;
+        int index;
+        if(Mod_PLC->ClientSocket_PC->Active)
+        {
+            lblConnection->Caption = "PC PLC : CONNECTED";
+            lblConnection->Font->Color = clGreen;
+        }
+        else
+        {
+            lblConnection->Caption = "PC PLC : DISCONNECTED";
+            lblConnection->Font->Color = clRed;
+        }
+
+        Label4->Caption = "CELL INFO. : ";
+        if(Mod_PLC->ClientSocket_PLC->Active)    //    PLC ªÛ≈¬
+        {
+            // PLC - IR/OCV
+            index = 0;
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_HEART_BEAT);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_AUTO_MANUAL);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_ERROR);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_IN);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_PROB_OPEN);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_PROB_CLOSE);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_COMPLETE);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetString(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_ID, 10);
+
+            AnsiString cell_info;
+            for(int i = 0; i < 25; i++)
+            {
+                cell_info = "";
+                for(int j = 0; j < 16; j++)
+                {
+                    cell_info += Mod_PLC->GetData(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_CELL_DATA + i, j);
+                }
+                ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = cell_info;
+                Label4->Caption += Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_CELL_DATA + i);
+            }
+
+            //* CELL SERIAL
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSrialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
+            for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+                ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSrial(PLC_D_IROCV_CELL_SERIAL, channel, PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
+        }
+
+        if(Mod_PLC->ClientSocket_PC->Active)    //    PC ªÛ≈¬
+        {
+            // PC - IR/OCV
+            index = 0;
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_HEART_BEAT);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_STAGE_AUTO_READY);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_TRAY_OUT);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_PROB_OPEN);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_PROB_CLOSE);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURING);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_NG_ALARM);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_COMPLETE);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_REMEASURE);
+
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_NG_COUNT);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_IR_MIN);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_IR_MAX);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_OCV_MIN);
+            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_OCV_MAX);
+
+            AnsiString okng_bin;
+            for(int i = 0; i < 25; i++)
+            {
+                okng_bin = "";
+                for(int j = 0; j < 16; j++)
+                    okng_bin += Mod_PLC->GetData(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURE_OK_NG + i, j);
+
+                ListView_PC->Items->Item[index++]->SubItems->Strings[1] = okng_bin;
+            }
+
+            for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+                ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetResultCode(PC_D_IROCV_RESULT_CODE, channel);
+
+            for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+                ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetIrValue(PC_D_IROCV_IR_VALUE, channel);
+
+            for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
+                ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetOcvValue(PC_D_IROCV_OCV_VALUE, channel);
+        }
 	}
-	else
+	__finally
 	{
-		lblConnection->Caption = "PC PLC : DISCONNECTED";
-		lblConnection->Font->Color = clRed;
-	}
-
-    Label4->Caption = "CELL INFO. : ";
-	if(Mod_PLC->ClientSocket_PLC->Active)	//	PLC ÏÉÅÌÉú
-	{
-		// PLC - IR/OCV
-		index = 0;
-        ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_HEART_BEAT);
-		ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_AUTO_MANUAL);
-		ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_ERROR);
-		ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_IN);
-		ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_PROB_OPEN);
-		ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_PROB_CLOSE);
-        ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_COMPLETE);
-		ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetString(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_ID, 10);
-
-		AnsiString cell_info;
-		for(int i = 0; i < 25; i++)
-		{
-			cell_info = "";
-			for(int j = 0; j < 16; j++)
-			{
-				cell_info += Mod_PLC->GetData(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_CELL_DATA + i, j);
-			}
-			ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = cell_info;
-			Label4->Caption += Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_CELL_DATA + i);
-		}
-
-        //* CELL SERIAL
-        ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSrialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
-        for(int i = 0; i < 20; i++)
-            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSrial(PLC_D_IROCV_CELL_SERIAL, i * 20, 10);
-	}
-
-	if(Mod_PLC->ClientSocket_PC->Active)	//	PC ÏÉÅÌÉú
-	{
-		// PC - IR/OCV
-		index = 0;
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_HEART_BEAT);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_STAGE_AUTO_READY);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_TRAY_OUT);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_PROB_OPEN);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_PROB_CLOSE);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURING);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_NG_ALARM);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_COMPLETE);
-        ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_REMEASURE);
-
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_NG_COUNT);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_IR_MIN);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_IR_MAX);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_OCV_MIN);
-		ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_OCV_MAX);
-
-		AnsiString okng_bin;
-		for(int i = 0; i < 25; i++)
-		{
-			okng_bin = "";
-			for(int j = 0; j < 16; j++)
-				okng_bin += Mod_PLC->GetData(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURE_OK_NG + i, j);
-
-			ListView_PC->Items->Item[index++]->SubItems->Strings[1] = okng_bin;
-		}
-
-        for(int i = 0; i < 20; i++)
-            ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetResultCode(PC_D_IROCV_RESULT_CODE, i * 20);
-
-        for(int i = 0; i < 20; i++)
-        	ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetIrValue(PC_D_IROCV_IR_VALUE, i * 20);
-
-        for(int i = 0; i < 20; i++)
-        	ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetOcvValue(PC_D_IROCV_OCV_VALUE, i * 20);
+		ListView_PC->Items->EndUpdate();
+		ListView_PLC->Items->EndUpdate();
 	}
 }
 //---------------------------------------------------------------------------
@@ -489,7 +533,7 @@ void __fastcall TForm_PLCInterface::btnWriteIrOcvValueClick(TObject *Sender)
 		? editIncrement->Text.Trim().ToIntDef(1) : 0;
 
 	// ir value 2 Word
-	// 2 Word :  value / (65536 / 2) => Ïúó Ï£ºÏÜåÏóê Ïì∞Í∏∞, value % (65536 /2 ) => ÏïÑÎûò Ï£ºÏÜåÏóê Ïì∞Í∏∞ // herald 2017 11 30
+	// 2 Word :  value / (65536 / 2) => ¿≠ ¡÷º“ø° æ≤±‚, value % (65536 /2 ) => æ∆∑° ¡÷º“ø° æ≤±‚ // herald 2017 11 30
 	for(int i = 0; i < MAXCHANNEL; i++)
 	{
 		int32_t ir_int = static_cast<int32_t>(ir_base * 100.0)

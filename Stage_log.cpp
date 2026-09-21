@@ -1,7 +1,13 @@
+// [설정·파일·로그] INI/채널 매핑, 결과 CSV, 누적 정보, 통신/PLC 로그.
+// 전체 구조 및 오류 추적 위치: CODE_STRUCTURE.md
+
+#include <vcl.h>
+#pragma hdrstop
+
 #include "FormTotal.h"
 #include "RVMO_main.h"
+#include "FormCalibration.h"
 
-// 환경설정 파일 저장 / 읽기
 void __fastcall TTotalForm::WriteSystemInfo()
 {
 	TIniFile *ini;
@@ -14,6 +20,9 @@ void __fastcall TTotalForm::WriteSystemInfo()
 	ini->WriteBool("MAIN", "AUTO_CHECK", RemeasureChk->Checked);
 	ini->WriteInteger("MAIN", "REMEASURE", RemeasureEdit->Text.ToIntDef(0));
 	ini->WriteBool("MAIN", "REM_BYPASS", chkRemBypass->Checked);
+    // [CELL SERIAL 공통] 미체크=TRAY IN 보관(기존), 체크=상시 수신/결과 직전 재확인.
+    // 실제 적용은 ReadSystemInfo 및 다음 InitTrayStruct에서 한다. 현재 트레이 모드는 유지한다.
+    ini->WriteBool("CELL_SERIAL", "CONTINUOUS_READ", chkCellSerialContinuousRead->Checked);
 
 	ini->WriteString("IROCV_PLC", "IP", editPLCIPAddress->Text);
 	ini->WriteString("IROCV_PLC", "PORT1", editPLCPortPC->Text);
@@ -61,8 +70,8 @@ void __fastcall TTotalForm::WriteSystemInfo()
 
 	delete ini;
 }
-//---------------------------------------------------------------------------
-bool __fastcall TTotalForm::ReadSystemInfo()
+
+void __fastcall TTotalForm::ReadSystemInfo()
 {
 	TIniFile *ini;
 
@@ -71,6 +80,11 @@ bool __fastcall TTotalForm::ReadSystemInfo()
 
 	ini = new TIniFile(file);
 	config.remeasure_use = ini->ReadBool("MAIN", "AUTO_CHECK", true);
+    // [CELL SERIAL 공통] 기존 INI에 키가 없으면 기존 TRAY IN 수신 방식으로 동작한다.
+    config.cell_serial_continuous_read = ini->ReadBool("CELL_SERIAL", "CONTINUOUS_READ", false);
+    chkCellSerialContinuousRead->Checked = config.cell_serial_continuous_read;
+    if(autoInspection.GetStep() == STEP_WAIT_TRAY_IN && !resultCellSerialPending && (!tray.ams || tray.amf))
+        ApplyCellSerialReadMode();
 	config.remeasure_cnt = ini->ReadInteger("MAIN", "REMEASURE", 1);
     config.remeasure_alarm_cnt = ini->ReadInteger("MAIN", "REMEASURE_ALARM_COUNT", 5);
 	config.remeasure_bypass = 	ini->ReadBool("MAIN", "REM_BYPASS", false);
@@ -135,24 +149,8 @@ bool __fastcall TTotalForm::ReadSystemInfo()
 
 	delete ini;
 }
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::VisibleSpec(bool bUseAverage)
-{
-	if(bUseAverage){
-		grpIrSpec->Visible = true;
-		grpOcvSpec->Visible = false;
-		grpIrAvg->Visible = true;
-		grpOcvAvg->Visible = true;
-	}
-	else{
-		grpIrSpec->Visible = true;
-		grpOcvSpec->Visible = true;
-		grpIrAvg->Visible = false;
-		grpOcvAvg->Visible = false;
-	}
-}
-//---------------------------------------------------------------------------
-bool __fastcall TTotalForm::ReadCellInfo()
+
+void __fastcall TTotalForm::ReadCellInfo()
 {
 	TIniFile *ini;
 
@@ -166,8 +164,7 @@ bool __fastcall TTotalForm::ReadCellInfo()
 
 	delete ini;
 }
-//---------------------------------------------------------------------------
-// 재측정 정보 읽고 쓰기
+
 void __fastcall TTotalForm::ReadRemeasureInfo()
 {
 	TIniFile *ini;
@@ -224,7 +221,6 @@ void __fastcall TTotalForm::ReadRemeasureInfo()
 
 	delete ini;
 }
-//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::WriteRemeasureInfo()	// Tray가 Vacancy 상태일때 기록
 {
@@ -258,7 +254,7 @@ void __fastcall TTotalForm::WriteRemeasureInfo()	// Tray가 Vacancy 상태일때 기록
 
 	delete ini;
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::RemeasureAlarm(int remeasure_alarm_count)
 {
 	if(remeasure_alarm_count > 0) {
@@ -272,7 +268,7 @@ void __fastcall TTotalForm::RemeasureAlarm(int remeasure_alarm_count)
 		lblRemeasureAlarmCheck->Visible = false;
     }
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::WriteCommLog(AnsiString Type, AnsiString Msg)
 {
 	AnsiString str, dir;
@@ -296,7 +292,7 @@ void __fastcall TTotalForm::WriteCommLog(AnsiString Type, AnsiString Msg)
 
 	FileClose(file_handle);
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::WritePLCLog(AnsiString Type, AnsiString Msg)
 {
 	AnsiString str, dir;
@@ -320,42 +316,7 @@ void __fastcall TTotalForm::WritePLCLog(AnsiString Type, AnsiString Msg)
 
 	FileClose(file_handle);
 }
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::WriteTrayInfo()
-{
-	int file_handle;
-	AnsiString filename;
-	AnsiString dir;
-	AnsiString ok_ng;
 
-	dir = (AnsiString)DATA_PATH + Now().FormatString("yyyymmdd") + "\\";// + lblTitle->Caption + "\\";
-	ForceDirectories((AnsiString)dir);
-
-	filename =  dir + tray.trayid +  "-" + Now().FormatString("yymmddhhnnss") + "-TRAYINFO.csv";
-
-	if(FileExists(filename)){
-		DeleteFile(filename);
-	}
-
-	file_handle = FileCreate(filename);
-	FileSeek(file_handle, 0, 0);
-
-	AnsiString file;
-//	file = "TRAY ID," + tray.trayid + "\r\n";
-//	file += "CH,OK/NG\r\n";
-	file = "CELL 유무 (1 : OK/ 0 : NG)\r\n";
-	for(int i = 0; i < MAXCHANNEL; ++i)
-	{
-		if(tray.cell[i] == 1) ok_ng = "1";
-		else ok_ng = "0";
-		file = file + IntToStr(i+1) + "," + ok_ng + "\r\n";
-	}
-
-	FileWrite(file_handle, file.c_str(), file.Length());
-	FileClose(file_handle);
-}
-
-//---------------------------------------------------------------------------
 void __fastcall TTotalForm::WriteResultFile()
 {
 	int file_handle;
@@ -420,42 +381,6 @@ void __fastcall TTotalForm::WriteResultFile()
 	FileWrite(file_handle, file.c_str(), file.Length());
 	FileClose(file_handle);
 }
-//---------------------------------------------------------------------------
-
-void __fastcall TTotalForm::WriteOKNG()
-{
-	int file_handle;
-	AnsiString filename;
-	AnsiString dir;
-	AnsiString ok_ng;
-
-	dir = (AnsiString)DATA_PATH + Now().FormatString("yyyymmdd") + "\\";// + lblTitle->Caption + "\\";
-	ForceDirectories((AnsiString)dir);
-
-	filename =  dir + tray.trayid +  "-" + Now().FormatString("yymmddhhnnss") + "-OKNG.csv";
-
-	if(FileExists(filename)){
-		DeleteFile(filename);
-	}
-
-	file_handle = FileCreate(filename);
-	FileSeek(file_handle, 0, 0);
-
-	AnsiString file;
-	file = "TRAY ID," + tray.trayid + "\r\n";
-	file += "CH,OK/NG\r\n";
-
-	for(int i = 0; i < MAXCHANNEL; ++i)
-	{
-		if((tray.cell[i] == 1) && retest.cell[i] == '0') ok_ng = "OK";
-		else ok_ng = "NG";
-		file = file + IntToStr(i+1) + "," + ok_ng + "\r\n";
-	}
-
-	FileWrite(file_handle, file.c_str(), file.Length());
-	FileClose(file_handle);
-}
-//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::ErrorLog()
 {
@@ -480,44 +405,7 @@ void __fastcall TTotalForm::ErrorLog()
 
 	FileClose(file_handle);
 }
-//---------------------------------------------------------------------------
-// 재측정 정보 읽고 쓰기
-void __fastcall TTotalForm::ReadPreChargerOKNG(AnsiString trayid)
-{
-	AnsiString dir = "C:\\PreCharge\\Data\\";// + lblTitle->Caption + "\\";
-	AnsiString filename = dir + tray.trayid + "-OKNG.csv";
-	AnsiString str;
-	int file_handle, file_len;
-	char *txt;
 
-	if(FileExists(filename))
-		file_handle = FileOpen(filename, fmOpenRead);
-
-	file_len = FileSeek(file_handle, 0, 2);
-	FileSeek(file_handle, 0, 0);
-
-	txt = new char[file_len+1];
-	FileRead(file_handle, txt, file_len);
-	FileClose(file_handle);
-
-	// ir ocv value processing
-	str = txt;
-	delete []txt;
-
-	AnsiString tempStr, tempStr1;
-
-	str.Delete(1, str.Pos("\n"));  										// 첫째줄 tray id 삭제
-
-	for(int chCount = 0; chCount < MAXCHANNEL; chCount++){
-		tempStr1 = str.SubString(1, str.Pos("\n"));
-		str.Delete(1, tempStr1.Pos("\n"));                              // 읽은 줄 변수(tempStr1)에 넣고 삭제
-		tempStr1.Delete(1, tempStr1.Pos(","));       					// 채널 번호 삭제
-
-		tempStr = tempStr1.SubString(1, tempStr1.Pos("\n") - 1);       // OK/NG 값 - tempStr
-		precharger_okng[chCount] = tempStr.ToInt();
-	}
-}
-//---------------------------------------------------------------------------
 void __fastcall TTotalForm::ReadCaliboffset()                         //20171202 개별보정을 위해 추가
 {
 	TIniFile *ini;
@@ -529,4 +417,39 @@ void __fastcall TTotalForm::ReadCaliboffset()                         //20171202
 
 	delete ini;
 }
+
 //---------------------------------------------------------------------------
+// mapping.csv에서 장비↔화면 채널 매핑을 읽고, 파일이 없으면 기본 매핑을 만든다.
+void __fastcall TTotalForm::ReadchannelMapping()
+{
+	AnsiString str, FileName;
+	int file_handle;
+
+	FileName = (AnsiString)BIN_PATH + "mapping.csv";
+
+	TStringList *data;
+	data = new TStringList;
+
+	if (FileExists(FileName)) {
+
+		data->LoadFromFile(FileName);
+
+		for (int i = 1; i <= MAXCHANNEL; ++i) {
+			str = data->Strings[i];
+			str.Delete(1, str.Pos(",")); // 채널
+			chMap[i] = str.ToInt();
+			chReverseMap[str.ToInt()] = i;
+		}
+	}
+	else {
+		data->Add("변경전, 변경후");
+		for (int i = 1; i <= MAXCHANNEL; ++i) {
+			chMap[i] = i;
+            chReverseMap[i] = i;
+			data->Add(IntToStr(i) + "," + IntToStr(i));
+		}
+		data->SaveToFile(FileName);
+
+	}
+	delete data;
+}

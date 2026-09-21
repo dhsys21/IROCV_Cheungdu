@@ -80,27 +80,19 @@ void __fastcall TForm_NgCountError::SaveErrorLog(AnsiString title, AnsiString ms
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::btnTrayOutClick(TObject *Sender)
 {
-    timerErrorOff->Enabled = true;
-
     Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-	Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 1);
-	BaseForm->nForm[stage]->WritePLCLog("TRAY OUT", "NG TRAY OUT");
-
-    //* 2026 09 18 ng count error
-    BaseForm->nForm[stage]->nStep = 0;
-	BaseForm->nForm[stage]->nSection = STEP_FINISH;
-
+    BaseForm->nForm[stage]->ForceTrayOut();
+    Timer_BringToFront->Enabled = false;
+    timerErrorOff->Enabled = false;
+    Close();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::btnOKClick(TObject *Sender)
 {
-    Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-    Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
-    Mod_PLC->SetValue(PC_D_IROCV_REMEASURE, 1);
-	BaseForm->nForm[stage]->Initialization();
-	BaseForm->nForm[stage]->WritePLCLog("RESTART", "NG TRAY RESTART");
-    BaseForm->nForm[stage]->CmdForceStop_Original();
-	timerErrorOff->Enabled = true;
+    Timer_BringToFront->Enabled = false;
+    timerErrorOff->Enabled = false;
+    Close();
+    BaseForm->nForm[stage]->RestartAutoInspection();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::Timer_BringToFrontTimer(TObject *Sender)
@@ -110,7 +102,7 @@ void __fastcall TForm_NgCountError::Timer_BringToFrontTimer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::timerErrorOffTimer(TObject *Sender)
 {
-    if(Mod_PLC->GetPlcValue(PC_D_IROCV_ERROR) == 1)
+    if(Mod_PLC->GetValue(PC_D_IROCV_ERROR) == 1)
 	{
 		Label_Msg2->Caption = "Please check PLC whether PC ERROR is 0 ...";
 		Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);

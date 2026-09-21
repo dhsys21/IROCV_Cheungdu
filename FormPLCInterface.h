@@ -51,6 +51,8 @@ __published:	// IDE-managed Components
 	TLabel *Label9;
 	TLabel *lblConnection;
 	TLabel *lblTestStatus;
+	TCheckBox *chkShowAll;
+	void __fastcall chkShowAllClick(TObject *Sender);
 	void __fastcall Timer_UpdateTimer(TObject *Sender);
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
@@ -64,6 +66,8 @@ __published:	// IDE-managed Components
 	void __fastcall btnClearNgClick(TObject *Sender);
 	void __fastcall btnAllNgClick(TObject *Sender);
 private:	// User declarations
+    // 목록 생성과 값 갱신에 같은 채널 간격을 적용한다: 전체=1, 요약=20.
+    int __fastcall GetDisplayChannelStep();
     void __fastcall SetListViewPLC();
 	void __fastcall SetListViewPC();
 

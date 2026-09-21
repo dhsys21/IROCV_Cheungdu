@@ -54,8 +54,6 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 		nw = 30;
 //		nh = 25;
 		nh = 20;
-
-		int cnt = 0;
 		for(int index=399; index>=0;){
 			pch[index] = new TPanel(this);
 			SetOption(pch[index], nx, ny, nw, nh-1, index);
@@ -116,8 +114,6 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 		ny = 600;
 		nw = 30;
 		nh = 20;
-
-		int cnt = 0;
 		for(int index=0; index<400;){
 			pch[index] = new TPanel(this);
 			SetOption(pch[index], nx, ny, nw, nh-1, index);
@@ -172,8 +168,6 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 		ny = 600;
 		nw = 30;
 		nh = 20;
-
-		int cnt = 0;
 		for(int index=0; index<400;){
 			pch[index] = new TPanel(this);
 			SetOption(pch[index], nx, ny, nw, nh-1, index);
@@ -228,8 +222,6 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 		ny = 600;
 		nw = 30;
 		nh = 20;
-
-		int cnt = 0;
 		for(int index = 0; index < MAXCHANNEL;){
 			pch[index] = new TPanel(this);
 			SetOption(pch[index], nx, ny, nw, nh-1, index);

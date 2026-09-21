@@ -5545,7 +5545,7 @@ object TotalForm: TTotalForm
     Left = 728
     Top = 34
     Width = 600
-    Height = 464
+    Height = 540
     Cursor = crDefault
     CanMove = True
     Caption.Location = plCenterCenter
@@ -5579,6 +5579,33 @@ object TotalForm: TTotalForm
     Visible = False
     TabOrder = 7
     TMSStyle = 0
+    object grpCellSerialReadMode: TGroupBox
+      Left = 10
+      Top = 465
+      Width = 580
+      Height = 68
+      Caption = 'CELL SERIAL'
+      TabOrder = 14
+      object chkCellSerialContinuousRead: TCheckBox
+        Left = 10
+        Top = 18
+        Width = 558
+        Height = 20
+        Caption = 'Continuous read (PLC keeps data until TRAY OUT)'
+        Hint = 'Save to apply. Changes during inspection apply to the next tray.'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+      end
+      object lblCellSerialReadMode: TLabel
+        Left = 10
+        Top = 43
+        Width = 558
+        Height = 16
+        AutoSize = False
+        Caption = 'Unchecked: capture at TRAY IN / Checked: refresh before result save'
+      end
+    end
     object Label5: TLabel
       Left = 18
       Top = 10
@@ -6798,6 +6825,13 @@ object TotalForm: TTotalForm
     Enabled = False
     OnTimer = Timer_PLCConnectTimer
     Left = 646
+    Top = 8
+  end
+  object Timer_ResultCellSerial: TTimer
+    Enabled = False
+    Interval = 200
+    OnTimer = Timer_ResultCellSerialTimer
+    Left = 810
     Top = 8
   end
   object TrayDownTimer: TTimer

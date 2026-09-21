@@ -575,8 +575,6 @@ void __fastcall TRemeasureForm::ChInfoMouseClick(TObject *Sender)
 	int index;
 	index = pnl->Tag;
 	pChannel->Caption = index + 1;
-
-    int ch = BaseForm->nForm[stage]->chReverseMap[index + 1];
     pPos->Caption = IntToStr((index/20)+1) + "-" + IntToStr((index%20)+1);
     pNgTotalUse->Caption = IntToStr(acc_remeasure[index]) + " / " + IntToStr(acc_totaluse[index]);
 }

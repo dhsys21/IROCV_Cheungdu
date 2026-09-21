@@ -56,6 +56,7 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
 
     PLC_Write_Result = false; //voltage, current 값은 필요 시에만 쓰기를 한다.
+    cellSerialContinuousRead = false; // [CELL SERIAL 공통] 기존 TRAY IN 수신이 기본값.
     ResetCellSerialRead();
     currentWriteTask = nPCDATA;
 }
@@ -109,14 +110,65 @@ void __fastcall TMod_PLC::ResetCellSerialRead()
     CellSerialReadRequested = false;
     CellSerialReadActive = false;
     CellSerialReadComplete = false;
+    memset(cellSerialReceiveData, 0, sizeof(cellSerialReceiveData));
     memset(plc_Interface_Cell_Serial, 0,
         sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
 }
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::StartCellSerialRead()
 {
+    // [CELL SERIAL 공통] 지금 요청한 이후의 완전한 1회 수신만 완료로 인정한다.
+    // 이미 진행 중인 이전 회차는 다음 응답에서 버리고 처음부터 다시 읽는다.
     CellSerialReadComplete = false;
     CellSerialReadRequested = true;
+    memset(plc_Interface_Cell_Serial, 0, sizeof(plc_Interface_Cell_Serial));
+}
+//---------------------------------------------------------------------------
+// [CELL SERIAL 공통] 통신 중인 조각은 건드리지 않고 다음 읽기 예약부터 모드를 적용한다.
+void __fastcall TMod_PLC::SetCellSerialContinuousRead(bool enabled)
+{
+    cellSerialContinuousRead = enabled;
+}
+//---------------------------------------------------------------------------
+// [CELL SERIAL 공통] 수신용 버퍼만 지운다. 상시 수신 중 완료 버퍼는 계속 조회할 수 있다.
+void __fastcall TMod_PLC::BeginCellSerialRead()
+{
+    memset(cellSerialReceiveData, 0, sizeof(cellSerialReceiveData));
+    CellSerialIndex = 0;
+    CellSerialReadRequested = false;
+    CellSerialReadActive = true;
+    currentReadTask = nCELLSERIAL;
+}
+//---------------------------------------------------------------------------
+// [CELL SERIAL 공통] 일반 데이터는 상시 모드에서도 매 조각 사이에 읽어 PLC 신호 갱신을 유지한다.
+void __fastcall TMod_PLC::PrepareCellSerialRead()
+{
+    if(CellSerialReadRequested || (cellSerialContinuousRead && !CellSerialReadActive))
+        BeginCellSerialRead();
+    else
+        currentReadTask = CellSerialReadActive ? nCELLSERIAL : nSTANDARD;
+}
+//---------------------------------------------------------------------------
+// [CELL SERIAL 공통] 820×4+730=4,010워드가 모두 모인 뒤에만 결과/화면용 버퍼를 교체한다.
+void __fastcall TMod_PLC::CompleteCellSerialChunk()
+{
+    if(CellSerialReadRequested)
+    {
+        BeginCellSerialRead();
+        if(cellSerialContinuousRead) currentReadTask = nSTANDARD;
+        return;
+    }
+    ++CellSerialIndex;
+    if(CellSerialIndex >= PLC_D_CELL_SERIAL_READCOUNT)
+    {
+        memcpy(plc_Interface_Cell_Serial, cellSerialReceiveData, sizeof(plc_Interface_Cell_Serial));
+        CellSerialIndex = 0;
+        CellSerialReadActive = false;
+        CellSerialReadComplete = true;
+        currentReadTask = nSTANDARD;
+    }
+    else
+        currentReadTask = cellSerialContinuousRead ? nSTANDARD : nCELLSERIAL;
 }
 //---------------------------------------------------------------------------
 bool __fastcall TMod_PLC::IsCellSerialReadComplete()
@@ -351,67 +403,49 @@ void __fastcall TMod_PLC::ClientSocket_PLCError(TObject *Sender, TCustomWinSocke
 void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket *Socket)
 
 {
+    bool responseComplete = false; // [CELL SERIAL 공통] TCP 일부 수신에서는 다음 요청을 보내지 않는다.
     int length = Socket->ReceiveLength();
 	plc_Read_Temp = Socket->ReceiveText();
 
 	for(int i = 0; i < length; i++)
 		plc_Read += IntToHex((unsigned char)plc_Read_Temp[i + 1], 2);
    //	TotalForm->Memo1->Lines->Add(plc_Read);
-	while(!plc_Read.IsEmpty() && (plc_Read.Length() >= 54) && (plc_Read.Pos("D000")))
+	while(!plc_Read.IsEmpty() && (plc_Read.Length() >= 22) && (plc_Read.Pos("D000")))
 	{
 		int index = plc_Read.Pos("D000");
 
 		if(index != 1) plc_Read.Delete(1, index - 1);		//	헤더 위치 인지 확인
+		if(plc_Read.Length() < 22) break;
 
 		if(plc_Read.SubString(19, 4) == "0000")		// 종료 코드 확인(에러)
 		{
-			int length = 18 + StrToInt("0x" + plc_Read.SubString(15, 2))
-						+ (StrToInt("0x" + plc_Read.SubString(17, 2)) * 256);		//	데이터 길이 확인
+			// [CELL SERIAL 공통] MC 길이는 바이트, plc_Read는 HEX 문자열(바이트당 2글자).
+            // TCP에서 조각나 도착한 응답을 전체 응답으로 오인하지 않는다.
+			int length = 18 + 2 * (StrToInt("0x" + plc_Read.SubString(15, 2))
+						+ (StrToInt("0x" + plc_Read.SubString(17, 2)) * 256));
 
 			if(plc_Read.Length() >= length)
 			{
+                const int expectedWords = currentReadTask == nCELLSERIAL
+                    ? GetCellSerialReadWords(CellSerialIndex) : PLC_D_INTERFACE_LEN;
+                if(length < 22 + expectedWords * 4)
+                {
+                    // 잘못된 길이는 완료로 게시하지 않고 일반 데이터부터 재동기화한다.
+                    ResetCellSerialRead();
+                    StartCellSerialRead();
+                    plc_Read = "";
+                    responseComplete = true;
+                    break;
+                }
             	switch(currentReadTask)
                 {
                     case nSTANDARD:
                         PLC_Recv_Interface();
-                        if(CellSerialReadRequested){
-                            memset(plc_Interface_Cell_Serial, 0,
-                                sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
-                            CellSerialIndex = 0;
-                            CellSerialReadRequested = false;
-                            CellSerialReadActive = true;
-                            currentReadTask = nCELLSERIAL;
-                        }
-                        else{
-                            currentReadTask = nSTANDARD;
-                        }
+                        PrepareCellSerialRead();
                         break;
                     case nCELLSERIAL:
-                        int wordsRead = GetCellSerialReadWords(CellSerialIndex);
-                        PLC_Recv_Interface_CellSerial(CellSerialIndex, wordsRead);
-
-                        if(CellSerialReadRequested){
-                            memset(plc_Interface_Cell_Serial, 0,
-                                sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
-                            CellSerialIndex = 0;
-                            CellSerialReadRequested = false;
-                            CellSerialReadActive = true;
-                            CellSerialReadComplete = false;
-                            currentReadTask = nCELLSERIAL;
-                            break;
-                        }
-
-                        CellSerialIndex++;
-
-                        if(CellSerialIndex >= PLC_D_CELL_SERIAL_READCOUNT){
-                            CellSerialIndex = 0;
-                            CellSerialReadActive = false;
-                            CellSerialReadComplete = true;
-                            currentReadTask = nSTANDARD;
-                        }
-                        else{
-                            currentReadTask = nCELLSERIAL;
-                        }
+                        PLC_Recv_Interface_CellSerial(CellSerialIndex, GetCellSerialReadWords(CellSerialIndex));
+                        CompleteCellSerialChunk();
                         break;
                 }
 //				if(plc_index == PLC_INDEX_INTERFACE) PLC_Recv_Interface();
@@ -419,10 +453,18 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
 			}
 			else break;
 		}
+		else
+        {
+            // [CELL SERIAL 공통] PLC 오류 응답의 이전 완료값을 최종 결과에 사용하지 않는다.
+            ResetCellSerialRead();
+            StartCellSerialRead();
+        }
 		plc_Read = "";
+		responseComplete = true;
 		break;
 	}
 
+	if(!responseComplete) return;
 	plc_ReadCount = 0;
 	plc_ReadFlag = true;
 }
@@ -512,8 +554,8 @@ void __fastcall TMod_PLC::PLC_Recv_Interface_CellSerial(int index, int wordsToRe
         int destIndex = i + (index * PLC_D_CELL_SERIAL_READLEN);
         if(destIndex >= PLC_D_CELL_SERIAL_LEN) break;
 
-        plc_Interface_Cell_Serial[destIndex][0] = StrToInt("0x" + plc_Read.SubString(23 + num, 2));
-        plc_Interface_Cell_Serial[destIndex][1] = StrToInt("0x" + plc_Read.SubString(23 + num + 2, 2));
+        cellSerialReceiveData[destIndex][0] = StrToInt("0x" + plc_Read.SubString(23 + num, 2));
+        cellSerialReceiveData[destIndex][1] = StrToInt("0x" + plc_Read.SubString(23 + num + 2, 2));
         num += 4;
     }
 }

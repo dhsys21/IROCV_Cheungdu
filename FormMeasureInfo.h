@@ -164,9 +164,9 @@ public:		// User declarations
 	int msaCount;
     AnsiString msaFN, msaReportFN;
 	void __fastcall InitStruct();
-	void __fastcall DisplayIrValue(int index, TColor clr, AnsiString caption);
+    void __fastcall DisplayIrValue(int index, TColor clr, AnsiString caption, bool measured = true);
 	void __fastcall DisplayIrValue(int index, AnsiString caption);
-	void __fastcall DisplayOcvValue(int index, TColor clr, AnsiString caption );
+    void __fastcall DisplayOcvValue(int index, TColor clr, AnsiString caption, bool measured = true);
     void __fastcall initChart(int ir_min, int ir_max, int ocv_min, int ocv_max);
 	__fastcall TMeasureInfoForm(TComponent* Owner);
 };

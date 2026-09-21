@@ -1,12 +1,19 @@
+// [장비 통신] 소켓 연결, 수신 큐, 프레임 해석, 명령 송신, 응답 분기와 운전 모드.
+// 전체 구조 및 오류 추적 위치: CODE_STRUCTURE.md
+
+#include <vcl.h>
+#pragma hdrstop
+
 #include "FormTotal.h"
 #include "RVMO_main.h"
 #include "FormCalibration.h"
 #pragma link "wininet.lib"
+
 void __fastcall TTotalForm::CmdStart()
 {
 	MakeData(1, "STA");
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::CmdBattHeight(int height)
 {
 	// 자동검사 2. 높이 전송 (송신)
@@ -16,114 +23,12 @@ void __fastcall TTotalForm::CmdBattHeight(int height)
 		MakeData(1, "SIZ", "01");
 	}
 }
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdAutoTest()
-{
-    for(int i = 0; i < MAXCHANNEL; i++)
-	{
-		tray.ir_flag[i] = false;
-		tray.ocv_flag[i] = false;
-	}
 
-	tray.ir_avgAll = 0;
-	tray.ir_avgAll_count = 0;
-
-	tray.ocv_avgAll = 0;
-    tray.ocv_avgAll_count = 0;
-
-	// 자동검사 4. 검사시작
-	MakeData(3, "AMS");
-}
-//---------------------------------------------------------------------------
-// For PLC
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdForceStop_Original()
-{
-	// 자동검사 7. 검사종료	- Probe 해제 및 Tray 검사 대기
-	MakeData(1, "STP");
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdForceStop()
-{
-	// 검사종료	- Probe 해제 및 Tray 검사 대기
-    MakeData(1, "STP");
-    Panel_State->Caption = " IR/OCV Complete ... ";
-
-	Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
-	WritePLCLog("CmdForceStop", "IROCV PROBE OPEN = 1");
-
-    BadInfomation();
-    WritePLCLog("CmdForceStop", "Write BadInfomation");
-    Sleep(50);
-    WriteResultCode();
-    WritePLCLog("CmdForceStop", "Write ResultCode");
-    ReadCellInfo();
-
-    Sleep(50);
-    WriteIROCVValue();
-    WritePLCLog("CmdForceStop", "Write IR, OCV Value");
-    // Load Cell Serial
-    if(LoadTrayInfo(tray.trayid) == false)
-        ReadCellSerial();
-    // Write Result File
-    WriteResultFile();
-    Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
-    WritePLCLog("CmdForceStop", "PC_D_IROCV_COMPLETE = 1");
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdTrayOut()
-{
-    if(NgCount == tray.cell_count || NgCount > editNgAlarmCount->Text.ToIntDef(10)){
-        Form_Error->DisplayErrorMessage("IR/OCV NG ERROR",
-										"There is too many ng cells. Please check it.",
-										"Select [Tray Out] or [Restart]");
-		Form_Error->Tag = this->Tag;
-        DisplayStatus(nEND);
-	}
-	else{
-        Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 1);
-        DisplayStatus(nFinish);
-        WritePLCLog("CmdTrayOut", "IROCV TRAY OUT = 1");
-		Panel_State->Caption = " IROCV Tray Out ... ";
-
-        //* 2026 09 18 ng count error
-        nStep = 0;
-		nSection = STEP_FINISH;
-	}
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdTrayOut_Original()
-{
-	BadInfomation();
-	WriteIROCVValue();
-    if(LoadTrayInfo(tray.trayid) == false)
-        ReadCellSerial();
-	WriteResultFile();
-//	WriteResultFile_MES2();
-//    WriteResultFile_MES();
-//	WriteOKNG();
-
-//	DeleteFile((AnsiString)DATA_PATH + tray.trayid + ".Tray");
-
-	// 자동검사 9(끝). 트레이 방출
-	MakeData(1,"FIN");
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdVersion()
-{
-	MakeData(1, "IDN");
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdEmergencyStop()
-{
-	MakeData(1, "EMS");
-}
-//---------------------------------------------------------------------------
 void __fastcall TTotalForm::CmdReset()
 {
 	MakeData(1, "RST");
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::CmdIRCell(AnsiString pos)
 {
     int value = pos.ToInt();
@@ -131,7 +36,7 @@ void __fastcall TTotalForm::CmdIRCell(AnsiString pos)
 	pos = FormatFloat("000", value);
 	MakeData(2, "IR*", pos);
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::CmdOCVCell(AnsiString pos)
 {
     int value = pos.ToInt();
@@ -139,17 +44,12 @@ void __fastcall TTotalForm::CmdOCVCell(AnsiString pos)
 	pos = FormatFloat("000", value);
 	MakeData(2, "OCV", pos);
 }
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdGetSensorInfo()
-{
-	MakeData(0,"SEN");
-}
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::CmdSpeedSet(int mode)
 {
     MakeData(1, "IRT", mode);
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::CmdManualMod(bool Set)
 {
     //* 속도 변경 IRT0->slow IRT1->medium IRT2->fast
@@ -164,8 +64,7 @@ void __fastcall TTotalForm::CmdManualMod(bool Set)
 		this->InitTrayStruct();
 
 		DisplayStatus(nManual);
-        nSection = STEP_WAIT;
-		nStep = 0;
+        ResetAutoInspection();
 		if(Timer_AutoInspection->Enabled == true)
 			Timer_AutoInspection->Enabled = false;
 	}
@@ -175,8 +74,7 @@ void __fastcall TTotalForm::CmdManualMod(bool Set)
 		this->InitTrayStruct();
 
         DisplayStatus(nVacancy);
-        nSection = STEP_WAIT;
-		nStep = 0;
+        ResetAutoInspection();
 		if(Timer_AutoInspection->Enabled == false)
 			Timer_AutoInspection->Enabled = true;
 
@@ -184,22 +82,7 @@ void __fastcall TTotalForm::CmdManualMod(bool Set)
             MeasureInfoForm->msaTimer->Enabled = false;
 	}
 }
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdRestart()
-{
-	MakeData(1, "REM");
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::StageClearAlarm()
-{
-	MakeData(1, "CLR");
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::CmdDeviceInfo()
-{
-	MakeData(3, "DEV", "1");
-}
-//---------------------------------------------------------------------------
+
 int __fastcall TTotalForm::SensorState(AnsiString cmd)
 {
 /*
@@ -229,269 +112,7 @@ int __fastcall TTotalForm::SensorState(AnsiString cmd)
     if(cmd == "HOM")return HOM;
 	return -3;
 }
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::ResponseAutoTestFinish()
-{
-//*
-//    if(config.average_use == true) SetRemeasureList();
-//	else SetRemeasureList2();
 
-	if(bLocal == true){
-		CmdForceStop();
-        DisplayProcess(sFinish, "AutoInspection_Measure", " AMF - Measure finished ... ");
-		WriteCommLog("IR/OCV STOP", "AMF - ResponseautoTestfinish()");
-	}
-	else
-	{
-//		SendData("AMF");    //kedison
-		SendData("SEN");
-//		CmdForceStop();
-    	//* 마련 EVE는 Average(SetRemeasureList2())를 사용하지 않음.
-		if(config.average_use == true) SetRemeasureList();
-		else SetRemeasureList();
-	}
-}
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//  				IR / OCV 데이타 처리 관련
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::ProcessIr(AnsiString param)
-{
-	AnsiString msg_ir, msg_ocv, result;
-	int channel = 0;
-	channel = chMap[param.SubString(1, 3).ToInt()];
-
-	param.Delete(1,3);
-	int pos = param.Pos("E");
-
-	float value = (float)param.SubString(1, pos-1).ToDouble() * 1000;
-	int count = param.SubString(pos + 2, param.Pos(",") - pos - 2).ToInt();
-
-	if(count > 10) value = 0;
-	else
-	{
-		if(param.SubString(pos + 1, 1) == "+")
-		{
-			for(int i = 0; i < count; i++) {
-				value *= 10.0;
-			}
-		}
-		else if(param.SubString(pos + 1, 1) == "-")
-		{
-			for(int i = 0; i < count; i++) {
-				value /= 10.0;
-			}
-		}
-	}
-
-	if(value <= 0 || value > 900)result = "CE";
-	else result = "GO";
-
-    int index = channel - 1;
-
-	if(CaliForm->stage != this->Tag)
-	{
-		InsertIrValue(channel, value, result); //일반계측
-	}
-	else
-	{
-        TColor clr;
-		if(result == "GO")
-		{
-			clr = clIrCheck;
-			CaliForm->pmeasure[index]->Caption = FormatFloat("0.000", value);
-			CaliForm->poffset[index]->Caption = FormatFloat("0.00", StrToFloat(CaliForm->pstandard[index]->Text) -  value);
-		}
-		else
-			clr = clMeasureFail;
-			value = 0;
-	}
-
-	if(tray.rem_mode == 1){
-		send.tx_mode = 200;
-		this->RemeasureExcute();
-	}
-
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString result)
-{
-	int index = pos-1;
-
-	bool cell = false;
-
-	if(tray.cell[index] == 1)cell = true;
-	tray.measure_result[index] = GetReslut(result);
-
-
-	if(cell)   // 셀이 있을때
-	{
-        tray.orginal_value[index] = value;
-		tray.after_value[index] = tray.orginal_value[index] + BaseForm->DefaultOffset[this->Tag];
-		tray.after_value[index] = tray.after_value[index] + stage.ir_offset[index];    //개별보정
-
-		if(tray.measure_result[index] == GO)
-		{
-			if(tray.after_value[index] >= config.ir_min && tray.after_value[index] <= config.ir_max)
-			{
-				SetProcessColor(index, IrCheck);
-
-                tray.ir_avgAll_count++;
-				tray.ir_avgAll += tray.after_value[index];
-                tray.ir_flag[index] = true;
-			}
-			else
-			{
-				SetProcessColor(index, MeasureFail, result);
-            }
-		}
-		else
-		{
-			tray.orginal_value[index] = 999;
-			tray.after_value[index] = 999;
-			SetProcessColor(index, MeasureFail, result);
-		}
-
-	}
-	else{     // 셀이 없을때
-		if(tray.measure_result[index] == GO)
-		{
-			WriteCommLog("ETC", "OUTFLOW");
-			SetProcessColor(index, CellError);
-		}
-
-		tray.orginal_value[index] = 0;
-		tray.after_value[index] = 0;
-	}
-}
-//---------------------------------------------------------------------------
-int __fastcall TTotalForm::GetReslut(AnsiString result)
-{
-	if(result == "GO") return GO;
-	if(result == "HI") return HI;
-	if(result == "LO") return LO;
-	if(result == "OV") return OV;
-	if(result == "UN") return UN;
-	if(result == "CE") return CE;
-	if(result == "NA") return NA;
-	if(result == "NO") return NO;
-	else return 100;
-}
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::ProcessOcv(AnsiString param)
-{
-	int channel = 0;
-	channel = chMap[param.SubString(1, 3).ToInt()];
-
-	param.Delete(1,3);
-	int pos = param.Pos("E");
-
-	float value = (float)param.SubString(1, pos-1).ToDouble() * 1000;
-	int count = param.SubString(pos + 2, param.Length()).ToInt();
-
-	if(count > 10) value = 0.0;
-	else
-	{
-		if(param.SubString(pos + 1, 1) == "+")
-		{
-			for(int i = 0; i < count; i++) {
-				value *= 10.0;
-			}
-		}
-		else if(param.SubString(pos + 1, 1) == "-")
-		{
-			for(int i = 0; i < count; i++) {
-				value /= 10.0;
-			}
-		}
-	}
-
-	if(value <= 10 || value > 7000) value = 0.0;
-
-	int index;
-
-	index = channel -1;
-	InsertOcvValue(channel, value);
-
-
-//	SetProcessColor(index, OcvCheck);
-
-//	if(tray.ocv_value[index] >= config.ocv_min && tray.ocv_value[index] <= config.ocv_max){
-//		SetProcessColor(index, OcvCheck);
-//	}else{
-//        SetProcessColor(index, BadOcv);
-//    }
-//	SetProcessColor(index, OcvCheck);
-
-	if(tray.rem_mode == 1){
-		send.tx_mode = 200;
-		this->RemeasureExcute();
-	}
-}
-
-//---------------------------------------------------------------------------
-void __fastcall TTotalForm::InsertOcvValue(int pos, float value)
-{
-	// 자동검사 5.2 검사 결과 수신 - OCV
-	int index = pos-1;
-	bool cell = false;
-
-	if(tray.cell[index] == 1)cell = true;
-
-	if(cell)
-	{
-		tray.ocv_value[index] = value;
-
-//		if(config.average_use == true && tray.ocv_value[index] >= 100 && tray.ocv_value[index] <= 4200)
-//		{
-//            SetProcessColor(index, OcvCheck);
-//
-//			tray.ocv_avgAll_count++;
-//			tray.ocv_avgAll += tray.ocv_value[index];
-//			tray.ocv_flag[index] = true;
-//		}
-//		else if(config.average_use == false && tray.ocv_value[index] >= config.ocv_min && tray.ocv_value[index] <= config.ocv_max)
-//		{
-//			SetProcessColor(index, OcvCheck);
-//
-//			tray.ocv_avgAll_count++;
-//			tray.ocv_avgAll += tray.ocv_value[index];
-//			tray.ocv_flag[index] = true;
-//		}
-//		else
-//		{
-//			SetProcessColor(index, BadOcv);
-//		}
-        if(tray.ocv_value[index] >= config.ocv_min && tray.ocv_value[index] <= config.ocv_max)
-		{
-			SetProcessColor(index, OcvCheck);
-
-			tray.ocv_avgAll_count++;
-			tray.ocv_avgAll += tray.ocv_value[index];
-			tray.ocv_flag[index] = true;
-		}
-		else
-		{
-			SetProcessColor(index, BadOcv);
-		}
-	}
-	else
-	{
-		if(value > 1500)
-		{
-			WriteCommLog("ETC", "OUTFLOW");
-			SetProcessColor(index, CellError);
-		}
-//		tray.ocv_value[index] = 0;
-        tray.ocv_value[index] = value;
-	}
-}
-//---------------------------------------------------------------------------
 int __fastcall TTotalForm::DataCheck(AnsiString msg, AnsiString &param)
 {
 	// 1. stx, etx 확인
@@ -555,7 +176,7 @@ int __fastcall TTotalForm::DataCheck(AnsiString msg, AnsiString &param)
 	if(cmd == "DEV")return DEV;
 	return -3;
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::SendData(AnsiString Cmd, AnsiString Param)
 {
 	if(sock != NULL){
@@ -588,7 +209,7 @@ void __fastcall TTotalForm::SendData(AnsiString Cmd, AnsiString Param)
 		//sock->sen
 	}
 }
-//---------------------------------------------------------------------------
+
 void __fastcall TTotalForm::MakeData(int tx_mode, AnsiString cmd, AnsiString param)
 {
 	if(tx_mode < 0){
@@ -600,6 +221,488 @@ void __fastcall TTotalForm::MakeData(int tx_mode, AnsiString cmd, AnsiString par
 		send.tx_mode = tx_mode;
 	}
 }
+
 //---------------------------------------------------------------------------
+// 장비 소켓 연결 완료: 송신 상태와 화면을 초기화하고 현재 모드 정보를 적용한다.
+void __fastcall TTotalForm::ClientConnect(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+	pConInfo->Font->Color = clrConInfo->Color;
+	pConInfo->Caption = "IR/OCV is connected";
+	sock = Socket;
+
+	send.tx_mode = 0;  	// 초기화
+	send.time_out = 0;
+	send.re_send = 0;
 
 
+	if(stage.arl == nLocal){
+		this->CmdManualMod(true);
+	}
+	OldSenCmd = "NONE";
+	SendTimer->Enabled = true;
+	RefreshStageStatusImage();
+}
+
+//---------------------------------------------------------------------------
+// 장비 소켓 연결 중 표시를 갱신한다. 연결 완료로 간주하지 않는다.
+void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+	pConInfo->Font->Color = clRed;
+	pConInfo->Caption = "Connection...";
+	RefreshStageStatusImage();
+}
+
+//---------------------------------------------------------------------------
+// 장비 소켓 오류 처리: 연결을 닫고 미연결 이미지를 갱신한다.
+void __fastcall TTotalForm::ClientError(TObject *Sender,
+	  TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
+{
+	AnsiString str;
+	str = "Connection failed";
+	pConInfo->Caption = str;
+	ErrorCode = 0;
+	Socket->Close();
+	RefreshStageStatusImage();
+}
+
+//---------------------------------------------------------------------------
+// 장비 연결 해제 처리: 연결 표시를 바꾸며 자동 검사 단계 자체는 보존한다.
+void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+	pConInfo->Font->Color = clRed;
+	pConInfo->Caption = "Connection failed.";
+	ReContactTimer->Enabled = true;
+	sock = NULL;
+	RefreshStageStatusImage();
+}
+
+//---------------------------------------------------------------------------
+// 설정된 재접속 조건에 따라 장비 소켓 연결을 다시 요청한다.
+void __fastcall TTotalForm::ReContactTimerTimer(TObject *Sender)
+{
+		ReContactTimer->Enabled = false;
+		if(config.recontact == true)
+			Client->Active = true;
+}
+
+//---------------------------------------------------------------------------
+// 장비 소켓에서 받은 문자열을 수신 큐에 넣는다. 명령별 처리는 OnReceiveStage에서 한다.
+void __fastcall TTotalForm::ClientRead(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+	AnsiString msg;
+	AnsiString queue_msg;
+
+	msg = Socket->ReceiveText();
+	int stx =  msg.Pos((char)0x02);
+	int etx = msg.Pos((char)0x03);
+
+	if(etx > 0){
+		while(etx > 0){
+			if(stx == 1)queue_msg = msg.SubString(1, etx);
+			else queue_msg = remainMsg + msg.SubString(1, etx);
+			rxq.push(queue_msg.c_str());
+			msg.Delete(1, etx);
+
+			stx =  msg.Pos((char)0x02);
+			etx =  msg.Pos((char)0x03);
+
+			if(etx > 0)remainMsg = "";
+			else remainMsg = msg;
+		}
+	}else{
+		remainMsg = msg;
+	}
+}
+
+//---------------------------------------------------------------------------
+// 수신 큐를 읽어 COMM_RECEIVE 메시지로 전달한다.
+void __fastcall TTotalForm::rxTimerTimer(TObject *Sender)
+{
+	AnsiString RxStr;
+	bool flag;
+
+	if(rxq.empty() == false){	// 데이터가 있으면 처리
+			RxStr = rxq.front().data();
+			rxq.pop();
+			SendMessage(BaseForm->nForm[Tag]->Handle, COMM_RECEIVE, 0, (LPARAM)&RxStr);
+	}
+
+}
+
+//---------------------------------------------------------------------------
+// 예약된 장비 명령의 송신·재전송을 처리한다. 자동 검사 진행 타이머와 구분한다.
+void __fastcall TTotalForm::SendTimerTimer(TObject *Sender)
+{
+	if(q_cmd.empty() == false){
+		SendTimer->Interval = 700;
+		SendData(q_cmd.front().data(), q_param.front().data());
+		q_cmd.pop();
+		q_param.pop();
+	}else{
+		senCnt += 1;
+
+		switch(send.tx_mode){
+			case 0: // 일반 상태, 타임아웃 처리
+				SendTimer->Interval = 10;
+				if(senCnt < 32 && senCnt > 30){
+					SendData("OUT");
+				}else if(senCnt > 60) {
+					senCnt = 0;
+					SendData("SEN");
+				}
+				break;
+			case 1: // 특정 메세지 전송
+				SendTimer->Interval = 500;
+				SendData(send.cmd, send.param);
+				break;
+			case 2:	// 응답일 경우
+				SendTimer->Interval = 100;
+				SendData(send.cmd, send.param);
+				send.tx_mode = 0;
+				break;
+			case 3:	// 전송 후 다른 명령어 대기
+                SendTimer->Interval = 300;
+				SendData(send.cmd, send.param);
+				send.tx_mode = 100;
+			case 200:
+				return;
+			default:
+				break;
+		}
+		send.time_out += 1;	// 재전송 횟수 및 타이머 시간 체크
+		// 타임아웃 시간 설정 할것.
+		if(send.time_out == 300){
+			//this->DisplayStatus(nNoAnswer);
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+// 장비 응답 분기: AMS/AMF/IR/OCV/센서 상태 등을 해당 처리 함수로 전달한다.
+void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
+{
+	AnsiString *msg, param;
+	int cmd = 0;
+	msg = (AnsiString*)Msg.LParam;
+	int nvalue = 0;
+
+//	if((stage.err == NO_ANSWER) && (GrpError->Visible)){
+//		this->VisibleBox(OldGrp);
+//	}
+
+	try{
+
+		if(msg->Trim().IsEmpty()){
+			return;
+		}
+		WriteCommLog("RX", *msg);
+		cmd = DataCheck(*msg, param); 	// cmd , check sum 확인
+
+		send.time_out = 0;
+
+        //if(!ims->m_bStart) return;      // 수정
+
+		switch(cmd){
+			case STA:
+				send.tx_mode = 0;
+				 break;
+			case DEV:
+				if(param.Pos(",1,") > 0)pdev1->Color = clBothCheck;
+				else pdev1->Color = clSilver;
+				if(param.Pos(",2,") > 0)pdev2->Color = clBothCheck;
+				else pdev2->Color = clSilver;
+				if(param.Pos(",3,") > 0)pdev3->Color = clBothCheck;
+				else pdev3->Color = clSilver;
+				if(param.Pos(",4,") > 0)pdev4->Color = clBothCheck;
+				else pdev4->Color = clSilver;
+				if(param.Pos(",11,") > 0)pdev5->Color = clBothCheck;
+				else pdev5->Color = clSilver;
+				if(param.Pos(",12,") > 0)pdev6->Color = clBothCheck;
+				else pdev6->Color = clSilver;
+				if(param.Pos(",13,") > 0)pdev7->Color = clBothCheck;
+				else pdev7->Color = clSilver;
+				if(param.Pos(",14,") > 0)pdev8->Color = clBothCheck;
+				else pdev8->Color = clSilver;
+
+				for(int i=0; i<8; ++i){
+					if(pdev[i]->Color == clBothCheck)nvalue += 1;
+				}
+
+				if(nvalue < 2)ProcessError("MEASUREMENT", "ERROR","Measurement error", "");
+				else{
+					CmdAutoTest();
+				}
+				break;
+			case BCR:
+				if( (param.Pos("?") == 0) && (param != "NOREAD") ){ 	// 바코드 읽기 성공
+					//pTrayid->Caption = param;
+					editTrayId->Text = param;
+					send.tx_mode = 0;
+				}
+				else{
+					if(send.re_send < 2){
+						send.re_send += 1;
+						send.tx_mode = 3;
+					}
+					else{
+						send.tx_mode = 0;
+						send.re_send = 0;
+						ErrorMsg(BARCODE_ERROR);
+					}
+				}
+				break;
+			case IDN:        // 버전
+				pConInfo->Caption = param;
+				send.tx_mode = 0;
+				break;
+			case RST:
+				send.tx_mode = 0;
+				ErrorMsg(RESET);
+                Initialization(); // 2017 09 04 herald
+				//SendData("STA");
+				break;        // 모든 에러 해제
+			case SIZ:
+				send.tx_mode = 0;
+				DisplayStatus(nREADY);
+				break;        // BATT 사이즈 정보
+			case AMS:
+				pb->Position = 0;
+				send.tx_mode = 200;
+				tray.ams = true;
+                tray.amf = false;
+				DisplayStatus(nRUN);
+				break;
+			case AMF:        // 검사종료 알림
+                if(tray.amf) break; // Ignore a duplicate completion for this measurement.
+				send.tx_mode = 0;
+				tray.ams = false;
+				tray.amf = true;
+
+				ResponseAutoTestFinish();
+				break;
+			case IR:        // IR 셀 검사
+				if(pb->Position < pb->Max)pb->Position += 1;
+				ProcessIr(param);	// 읽기 , 색깔 변화
+				break;
+			case OCV:        // OCV 셀 검사
+				ProcessOcv(param);
+				break;
+			case STP:        // 강제 검사 종료
+				send.tx_mode = 0;
+				DisplayStatus(nEND);
+				break;
+			case FIN:       // 트레이 방출
+				//this->DisplayStatus(nFinish);
+				ModChange();
+				send.tx_mode = 0;
+				break;
+			// 검사장치 송신에 대한 PC응답 메세지 처리
+			case MAN: send.tx_mode = 0; break;
+			case REM: send.tx_mode = 0; break;
+			case EMS: send.tx_mode = 0; break;
+			case SEN:        // 센서정보
+				SensorInputProcess(param);
+				break;
+			case sOUT:
+				SensorOutputProcess(param);
+				break;
+			case ERR:        // 검사장치 에러 발생
+				ResponseError(param);
+				OldSenCmd = "NONE";
+				send.tx_mode = 0;
+				break;
+			case CLR:
+				SendData("CLR");
+				OldSenCmd = "NONE";
+				VisibleBox(OldGrp);
+				break;       // 에러 해제 통보
+			case REC: send.tx_mode = 0; break;
+			case LRM:
+				send.tx_mode = 0;
+				StageLocalRemeasure();
+				break;
+			default:
+				this->WriteCommLog("ERR", "Undefined Command");
+				send.tx_mode = 0;
+				break;
+		}
+	}catch(...){
+		this->WriteCommLog("ERR", "Except Error : " + *msg);
+	}
+}
+
+//---------------------------------------------------------------------------
+// 장비의 로컬 재측정 요청을 처리하고 기존 불량 개수에 따라 재측정 모드를 정한다.
+void __fastcall TTotalForm::StageLocalRemeasure(bool frm)
+{
+	// OP 박스 재측정 요청시
+	SendData("LRM");
+
+	if(GrpRemeasure->Visible == true){
+		VisibleBox(GrpMain);
+
+		if(retest.cnt_error > remLimit){
+			retest.re_excute = false;	// 전체 재측정
+		}
+		else{
+			retest.re_excute = true;	// 불량 재측정
+		}
+		CmdBattHeight();
+	}
+}
+
+//---------------------------------------------------------------------------
+// 예약된 Auto/Remote/Local 운전 모드를 적용한다.
+void __fastcall TTotalForm::ModChange()
+{
+	if(stage.arl != stage.arl_reserve){
+		stage.arl = stage.arl_reserve;
+		switch(stage.arl){
+			case nAuto:
+				this->CmdManualMod(false);
+				VisibleBox(GrpMain);
+				break;
+			case nRemote:
+				this->CmdManualMod(false);
+				break;
+			case nLocal:
+				this->CmdManualMod(true);
+				stage.alarm_status = nManual;
+				break;
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+// 센서 입력 응답을 저장하고 장비 상태 변경을 감지한다.
+void __fastcall TTotalForm::SensorInputProcess(AnsiString param)
+{
+	AnsiString cmd;
+	cmd = param.SubString(1,3);
+	param.Delete(1,3);
+
+	unsigned char *ptrInput;
+
+
+	ptrInput = (unsigned char *)&sensor;
+
+
+	while(param.IsEmpty() == false){
+		*ptrInput = (unsigned char)StrToInt("0x" + param.SubString(1,2));
+		ptrInput++;
+		param.Delete(1,2).Trim();
+	}
+	//DisplaySensorInfo();
+
+	if(stage.init == true){
+		lblStatus->Caption = cmd;
+		InitEquipStatus(SensorState(cmd));
+		OldSenCmd = cmd;
+		stage.init = false;
+	}
+	else if(cmd != OldSenCmd){
+		lblStatus->Caption = cmd;
+		EquipStatus(SensorState(cmd));
+		OldSenCmd = cmd;
+	}
+}
+
+//---------------------------------------------------------------------------
+// 장비 센서 출력 응답을 센서 출력 버퍼에 저장한다.
+void __fastcall TTotalForm::SensorOutputProcess(AnsiString param)
+{
+	unsigned char *ptrOutput;
+
+	ptrOutput = (unsigned char *)&sensor_out;
+
+
+	while(param.IsEmpty() == false){
+		*ptrOutput = (unsigned char)StrToInt("0x" + param.SubString(1,2));
+		ptrOutput++;
+		param.Delete(1,2).Trim();
+	}
+	//DisplaySensorInfo();
+}
+
+//---------------------------------------------------------------------------
+// 장비 상태 코드 변경에 따른 기존 화면/명령 처리를 수행한다.
+void __fastcall TTotalForm::EquipStatus(int cmd)
+{
+	switch(cmd)
+	{
+		case HOM:
+//			DisplayStatus(nVacancy);
+//			VisibleBox(GrpMain);
+			break;
+
+		case MAN:
+//			if(GrpLocal->Visible == false){
+//				stage.arl = nLocal;
+//				VisibleBox(GrpLocal);
+//			}
+//			DisplayStatus(nManual);
+//			InitMeasureForm();
+			break;
+		case EMS:
+			//DisplayStatus(nEmergency);
+			VisibleBox(GrpMain);
+			break;
+		case LOC:
+			//DisplayStatus(nOpbox);
+			VisibleBox(GrpMain);
+			break;
+		case EMP:
+			//DisplayStatus(nVacancy);
+			break;
+		case RST:
+			CmdStart();
+			OldSenCmd = "NONE";
+			break;
+		case IDL:
+//			if( OldSenCmd != "ARV"){
+//				CmdStart();
+//			}
+//			else{
+//				DisplayStatus(nIdle);
+//			}
+			break;
+		case BZY:
+			break;
+	}
+}
+
+//---------------------------------------------------------------------------
+// 최초 센서 응답의 운전 상태를 초기 화면에 반영한다.
+void __fastcall TTotalForm::InitEquipStatus(int cmd)
+{
+
+	switch(cmd)
+	{
+		case RDY:
+			//this->CmdForceStop();
+			//this->DisplayStatus(nIN);
+			//ProcessError("Tray In", "",  "Please select the following actions : ", "Inspection start or  eject tray");
+			break;
+		case ARV:
+		case STB:
+			//this->DisplayStatus(nIN);
+			//ProcessError("Tray In", "",  "Please select the following actions : ", "Inspection start or  eject tray");
+			break;
+		case MAN:
+			stage.alarm_status = nManual;
+			stage.arl = nLocal;
+			VisibleBox(GrpLocal);
+			DisplayStatus(nManual);
+			break;
+		case BZY:
+			//ProcessError("STAGE", "BUSY", "On stage is a work in progress", "");
+			break;
+		default:
+			EquipStatus(cmd);
+			break;
+	}
+}

@@ -196,6 +196,16 @@ private:	// User declarations
     void __fastcall PLC_Recv_Interface_CellSerial(int index, int wordsToRead);
     int __fastcall GetCellSerialReadWords(int index);
     void __fastcall ResetCellSerialRead();
+    // [CELL SERIAL 공통] 일반 데이터 응답 후 요청/상시 모드에 따라 다음 읽기를 예약한다.
+    void __fastcall PrepareCellSerialRead();
+    // [CELL SERIAL 공통] 1회 분할 수신을 시작한다. 완료 버퍼는 마지막 조각까지 유지한다.
+    void __fastcall BeginCellSerialRead();
+    // [CELL SERIAL 공통] 조각 수신 후 전체 완료 시에만 공개 버퍼를 교체한다.
+    void __fastcall CompleteCellSerialChunk();
+    // [CELL SERIAL 공통] 설정은 재접속 후에도 유지하고, 다음 일반 응답부터 적용한다.
+    bool cellSerialContinuousRead;
+    // [CELL SERIAL 공통] 수신 중 임시 버퍼와 사용 가능한 완료 버퍼를 분리한다.
+    unsigned char cellSerialReceiveData[PLC_D_CELL_SERIAL_LEN][2];
 
 	PLC_DATA plc_Data;
 	AnsiString plc_Read, plc_Read_Temp;
@@ -240,6 +250,8 @@ public:		// User declarations
     AnsiString __fastcall GetCellSrialTrayId(int plc_address, int size);
     double __fastcall GetCellSrialValue(int plc_address);
     void __fastcall StartCellSerialRead();
+    // [CELL SERIAL 공통] false=명시 요청 때만, true=일반 데이터와 번갈아 상시 수신.
+    void __fastcall SetCellSerialContinuousRead(bool enabled);
     bool __fastcall IsCellSerialReadComplete();
     bool __fastcall IsCellSerialReadActive();
 

@@ -14,6 +14,7 @@
 
 //---------------------------------------------------------------------------
 #include "define.h"
+#include "AutoInspectionSequence.h"
 #include "FormMeasureInfo.h"
 #include "FormRemeasure.h"
 #include <Menus.hpp>
@@ -189,6 +190,11 @@ __published:	// IDE-managed Components
 	TImage *Image5;
 	TAdvSmoothButton *localTest;
 	TTimer *Timer_AutoInspection;
+    TTimer *Timer_ResultCellSerial;
+    void __fastcall Timer_ResultCellSerialTimer(TObject *Sender);
+    TGroupBox *grpCellSerialReadMode;
+    TCheckBox *chkCellSerialContinuousRead;
+    TLabel *lblCellSerialReadMode;
 	TAdvSmoothButton *localCali;
 	TAdvSmoothButton *btnConfig;
 	TGroupBox *GroupBox3;
@@ -362,7 +368,7 @@ __published:	// IDE-managed Components
 	void __fastcall btnAutoClick(TObject *Sender);
 	void __fastcall btnTrayOutClick(TObject *Sender);
 	void __fastcall BadListDrawItem(TCustomListView *Sender, TListItem *Item,
-          TRect &Rect, TOwnerDrawState State);
+          TRect &Rect, TOwnerDrawState TAutoInspectionStep);
 	void __fastcall StatusTimerTimer(TObject *Sender);
 	void __fastcall pTrayidDblClick(TObject *Sender);
 	void __fastcall editTrayIdKeyDown(TObject *Sender, WORD &Key,
@@ -379,8 +385,6 @@ __published:	// IDE-managed Components
 	void __fastcall TrayOutBtnClick(TObject *Sender);
 	void __fastcall Timer_AutoInspectionTimer(TObject *Sender);
 	void __fastcall btnConfigClick(TObject *Sender);
-	void __fastcall btnPLCConnectClick(TObject *Sender);
-	void __fastcall btnPLCDisconnectClick(TObject *Sender);
 	void __fastcall localCaliClick(TObject *Sender);
 	void __fastcall btnCloseConnConfigClick(TObject *Sender);
 	void __fastcall btnConnectPLCClick(TObject *Sender);
@@ -397,220 +401,295 @@ __published:	// IDE-managed Components
 	void __fastcall rbSpeedFastClick(TObject *Sender);
 	void __fastcall GroupBox8DblClick(TObject *Sender);
 
-private:	// User declarations
-//------------ 폼 관련 -------------------//
-    AnsiString Old_batch;
+private:
+    // [CELL SERIAL 공통] 트레이 초기화 시 확정한 모드. 검사 도중 설정 저장으로 바꾸지 않는다.
+    bool cellSerialContinuousReadForTray;
+    // [CELL SERIAL 공통] 결과 저장 직전 수신 대기/오류 선택 대기. 자동/수동 모두 동일하게 처리한다.
+    bool resultCellSerialPending;
+    bool resultCellSerialError;
+    DWORD resultCellSerialStartTime; // 새 전체 수신 요청 시각. 10초 제한에 사용.
+    // [CELL SERIAL 공통] 저장 설정을 다음 트레이/대기 상태에 적용한다.
+    void __fastcall ApplyCellSerialReadMode();
+    // [CELL SERIAL 공통] 결과 저장용 새 전체 수신을 요청하고 전용 타이머로 완료를 기다린다.
+    void __fastcall StartResultCellSerialRead();
+    // [CELL SERIAL 공통] 결과 저장 시리얼 오류창. 자동 배출/COMPLETE/파일 저장은 보류한다.
+    void __fastcall ShowResultCellSerialError(AnsiString reason);
+    // [CELL SERIAL 공통] 초기화/강제 배출 시 지연된 결과 저장을 취소한다.
+    void __fastcall CancelResultCellSerialRead();
+    // [CELL SERIAL 공통] 수신/개수 확인 후 또는 운영자 SAVE 승인 후 최종 결과를 저장한다.
+    void __fastcall CompleteResultCellSerialRead(bool operatorOverride);
+    // [CELL SERIAL 공통] 시리얼 준비 이후의 공통 NG/측정값/결과파일/COMPLETE 처리.
+    void __fastcall SaveMeasurementResult();
+    // ===== 데이터: 기존 접근 범위 유지 =====
+    // 현재 표시 중인 화면 그룹.
+    TGroupBox *CurrentGrp;
+    // 오류창을 닫을 때 복귀할 이전 화면 그룹.
+    TGroupBox *OldGrp;
+    // 현재 자동 검사 단계/설정: 외부 폼에서는 직접 변경하지 않는다.
+    TAutoInspectionSequence autoInspection;
+    // 자동 타이머 재진입 방지 플래그.
+    bool autoInspectionBusy;
+    // 현재 단계에서 읽은 트레이 ID.
+    AnsiString autoInspectionTrayId;
+    // 장비 수신 문자열 큐.
+    queue<string> rxq;
+    // 장비 송신 프레임 구성 버퍼.
+    vector<unsigned char> TxVector;
+    // 현재 연결된 장비 소켓.
+    TCustomWinSocket *sock;
+    // 프레임 경계에 걸친 미처리 수신 문자열.
+    AnsiString remainMsg;
+    TColor clAverageOver;
+    TColor clNoCell;
+    TColor clBadIr;
+    TColor clCellError;
+    TColor clLine;
+    TColor clIrCheck;
+    TColor clOcvCheck;
+    TColor clBothCheck;
+    TColor clMeasureFail;
+    // 시작 화면 안내 번호 표시. 트레이 투입/측정 시작 이후에는 미수신 항목을 공란으로 유지한다.
+    bool showStartupChannelNumbers;
+    // IR 실제 수신 여부: 수신한 채널만 측정값 표시.
+    bool irValueReceived[MAXCHANNEL];
+    // OCV 실제 수신 여부: IR과 별도로 수신한 채널만 측정값 표시.
+    bool ocvValueReceived[MAXCHANNEL];
+    // 준비~배출 8단계의 진행 표시 패널.
+    TPanel *pProcess[8];
+    // NG 오류창 기준 개수: 존재 셀의 IR/OCV/접촉 불량만 집계.
+    int NgCount;
 
-	TGroupBox *CurrentGrp;
-	TGroupBox *OldGrp;
-	void __fastcall VisibleBox(TGroupBox *grp);
-	bool bconfig;
+    // 장비 수신 메시지와 C++ 처리 함수 연결
+    BEGIN_MESSAGE_MAP
+    MESSAGE_HANDLER(COMM_RECEIVE,		TMessage, OnReceiveStage)
+    END_MESSAGE_MAP(TForm)
 
-	void __fastcall MakePanel(AnsiString type);
-	bool __fastcall ErrorCheck();
-	void __fastcall RefreshStageStatusImage();
-	//void __fastcall DisplayStatus(int status);
+    // ===== Stage_AutoInspection.cpp =====
+    // 메인 화면 수동 배출: 재측정 목록 정리, 강제 배출, PROBE CLOSE=0 / OPEN=1 / COMPLETE=1.
+    void __fastcall ManualTrayOut();
+    // 자동측정 대기 설정 읽기: 기존 200ms 타이머 호출 횟수 단위를 유지한다.
+    TAutoInspectionSetting __fastcall GetAutoInspectionSetting();
+    // PLC 신호·운전 옵션·검사 수량을 읽는다. 시리얼은 전체 수신 완료 후 버퍼에서 읽는다.
+    TAutoInspectionData __fastcall ReadAutoInspectionData();
+    // 단계 판단에서 반환한 명령을 한 번 실행한다. 실제 PLC 출력·측정 시작·오류창은 이곳에서 처리한다.
+    void __fastcall RunAutoInspectionCommand(TAutoInspectionCommand command,
+        const TAutoInspectionData &data);
+    // 단계가 바뀔 때 이전/다음 단계와 전환 이유를 PLC 로그에 기록한다.
+    void __fastcall WriteAutoStepLog(TAutoInspectionStep previous, AnsiString reason);
+    // 자동측정 단계와 NG 개수를 초기화한다. PLC 출력과 트레이 데이터 초기화는 Initialization에서 한다.
+    void __fastcall ResetAutoInspection();
+    // 운전 모드에 따라 PLC AUTO READY 신호 설정: 자동=1, 수동=0. 값이 바뀔 때만 기록한다.
+    void __fastcall SetAutoReadySignalToPLC();
+    // PLC CELL DATA 25워드의 비트맵으로 400셀 유무와 개수를 읽는다. Cycle 모드는 전 채널 사용.
+    void __fastcall ReadAutoCellData();
+    // CELL SERIAL 4,010워드 분할 수신 시작. 별도 START/COMPLETE 핸드셰이크는 사용하지 않는다.
+    void __fastcall StartAutoCellSerialRead();
+    // PLC 프로브 열림 확인 후 PC의 PROBE OPEN 요청을 0으로 해제한다.
+    void __fastcall ClearProbeOpenSignalToPLC();
+    // 현재 단계의 화면 문구와 MEASURING 신호를 갱신한다. 프로브/배출 동작을 새로 시작하지 않는다.
+    void __fastcall DisplayAutoInspectionStep();
+    // 예외 발생 단계와 원인을 기록하고 PC 자동 진행을 정지한다. 설비 비상정지 명령은 아니다.
+    void __fastcall StopAutoInspectionOnError(AnsiString message);
+    // 결과 처리 함수 종료를 시퀀스에 알린다. 이후 PLC 프로브 열림을 확인해야 자동 배출한다.
+    void __fastcall SetAutoMeasureComplete();
+    // 재측정 가능 단계인지 확인하고 이전 측정 완료/프로브 열림 요청을 초기화한다.
+    bool __fastcall PrepareAutoRemeasure();
+    // 자동 진행을 막는 통신/PLC/운전 모드 오류를 확인한다. true이면 현재 단계를 유지하고 대기한다.
+    bool __fastcall CheckAutoInspectionError();
+
+    // ===== Stage_Measurement.cpp =====
+    // 전체 재측정 요청: 트레이 ID를 유지하고 데이터 초기화·CELL DATA 재읽기 후 프로브 닫힘을 기다린다.
+    void __fastcall StartFullRemeasure();
+    // 선택 재측정 요청: 기존 불량 목록을 사용하고 프로브 닫힘 확인 후 채널별 재측정을 시작한다.
+    void __fastcall StartSelectedRemeasure();
+    // IR 응답 문자열을 값/채널로 해석하고 일반 측정 또는 교정 화면에 전달한다.
+    void __fastcall ProcessIr(AnsiString param);
+    // 채널 IR 수신 처리: 보정·판정·수신 표시를 갱신한다. 평균 계산 플래그와 표시용 수신 여부는 별개다.
+    void __fastcall InsertIrValue(int pos, float value, AnsiString result);
+    // OCV 응답 문자열을 값/채널로 해석하고 채널 판정 및 필요 시 다음 재측정을 진행한다.
+    void __fastcall ProcessOcv(AnsiString param);
+    // 채널 OCV 수신 처리: 규격 판정·평균 집계·화면을 갱신한다.
+    void __fastcall InsertOcvValue(int pos, float value);
+    // 장비의 GO/HI/LO/CE 등 판정 문자를 기존 내부 결과 코드로 변환한다.
+    int __fastcall GetReslut(AnsiString result);
+
+    // ===== Stage_TrayData.cpp =====
+    // 수신 버퍼의 400셀 시리얼을 복사하고 비어 있지 않은 개수를 반환한다. 완료 판정은 호출부에서 한다.
+    int __fastcall ReadCellSerial();
+    // 트레이 ID의 .Tray 파일에서 셀 시리얼을 복원한다. 파일이 없으면 false.
+    bool __fastcall LoadTrayInfo(AnsiString trayID);
+    // 현재 트레이의 400셀 시리얼을 .Tray 파일에 저장한다.
+    void __fastcall SaveTrayInfo(AnsiString trayID);
+    // 배출 완료한 트레이의 임시 .Tray 파일을 삭제한다.
+    void __fastcall DeleteTrayInfo(AnsiString trayID);
+
+    // ===== Stage_CellDisplay.cpp =====
+    // 설비 배치 타입에 맞춰 메인 화면의 400채널 패널을 생성한다.
+    void __fastcall MakePanel(AnsiString type);
+    // 셀 유무/판정 색상 갱신. 시작 안내 번호/트레이 투입 후 공란/각각 수신한 실제 값을 표시한다.
+    void __fastcall SetProcessColor(int index, int clr);
+    // 현재 채널 패널 색상을 표시용 상태 번호로 변환한다.
+    int __fastcall GetColorIndex(TColor clr);
+    // 수신 표시 초기화. 프로그램 시작은 번호, 트레이 투입/측정 이후는 공란.
+    void __fastcall InitCellDisplay();
+
+    // ===== Stage_comm.cpp =====
+    // 장비 응답 분기: AMS/AMF/IR/OCV/센서 상태 등을 해당 처리 함수로 전달한다.
+    void __fastcall OnReceiveStage(TMessage& Msg);
+    void __fastcall SendData(AnsiString Cmd, AnsiString Param="");
+    void __fastcall MakeData(int tx_mode, AnsiString cmd="", AnsiString param="");
+    int __fastcall DataCheck(AnsiString msg, AnsiString &param);
+    // 장비의 로컬 재측정 요청을 처리하고 기존 불량 개수에 따라 재측정 모드를 정한다.
+    void __fastcall StageLocalRemeasure(bool frm = false);
+    // 센서 입력 응답을 저장하고 장비 상태 변경을 감지한다.
+    void __fastcall SensorInputProcess(AnsiString param);
+    // 장비 센서 출력 응답을 센서 출력 버퍼에 저장한다.
+    void __fastcall SensorOutputProcess(AnsiString param);
+    int __fastcall SensorState(AnsiString cmd);
+    // 장비 상태 코드 변경에 따른 기존 화면/명령 처리를 수행한다.
+    void __fastcall EquipStatus(int cmd);
+    // 최초 센서 응답의 운전 상태를 초기 화면에 반영한다.
+    void __fastcall InitEquipStatus(int cmd);
+    // 예약된 Auto/Remote/Local 운전 모드를 적용한다.
+    void __fastcall ModChange();
+
+    // ===== Stage_Form.cpp =====
+    // 메인/재측정/오류 그룹을 전환하고 오류 화면 표시 개수를 갱신한다.
+    void __fastcall VisibleBox(TGroupBox *grp);
+    void __fastcall RefreshStageStatusImage();
     void __fastcall DisplayProcess(int status, AnsiString Status_Step, AnsiString msg, bool bError = false);
     void __fastcall DisplayError(AnsiString msg, bool bError = false);
-	//void __fastcall DisplaySensorInfo();
-	void __fastcall SetProcessColor(int index, int clr, AnsiString result ="");
-	int __fastcall GetColorIndex(TColor clr);
+    void __fastcall ResponseError(AnsiString param);
 
-	// 로그 파일 관련 생성
-	void __fastcall WriteSystemInfo();
-	bool __fastcall ReadSystemInfo();
-	bool __fastcall ReadCellInfo();
-	void __fastcall WriteResultFile();
-	void __fastcall WriteResultFile_MES();
-	void __fastcall WriteResultFile_MES2(); //210318
-	void __fastcall WriteOKNG();
-	void __fastcall ErrorLog();
-	void __fastcall ReadCaliboffset();           //20171202 개별보정을 위해 추가
-	double __fastcall GetSigma(float values[], bool flag[], double avg, int count);
+    // ===== Stage_log.cpp =====
+    void __fastcall WriteSystemInfo();
+    void __fastcall ReadSystemInfo();
+    void __fastcall ReadCellInfo();
+    void __fastcall WriteResultFile();
+    void __fastcall ErrorLog();
+    void __fastcall ReadCaliboffset();
 
-	BEGIN_MESSAGE_MAP
-		MESSAGE_HANDLER(COMM_RECEIVE,		TMessage, OnReceiveStage)
-	END_MESSAGE_MAP(TForm)
-	//------------ IMS 관련 -------------------//
-	//------------ STAGE 통신 관련 -------------------//
-	queue<string> rxq;		// 수신 큐
-	vector<unsigned char> TxVector;		// 전송 데이터 만들기
-	TCustomWinSocket *sock;	// STAGE에 전송을 위한 소켓
-	AnsiString remainMsg;
-
-	void __fastcall OnReceiveStage(TMessage& Msg);		// 데이터 수신시 발생
-	// 데이터 전송
-	void __fastcall SendData(AnsiString Cmd, AnsiString Param="");
-	// 전송 방식 결정 - 한번, 반복,,,
-	void __fastcall MakeData(int tx_mode, AnsiString cmd="", AnsiString param="");
-	int __fastcall DataCheck(AnsiString msg, AnsiString &param);
-
-	void __fastcall ResponseError(AnsiString param);
-	void __fastcall StageLocalRemeasure(bool frm = false);
-	void __fastcall StageClearAlarm();
-	void __fastcall StageReady();
-
-	void __fastcall SensorInputProcess(AnsiString param);
-	void __fastcall SensorOutputProcess(AnsiString param);
-	int __fastcall SensorState(AnsiString cmd);
-	void __fastcall EquipStatus(int cmd);
-	void __fastcall InitEquipStatus(int cmd);
-
-	void __fastcall ProcessIr(AnsiString param);
-	void __fastcall InsertIrValue(int pos, float value, AnsiString result);
-	void __fastcall ProcessOcv(AnsiString param);
-	void __fastcall InsertOcvValue(int pos, float value);
-	int __fastcall GetReslut(AnsiString result);
-
-    TColor clAverageOver;
-	TColor clNoCell;
-	TColor clBadIr;
-	TColor clCellError;
-	TColor clLine;
-	TColor clSelect;
-	TColor clIrCheck;
-	TColor clOcvCheck;
-	TColor clBothCheck;
-	TColor clMeasureFail;
-	TColor clNo;
-	TColor clYes;
-
-	void __fastcall InitCellDisplay();
-	void __fastcall ModChange();
-
-    TPanel *pProcess[8];
-    int NgCount;
-    //* CELL SERIAL
-    int nReadCellCountTime;
-    int __fastcall ReadCellSerial();
-    bool __fastcall LoadTrayInfo(AnsiString trayID);
-    void __fastcall SaveTrayInfo(AnsiString trayID);
-    void __fastcall DeleteTrayInfo(AnsiString trayID);
-public:		// User declarations
-
-	void __fastcall InitMeasureForm();
-	void __fastcall InitMeasureFormRemeasure();
-	void __fastcall InitTrayStruct();
-	void __fastcall Initialization();
-	void __fastcall PLCInitialization();
-	void __fastcall DisplayStatus(int status);
-
-	void __fastcall AutoInspection_Wait();
-	void __fastcall AutoInspection_Measure();
-	void __fastcall AutoInspection_Finish();
-	void __fastcall ResultReportToPLC();
-
-	void __fastcall OnInit();	// 초기화 요청
-	void __fastcall CmdVersion();
-	void __fastcall CmdEmergencyStop();
-	void __fastcall CmdReset();
-	void __fastcall CmdIRCell(AnsiString pos);
-	void __fastcall CmdOCVCell(AnsiString pos);
-	void __fastcall CmdAutoTest();
-	void __fastcall CmdBattHeight(int height = 1);
-	void __fastcall CmdGetSensorInfo();
-	void __fastcall CmdTrayOut();
-	void __fastcall CmdTrayOut_Original();
-	void __fastcall CmdForceStop();
-    void __fastcall CmdForceStop_Original();
-
-	void __fastcall CmdTestMode();
-	void __fastcall CmdManualMod(bool Set);
-    void __fastcall CmdSpeedSet(int mode);
-	void __fastcall CmdRestart();
-
-	void __fastcall plc_Barcode();
-	void __fastcall CmdStart();
-	void __fastcall CmdDeviceInfo();
-	void __fastcall ResponseAutoTestFinish();
-	void __fastcall ReadchannelMapping();
-
-    void __fastcall AcceptCellSerialData();
-    void __fastcall RetryCellSerialRead();
-
-//---------------------------------------------------------------------------
-// PLC
-	AnsiString PLC_IPADDRESS;
-	int PLC_PCPORT;
-	int PLC_PLCPORT;
-
-	STAGE_INFO stage;
-	CONFIG config;					// 환경 설정
-	TRAY_INFO tray;
-
-	TPanel *panel[400];
-	TPanel *pdev[8];
-
-	int acc_remeasure[400];
+public:
+    // ===== 데이터: 기존 접근 범위 유지 =====
+    AnsiString PLC_IPADDRESS;
+    int PLC_PCPORT;
+    int PLC_PLCPORT;
+    STAGE_INFO stage;
+    CONFIG config;
+    TRAY_INFO tray;
+    TPanel *panel[400];
+    TPanel *pdev[8];
+    int acc_remeasure[400];
     int acc_totaluse[400];
-	int remeasure_info[400];
-	int precharger_okng[400];
-	int chMap[401];
-	int chReverseMap[401];
-
-    //* 임시
+    int chMap[401];
+    int chReverseMap[401];
     int acc_totaltray;
     int acc_finalng;
-
-	int acc_cnt;
-	AnsiString acc_init;
+    int acc_cnt;
+    AnsiString acc_init;
+    // 현재 트레이 검사 시작 시각.
     TDateTime m_dateTime;
+    TExtInput  sensor;
+    TExtOutput  sensor_out;
+    SEND_DATA send;
+    queue<string> q_cmd;
+    queue<string> q_param;
+    // 현재 트레이의 재측정 대상/진행 정보.
+    REMEASURE retest;
+    int senCnt;
+    AnsiString OldSenCmd;
+    AnsiString OldPLCStatus, PLCStatus, OldErrorCheckStatus;
+    // 기존 자동 개별 재측정 대상 개수 제한.
+    int remLimit;
+    // 수동 측정 운전 여부.
+    bool bLocal;
 
-    int start_delay_time;
-    int max_delay_time;
+    // ===== FormTotal.cpp =====
+    __fastcall TTotalForm(TComponent* Owner);
 
-	int nSection, nStep, nStepCount;
-	bool m_bAuto;
-    bool mAuto;
-	//------------ STAGE 통신 관련 -------------------//
+    // ===== Stage_AutoInspection.cpp =====
+    // 자동 검사 전체 초기화: PLC 출력 → 트레이 데이터 → 단계 순서로 초기화한다.
+    void __fastcall Initialization();
+    // 자동 배출 판단: Auto/프로브 열림/결과 완료를 확인하고 NG 조건에 따라 오류 대기 또는 배출한다.
+    void __fastcall CmdTrayOut();
+    // 수동 또는 운영자가 승인한 배출: NG를 다시 검사하지 않고 TRAY OUT을 요청한다.
+    void __fastcall ForceTrayOut();
+    // NG 오류창 Restart: PLC·트레이·자동 단계를 초기화하고 TRAY IN부터 다시 검사한다.
+    void __fastcall RestartAutoInspection();
+    // 시리얼 오류창 SAVE: 현재 데이터를 저장하고 프로브 닫힘 확인 단계로 진행한다.
+    void __fastcall AcceptCellSerialData();
+    // 시리얼 오류창 CANCEL: 대기 횟수를 초기화하고 4,010워드를 처음부터 다시 수신한다.
+    void __fastcall RetryCellSerialRead();
 
-	TExtInput  sensor;				//  센서
-	TExtOutput  sensor_out;				//  센서
-
-	SEND_DATA send;				// 전송 데이터
-	queue<string> q_cmd;
-	queue<string> q_param;
-	queue<int> q_txMode;
-
-	REMEASURE retest;
-	void __fastcall RemeasureExcute();
-	void __fastcall ReadRemeasureInfo();
-	void __fastcall WriteRemeasureInfo();
-	int senCnt;
-
-	AnsiString OldSenCmd;
-	AnsiString OldPLCStatus, PLCStatus, OldErrorCheckStatus, ErrorCheckStatus, OldIROCVStage, IROCVStage;
-
-	void __fastcall ErrorMsg(int err);
-	void __fastcall ProcessError(AnsiString err1, AnsiString err2,AnsiString err3,AnsiString err4);
-	void __fastcall ShowAlarm(AnsiString err1, AnsiString err2, AnsiString err3 , AnsiString err4);
-
-    void __fastcall RemeasureAlarm(int remeasure_alarm_count);
-	void __fastcall WriteCommLog(AnsiString Type, AnsiString Msg);
-    void __fastcall WritePLCLog(AnsiString Type, AnsiString Msg);
-	void __fastcall ReadPreChargerOKNG(AnsiString trayid);
-
-	int remLimit;
-    void __fastcall VisibleSpec(bool bUseAverage);
-	void __fastcall SetRemeasureList();
+    // ===== Stage_Measurement.cpp =====
+    // 수동 측정 초기화: 내부 값은 0, 화면은 수신 전까지 공란.
+    void __fastcall OnInit();
+    // 전체 측정 시작: 표시·수신 플래그·평균 누계를 초기화하고 AMS 명령을 예약한다.
+    void __fastcall CmdAutoTest();
+    // 결과 마감: STP/프로브 열림 요청 → NG·결과 코드·값·파일 작성 → COMPLETE → 자동 단계 완료 통지.
+    void __fastcall CmdForceStop();
+    // [CELL SERIAL 공통] 수동/MSA 반복 측정도 이전 결과 저장 대기가 끝난 뒤 다음 측정을 시작한다.
+    bool IsWaitingForResultSave() const { return resultCellSerialPending; }
+    // AMF 수신 후 처리: 운전 모드에 따라 결과 마감 또는 기존 자동 개별 재측정을 수행한다.
+    void __fastcall ResponseAutoTestFinish();
+    // 재측정 목록의 다음 IR/OCV를 요청한다. 더 없으면 최종 판정과 결과 마감을 수행한다.
+    void __fastcall RemeasureExcute();
+    // 전체 측정 후 재측정 대상 집계. 기존 remLimit 조건에 따라 개별 재측정 또는 결과 마감한다.
+    void __fastcall SetRemeasureList();
+    // 개별 재측정 후 최종 불량 목록을 다시 집계한다. 측정 명령은 보내지 않는다.
     void __fastcall SetRemeasureListAfter();
-	void __fastcall SetRemeasureList2();
-	void __fastcall AddRemeasureList();
-	void __fastcall ViewRemeasureList();
-    void __fastcall WriteTrayInfo();
-	void __fastcall SetTrayID(AnsiString str_id);
-	void __fastcall BadInfomation();
-    void __fastcall WriteResultCode();
-	void __fastcall WriteIROCVValue();
-    void __fastcall WriteIROCVValue(int initValue);
-	void __fastcall WriteIRMINMAX();
 
-	void __fastcall DisplayTrayInfo();
+    // ===== Stage_PlcData.cpp =====
+    // PC→PLC 검사 출력과 결과 버퍼 초기화. 기존 주소·초기값·출력 순서를 유지한다.
+    void __fastcall PLCInitialization();
+    // PLC용 NG 비트/수량과 오류창용 NgCount 집계. NgCount는 존재하는 IR/OCV/접촉 불량 셀만 센다.
+    void __fastcall BadInfomation();
+    // PLC 셀별 결과 작성: BadInfomation이 작성한 최종 OK/NG 비트와 동일하게 OK=0, NG=1.
+    void __fastcall WriteResultCode();
+    // IR/OCV 값을 PLC 결과 버퍼에 쓴다. 인자 없는 함수는 측정값, int 인자는 초기화 값이다.
+    void __fastcall WriteIROCVValue();
+    // IR/OCV 값을 PLC 결과 버퍼에 쓴다. 인자 없는 함수는 측정값, int 인자는 초기화 값이다.
+    void __fastcall WriteIROCVValue(int initValue);
+    // 현재 IR/OCV 규격 상·하한을 기존 배율로 PLC 설정 버퍼에 기록한다.
+    void __fastcall WriteIRMINMAX();
+
+    // ===== Stage_TrayData.cpp =====
+    // 새 트레이 초기화: 시리얼 모드 확정/지연 저장 취소, 데이터와 수신 표시 초기화.
+    void __fastcall InitTrayStruct();
+
+    // ===== Stage_CellDisplay.cpp =====
+    // 측정정보 창 재표시. 수신값과 미수신 공란(프로그램 시작 전에는 안내 번호)을 유지한다.
+    void __fastcall InitMeasureForm();
+    // CELL DATA의 셀 유무를 채널 화면에 반영한다. 측정값 수신 여부는 변경하지 않는다.
+    void __fastcall DisplayTrayInfo();
+
+    // ===== Stage_comm.cpp =====
+    void __fastcall CmdReset();
+    void __fastcall CmdIRCell(AnsiString pos);
+    void __fastcall CmdOCVCell(AnsiString pos);
+    void __fastcall CmdBattHeight(int height = 1);
+    void __fastcall CmdManualMod(bool Set);
+    void __fastcall CmdSpeedSet(int mode);
+    void __fastcall CmdStart();
+
+    // ===== Stage_Form.cpp =====
+    void __fastcall DisplayStatus(int status);
+    void __fastcall ErrorMsg(int err);
+    void __fastcall ProcessError(AnsiString err1, AnsiString err2,AnsiString err3,AnsiString err4);
+    // PLC 입력 신호 ON/OFF를 표시등 색상으로 반영한다.
     void __fastcall ShowPLCSignal(TAdvSmoothPanel *advPanel, bool bOn);
+    // 입력 암호를 확인한 뒤 설정 화면의 접근을 허용하거나 오류 문구를 표시한다.
     void __fastcall CheckPassword();
 
-	__fastcall TTotalForm(TComponent* Owner);
-	bool bLocal, n_bMeasureStart;
+    // ===== Stage_log.cpp =====
+    // mapping.csv에서 장비↔화면 채널 매핑을 읽고, 파일이 없으면 기본 매핑을 만든다.
+    void __fastcall ReadchannelMapping();
+    void __fastcall ReadRemeasureInfo();
+    void __fastcall WriteRemeasureInfo();
+    void __fastcall RemeasureAlarm(int remeasure_alarm_count);
+    void __fastcall WriteCommLog(AnsiString Type, AnsiString Msg);
+    void __fastcall WritePLCLog(AnsiString Type, AnsiString Msg);
+
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TTotalForm *TotalForm;

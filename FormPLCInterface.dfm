@@ -39,6 +39,15 @@ object Form_PLCInterface: TForm_PLCInterface
     ParentFont = False
     TabOrder = 0
     OnClick = GroupBox_PLC_PCClick
+    object chkShowAll: TCheckBox
+      Left = 920
+      Top = 8
+      Width = 130
+      Height = 20
+      Caption = 'Show all'
+      TabOrder = 2
+      OnClick = chkShowAllClick
+    end
     object ListView_PLC: TListView
       Left = 15
       Top = 32

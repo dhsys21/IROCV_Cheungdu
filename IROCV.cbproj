@@ -134,6 +134,10 @@
         <AppEnableHighDPI>true</AppEnableHighDPI>
     </PropertyGroup>
     <ItemGroup>
+        <CppCompile Include="AutoInspectionSequence.cpp">
+            <DependentOn>AutoInspectionSequence.h</DependentOn>
+            <BuildOrder>19</BuildOrder>
+        </CppCompile>
         <None Include="DEFINE.h">
             <BuildOrder>10</BuildOrder>
         </None>
@@ -217,6 +221,21 @@
             <FormType>dfm</FormType>
             <DependentOn>RVMO_main.h</DependentOn>
             <BuildOrder>6</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="Stage_AutoInspection.cpp">
+            <BuildOrder>20</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="Stage_CellDisplay.cpp">
+            <BuildOrder>21</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="Stage_Measurement.cpp">
+            <BuildOrder>22</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="Stage_PlcData.cpp">
+            <BuildOrder>23</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="Stage_TrayData.cpp">
+            <BuildOrder>24</BuildOrder>
         </CppCompile>
         <CppCompile Include="Stage_comm.cpp">
             <BuildOrder>7</BuildOrder>

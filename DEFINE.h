@@ -225,6 +225,8 @@ typedef struct{
     int remeasure_alarm_cnt;
 	bool remeasure_use;
 	bool remeasure_bypass;
+    // [CELL SERIAL 공통] false=TRAY IN 수신 보관, true=상시 수신 후 결과 저장 직전 재확인.
+    bool cell_serial_continuous_read;
     AnsiString pwd;
 }CONFIG;
 
