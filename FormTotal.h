@@ -445,8 +445,8 @@ private:
     TGroupBox *OldGrp;
     // 현재 자동 검사 단계/설정: 외부 폼에서는 직접 변경하지 않는다.
     TAutoInspectionSequence autoInspection;
-    // 자동 타이머 재진입 방지 플래그.
-    bool autoInspectionBusy;
+    // 자동측정 처리 함수 실행 중 여부. 설비의 전체 측정 기간을 뜻하지 않는다.
+    bool isAutoInspectionProcessing;
     // 현재 단계에서 읽은 트레이 ID.
     AnsiString autoInspectionTrayId;
     // 장비 수신 문자열 큐.

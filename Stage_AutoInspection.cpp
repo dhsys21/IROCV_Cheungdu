@@ -10,17 +10,17 @@
 
 namespace
 {
-// 자동 타이머가 처리 중일 때 다시 호출되는 것을 막는다.
-// 함수 종료/예외 발생 시 busy 플래그를 자동으로 해제한다.
-class TAutoTimerGuard
+// 자동측정 처리 함수가 중복 실행되지 않도록 잠근다.
+// ProcessAutoInspection 한 번의 처리 동안만 유지하며, 함수 종료/예외 시 자동 해제한다.
+class TAutoInspectionRunLock
 {
 public:
     // 처리 시작: 호출자의 재진입 방지 플래그를 켠다.
-    explicit TAutoTimerGuard(bool &busy) : busy_(busy) { busy_ = true; }
+    explicit TAutoInspectionRunLock(bool &isProcessing) : isProcessing_(isProcessing) { isProcessing_ = true; }
     // 처리 종료: 예외가 나더라도 재진입 방지 플래그를 끈다.
-    ~TAutoTimerGuard() { busy_ = false; }
+    ~TAutoInspectionRunLock() { isProcessing_ = false; }
 private:
-    bool &busy_; // TTotalForm::autoInspectionBusy 참조
+    bool &isProcessing_; // TTotalForm::isAutoInspectionProcessing 참조
 };
 }
 
@@ -60,42 +60,68 @@ void __fastcall TTotalForm::ResetAutoInspection()
 }
 
 //---------------------------------------------------------------------------
-// 자동모드 타이머: 오류 확인 → PLC 상태 읽기 → 단계 판단 → 명령 1회 실행 → 화면 갱신.
-// 디자이너 이벤트 진입점은 FormTotal.cpp의 Timer_AutoInspectionTimer. 자동측정 타이머 처리는 이 파일에서 유지한다.
+// 자동측정 타이머 처리: 오류 확인 → 단계 판단 → 명령 실행 → 화면 갱신.
+// 호출 위치: FormTotal.cpp의 Timer_AutoInspectionTimer.
 void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
 {
-    if(autoInspectionBusy) return;
-    TAutoTimerGuard guard(autoInspectionBusy);
+    // 1. 처리 중이면 중복 실행을 막는다.
+    if(isAutoInspectionProcessing) return;
+
+    // 실행 중=true, 함수 종료 시 자동으로 false.
+    TAutoInspectionRunLock runLock(isAutoInspectionProcessing);
     try
     {
+        // 2. 예외로 정지된 상태: 재시작 전까지 진행하지 않는다.
         if(autoInspection.GetStep() == STEP_ERROR_STOP)
         {
             DisplayError("Auto inspection stopped. Check the log and restart.", true);
             return;
         }
-        // Preserve the production pause/resume setting. Waiting ticks do not
-        // advance during a connection failure, PLC error or local-mode block.
+
+        // 3. 측정장비/PLC 연결, PLC 오류 및 수동 운전 차단 조건 확인.
         if(CheckAutoInspectionError()) return;
 
-        // 측정 중 설정 변경으로 재측정 조건이 달라지지 않도록 두 값을 함께 고정한다.
+        // 4. 재측정 설정 전달. 트레이 투입 대기 중에만 반영.
+        //    첫 번째: 닫힘 상태 재측정 최대 NG 개수(이하, 0=생략).
+        //    두 번째: 프로브 재개폐 추가 측정 횟수(0=생략).
         autoInspection.SetNextTrayRemeasureSettings(
             config.closedProbeRemeasureMaxNgCount, config.probeRemeasureCount);
+
+        // 5. PC→PLC AUTO READY 출력. Auto=1, Local(수동)=0.
         SetAutoReadySignalToPLC();
+
+        // 6. 트레이 유무, 프로브 열림/닫힘, 모드, 셀/NG 개수 확인.
+        //    트레이 ID와 CELL SERIAL 완료 여부는 해당 단계에서만 확인.
         TAutoInspectionData data = ReadAutoInspectionData();
+
+        // 변경 전 단계 보관: 단계 로그와 PROBE OPEN 요청 해제에 사용.
         TAutoInspectionStep previous = autoInspection.GetStep();
+
+        // 다음 단계와 실행할 명령 결정. CMD_NONE이면 대기.
         TAutoInspectionCommand command = autoInspection.RunAutoStep(data);
+
+        // 단계가 바뀐 경우에만 로그 기록.
         WriteAutoStepLog(previous, "Timer");
+
+        // 7. 프로브 열림 대기를 마치면 PC→PLC PROBE OPEN 요청 해제.
+        //    실제 프로브를 닫는 명령은 아니다.
         if(previous == STEP_WAIT_PROBE_OPEN && command != CMD_NONE)
             ClearProbeOpenSignalToPLC();
+
+        // 명령 실행: PLC 출력, 측정 시작, 시리얼 처리, 오류창 등.
         RunAutoInspectionCommand(command, data);
+
+        // 8. 현재 단계에 맞춰 진행 화면 갱신.
         DisplayAutoInspectionStep();
     }
     catch(const Exception &error)
     {
+        // 예외 내용 기록 후 자동 진행 정지. 설비 비상정지 명령은 아니다.
         StopAutoInspectionOnError(error.Message);
     }
     catch(...)
     {
+        // 그 외 예외도 자동 진행 정지.
         StopAutoInspectionOnError("Unknown auto inspection exception");
     }
 }

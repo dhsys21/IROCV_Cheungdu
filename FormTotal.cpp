@@ -39,7 +39,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 //	LocalRemeasure = false;
 	MakePanel(BaseForm->lblLineNo->Caption);
 //	this->ScaleBy(60,100);
-    autoInspectionBusy = false;
+    isAutoInspectionProcessing = false;
     config.cell_serial_continuous_read = false;
     cellSerialContinuousReadForTray = false;
     resultSaveStep = RESULT_IDLE;
