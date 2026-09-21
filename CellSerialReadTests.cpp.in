@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
+#include "SiteConfig.h"
 typedef unsigned long DWORD;
 struct TObject {};
 struct AnsiString {
@@ -21,16 +22,17 @@ struct AnsiString {
 };
 AnsiString operator+(const AnsiString&a,const AnsiString&b){return a.s+b.s;}
 bool operator==(const AnsiString&a,const AnsiString&b){return a.s==b.s;}
+AnsiString FormatFloat(const char *,int n){char b[32];sprintf(b,"%03d",n);return b;}
 AnsiString IntToStr(int n){char b[32];sprintf(b,"%d",n);return b;}
 AnsiString IntToHex(int n,int digits){char b[32];sprintf(b,"%0*X",digits,n);return b;}
 int StrToInt(const AnsiString &s){return strtol(s.s.c_str(),0,0);}
 struct Exception {AnsiString Message;};
 DWORD clockTime=0;
 DWORD GetTickCount(){return clockTime;}
-const int nSTANDARD=0,nCELLSERIAL=1,PLC_D_INTERFACE_LEN=100,MAXCHANNEL=400;
+const int nSTANDARD=0,nCELLSERIAL=1,PLC_D_INTERFACE_LEN=100;
 const int PLC_D_CELL_SERIAL_LEN=4010,PLC_D_CELL_SERIAL_READLEN=820,PLC_D_CELL_SERIAL_READCOUNT=5;
 const int PC_D_IROCV_COMPLETE=8,PC_D_IROCV_ERROR=2,PC_D_IROCV_MEASURING=6,PC_D_IROCV_PROB_OPEN=4;
-const int nEND=10;
+const int nAuto=0, nLocal=2, nEND=10, Line=4, PC_D_IROCV_NG_COUNT=10, PC_D_IROCV_MEASURE_OK_NG=20, PC_D_IROCV_RESULT_CODE=0;
 struct TCustomWinSocket {
     AnsiString data;
     int ReceiveLength(){return data.Length();}
@@ -38,11 +40,22 @@ struct TCustomWinSocket {
 };
 class TMod_PLC {
 public:
-    int currentReadTask,CellSerialIndex,plc_ReadCount,standardReads,pc[20];
+    int currentReadTask,CellSerialIndex,plc_ReadCount,standardReads,pc[20],resultCodes[MAXCHANNEL];
+    unsigned char pc_Interface_Data[70][2];
+    bool connected, transmitted;
+    void BeginResultTransmission(){transmitted=false;}
+    bool WasResultTransmitted(){return transmitted;}
+    bool IsResultConnectionReady(){return connected;}
+    void SetData(unsigned char (*data)[2],int word,int bit,bool value) {
+        int byte=bit/8, mask=1<<(bit%8);
+        if(value)data[word][byte]|=mask;else data[word][byte]&=~mask;
+    }
+    bool GetData(unsigned char (*data)[2],int word,int bit){return (data[word][bit/8]&(1<<(bit%8)))!=0;}
+    void SetResultCode(int address,int value){resultCodes[address]=value;}
     bool CellSerialReadRequested,CellSerialReadActive,CellSerialReadComplete,cellSerialContinuousRead,plc_ReadFlag;
     unsigned char plc_Interface_Cell_Serial[4010][2],cellSerialReceiveData[4010][2];
     AnsiString plc_Read,plc_Read_Temp;
-    TMod_PLC():cellSerialContinuousRead(false),standardReads(0),plc_ReadFlag(false),plc_ReadCount(0){memset(pc,0,sizeof(pc));ResetCellSerialRead();}
+    TMod_PLC():cellSerialContinuousRead(false),standardReads(0),plc_ReadFlag(false),plc_ReadCount(0){memset(pc,0,sizeof(pc));memset(pc_Interface_Data,0,sizeof(pc_Interface_Data));connected=true;transmitted=false;ResetCellSerialRead();}
     void __fastcall ResetCellSerialRead();
     void __fastcall StartCellSerialRead();
     void __fastcall SetCellSerialContinuousRead(bool enabled);
@@ -61,7 +74,15 @@ public:
 TMod_PLC plc;
 TMod_PLC *Mod_PLC=&plc;
 struct Timer {bool Enabled;Timer():Enabled(false){}};
-struct Panel {AnsiString Caption;};
+typedef int TColor;
+const int GO=0;
+struct Panel {AnsiString Caption;TColor Color;};
+struct MeasureUI {
+    int stage,irColor[MAXCHANNEL],ocvColor[MAXCHANNEL];
+    void DisplayIrValue(int i,int color,AnsiString,bool){irColor[i]=color;}
+    void DisplayOcvValue(int i,int color,AnsiString,bool){ocvColor[i]=color;}
+} measureUI;
+MeasureUI *MeasureInfoForm=&measureUI;
 struct ErrorForm {
     int stage,shown;
     Timer bring,off;Timer *Timer_BringToFront,*timerErrorOff;
@@ -73,33 +94,80 @@ struct ErrorForm {
 ErrorForm *Form_CellIdError=&errorForm;
 class TTotalForm {
 public:
+    struct { int arl; } stage;
+    struct TestSequence {
+        struct Setting { int closedProbeRemeasureMaxNgCount; } setting;
+        const Setting &GetSetting() const { return setting; }
+    } autoInspection;
     int Tag,filesSaved,trayFilesSaved,testSerialCount,reads,stops;
-    bool cellSerialContinuousReadForTray,resultCellSerialPending,resultCellSerialError;
-    DWORD resultCellSerialStartTime;
-    Timer timer;Timer *Timer_ResultCellSerial;
-    Panel panel;Panel *Panel_State;
-    struct {bool cell_serial_continuous_read;}config;
-    struct {int cell_count,cell[400];AnsiString trayid;}tray;
-    TTotalForm():Tag(0),filesSaved(0),trayFilesSaved(0),testSerialCount(400),reads(0),stops(0),
-      cellSerialContinuousReadForTray(false),resultCellSerialPending(false),resultCellSerialError(false),
-      resultCellSerialStartTime(0),Timer_ResultCellSerial(&timer),Panel_State(&panel){
-        config.cell_serial_continuous_read=false;tray.cell_count=400;
-        for(int i=0;i<400;++i)tray.cell[i]=1;
+    int fileAttempts,failFileAttempts,completeNotifications,measNgCount,acc_totaltray,acc_finalng;
+    int acc_totaluse[MAXCHANNEL],acc_remeasure[MAXCHANNEL],chReverseMap[MAXCHANNEL+1];
+    bool cellSerialContinuousReadForTray,trayResultCounted,bLocal,fileContainedSerial;
+    int trayFileLoads;
+    int countedFinalIrNg;
+    TResultSaveStep resultSaveStep;
+    DWORD resultSaveStartTime;
+    AnsiString resultFileName,lastCommand;
+    Timer timer;Timer *Timer_ResultSave;
+    Panel statePanel;Panel *Panel_State;
+    Panel cells[MAXCHANNEL],ocvLegend;Panel *panel[MAXCHANNEL],*pocv;
+    bool showStartupChannelNumbers;
+    TColor clLine,clMeasureFail,clBadIr,clIrCheck,clOcvCheck,clBothCheck,clCellError,clNoCell;
+    struct {bool cell_serial_continuous_read;double ir_min,ir_max,ocv_min,ocv_max;}config;
+    struct {int cell_count,cell[MAXCHANNEL],measure_result[MAXCHANNEL],rem_mode;bool first;double after_value[MAXCHANNEL],ocv_value[MAXCHANNEL];AnsiString trayid,cell_serial[MAXCHANNEL];}tray;
+    struct {int cell[MAXCHANNEL],pendingItems[MAXCHANNEL],waitingChannel,waitingItem,re_index,cnt_error;bool re_excute;}retest;
+    bool irValueReceived[MAXCHANNEL],ocvValueReceived[MAXCHANNEL];
+    TTotalForm():Tag(0),filesSaved(0),trayFilesSaved(0),testSerialCount(MAXCHANNEL),reads(0),stops(0),
+      cellSerialContinuousReadForTray(false),resultSaveStep(RESULT_IDLE),
+      resultSaveStartTime(0),Timer_ResultSave(&timer),Panel_State(&statePanel){
+        showStartupChannelNumbers=false;
+        bLocal=false;fileContainedSerial=false;trayFileLoads=0;
+        stage.arl=nAuto;
+        autoInspection.setting.closedProbeRemeasureMaxNgCount=49;
+        clLine=1;clMeasureFail=2;clBadIr=3;clIrCheck=4;clOcvCheck=5;clBothCheck=6;clCellError=7;clNoCell=8;
+        pocv=&ocvLegend;pocv->Color=9;
+        fileAttempts=failFileAttempts=completeNotifications=measNgCount=acc_totaltray=acc_finalng=countedFinalIrNg=0;
+        trayResultCounted=false;tray.first=true;tray.rem_mode=0;
+        config.cell_serial_continuous_read=false;tray.cell_count=MAXCHANNEL;
+        config.ir_min=10;config.ir_max=20;config.ocv_min=1000;config.ocv_max=3000;
+        memset(&retest,0,sizeof(retest));retest.waitingChannel=-1;
+        memset(acc_totaluse,0,sizeof(acc_totaluse));memset(acc_remeasure,0,sizeof(acc_remeasure));
+        for(int i=0;i<MAXCHANNEL;++i){tray.cell[i]=1;tray.after_value[i]=15;tray.ocv_value[i]=2000;
+            tray.measure_result[i]=GO;panel[i]=&cells[i];panel[i]->Color=123;
+            irValueReceived[i]=ocvValueReceived[i]=true;chReverseMap[i+1]=i+1;}
     }
     void __fastcall ApplyCellSerialReadMode();
     void __fastcall StartResultCellSerialRead();
     void __fastcall ShowResultCellSerialError(AnsiString reason);
     void __fastcall CompleteResultCellSerialRead(bool operatorOverride);
-    void __fastcall Timer_ResultCellSerialTimer(TObject *Sender);
-    void __fastcall CancelResultCellSerialRead();
-    void __fastcall CmdForceStop();
-    void MakeData(int,AnsiString){}
+    void __fastcall Timer_ResultSaveTimer(TObject *Sender);
+    void __fastcall ProcessResultSave(TObject *Sender);
+    void __fastcall CancelResultSave();
+    void __fastcall FinishMeasurement();
+    void __fastcall SaveMeasurementResult(bool saveWithoutCellSerial=false);
+    void __fastcall SetRemeasureListAfter();
+    void __fastcall SetRemeasureList();
+    int __fastcall JudgeCellResult(int index);
+    void __fastcall PrepareRemeasureItems();
+    void __fastcall RemeasureExcute();
+    void __fastcall BadInformation();
+    void __fastcall WriteResultCode();
+    void __fastcall UpdateCellDisplay(int index);
+    void MakeData(int,AnsiString command,AnsiString param=""){lastCommand=command;}
     void WritePLCLog(AnsiString,AnsiString){}
     void DisplayStatus(int){}
     int ReadCellSerial(){++reads;return testSerialCount;}
     void SaveTrayInfo(AnsiString){++trayFilesSaved;}
-    void SaveMeasurementResult(){++filesSaved;Mod_PLC->SetValue(PC_D_IROCV_COMPLETE,1);}
-    void StopAutoInspectionOnError(AnsiString){++stops;CancelResultCellSerialRead();}
+    bool LoadTrayInfo(AnsiString){++trayFileLoads;return true;}
+    void ReadCellInfo(){}
+    void WriteIROCVValue(){}
+    bool WriteResultFile(){
+        ++fileAttempts;fileContainedSerial=false;
+        for(int i=0;i<MAXCHANNEL;++i)if(!tray.cell_serial[i].IsEmpty())fileContainedSerial=true;
+        if(failFileAttempts>0){--failFileAttempts;return false;}++filesSaved;return true;
+    }
+    void SetAutoMeasureComplete(){++completeNotifications;}
+    void StopAutoInspectionOnError(AnsiString){++stops;CancelResultSave();resultSaveStep=RESULT_ERROR;}
 };
 @@FORM_METHODS@@
 int checks=0;
@@ -130,6 +198,48 @@ void serialRound(TMod_PLC &p,unsigned char marker,bool continuous){
     for(int i=0;i<4010;++i){check(p.plc_Interface_Cell_Serial[i][0]==marker);check(p.plc_Interface_Cell_Serial[i][1]==marker);}
 }
 int main(){
+    // Manual screen and Local mode must save without serials in either read mode.
+    // Missing/mismatched PLC serials, stale tray IDs, file retry and delayed callbacks.
+    for(int mode=0;mode<2;++mode) for(int manualKind=0;manualKind<3;++manualKind)
+    for(int serialCase=0;serialCase<2;++serialCase) {
+        TTotalForm manualSave;
+        manualSave.bLocal=manualKind!=0;
+        manualSave.stage.arl=manualKind==1?nAuto:nLocal;
+        manualSave.cellSerialContinuousReadForTray=mode!=0;
+        manualSave.testSerialCount=serialCase==0?0:MAXCHANNEL-1;
+        manualSave.failFileAttempts=1;
+        for(int c=0;c<MAXCHANNEL;++c)manualSave.tray.cell_serial[c]="OLD-TRAY-SERIAL";
+        plc.ResetCellSerialRead();plc.connected=false;
+        int oldErrors=errorForm.shown;
+        manualSave.FinishMeasurement();
+        check(manualSave.filesSaved==1&&manualSave.fileAttempts==2);
+        check(manualSave.resultSaveStep==RESULT_WAIT_PLC_SEND);
+        check(manualSave.reads==0&&manualSave.trayFileLoads==0&&manualSave.trayFilesSaved==0);
+        check(!manualSave.fileContainedSerial);
+        for(int c=0;c<MAXCHANNEL;++c)check(manualSave.tray.cell_serial[c].IsEmpty());
+        check(errorForm.shown==oldErrors&&!plc.CellSerialReadRequested);
+        clockTime+=RESULT_SERIAL_TIMEOUT_MS+1;
+        manualSave.Timer_ResultSaveTimer(0);
+        check(errorForm.shown==oldErrors&&manualSave.filesSaved==1);
+        manualSave.FinishMeasurement();
+        check(manualSave.fileAttempts==2);
+    }
+    plc.connected=true;
+    // Execute the actual production SetRemeasureList at all configured boundaries.
+    const int limits[]={0,1,49,50,MAXCHANNEL};
+    for(int n=0;n<5;++n) for(int ng=0;ng<=MAXCHANNEL;++ng) {
+        TTotalForm f;
+        f.autoInspection.setting.closedProbeRemeasureMaxNgCount=limits[n];
+        for(int c=0;c<ng;++c) f.tray.after_value[c]=999;
+        f.SetRemeasureList();
+        const bool retry=ng>0 && ng<=limits[n];
+        check(f.retest.waitingChannel==(retry?0:-1));
+        check(f.resultSaveStep==(retry?RESULT_IDLE:RESULT_WAIT_PLC_SEND));
+    }
+    TTotalForm manual;
+    manual.stage.arl=1;manual.tray.after_value[0]=999;
+    manual.SetRemeasureList();
+    check(manual.retest.waitingChannel==-1);
     TMod_PLC p;
     receive(p,100,0);check(p.currentReadTask==nSTANDARD&&!p.IsCellSerialReadActive());
     p.StartCellSerialRead();serialRound(p,17,false);
@@ -156,29 +266,85 @@ int main(){
     check(p.currentReadTask==nSTANDARD); // No unsolicited new round in capture mode.
 
     TTotalForm f;
-    f.CmdForceStop();check(f.filesSaved==1&&!f.resultCellSerialPending); // Default mode unchanged.
+    clockTime=0;
+    f.FinishMeasurement();check(f.filesSaved==1&&f.resultSaveStep==RESULT_WAIT_PLC_SEND);
+    f.FinishMeasurement();check(f.fileAttempts==1&&f.acc_totaltray==1);
+    clockTime=1000;f.Timer_ResultSaveTimer(0);check(plc.pc[PC_D_IROCV_COMPLETE]==0); // Not sent yet.
+    plc.transmitted=true;clockTime=999;f.Timer_ResultSaveTimer(0);check(plc.pc[PC_D_IROCV_COMPLETE]==0);
+    clockTime=1000;f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_COMPLETE&&f.completeNotifications==1);
+    f.FinishMeasurement();check(f.filesSaved==1); // Duplicate after completion also ignored.
+    f.Timer_ResultSaveTimer(0);check(f.completeNotifications==1);
+    f.resultSaveStep=RESULT_IDLE;
     f.config.cell_serial_continuous_read=true;f.ApplyCellSerialReadMode();
-    f.CmdForceStop();check(f.resultCellSerialPending&&f.filesSaved==1&&plc.pc[PC_D_IROCV_COMPLETE]==0);
-    f.CmdForceStop();check(f.filesSaved==1); // Duplicate completion is ignored while waiting.
-    f.Timer_ResultCellSerialTimer(0);check(f.filesSaved==1);
+    f.FinishMeasurement();check(f.resultSaveStep==RESULT_WAIT_SERIAL&&f.filesSaved==1&&plc.pc[PC_D_IROCV_COMPLETE]==0);
+    f.FinishMeasurement();check(f.filesSaved==1);
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==1);
     plc.CellSerialReadComplete=true;
-    f.Timer_ResultCellSerialTimer(0);check(f.filesSaved==2&&!f.resultCellSerialPending);
-    check(plc.pc[PC_D_IROCV_COMPLETE]==1&&f.reads==1);
-    f.tray.cell_count=0; // Manual full measurement: occupancy array remains authoritative.
-    f.Timer_ResultCellSerialTimer(0);check(f.filesSaved==2);
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==2&&f.resultSaveStep==RESULT_WAIT_PLC_SEND);
+    check(plc.pc[PC_D_IROCV_COMPLETE]==0&&f.reads==1);
+    plc.transmitted=true;clockTime+=1000;f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_COMPLETE);
+    f.tray.cell_count=0;
     f.StartResultCellSerialRead();f.testSerialCount=399;plc.CellSerialReadComplete=true;
-    f.Timer_ResultCellSerialTimer(0);
-    check(f.resultCellSerialError&&f.filesSaved==2&&plc.pc[PC_D_IROCV_COMPLETE]==0);
-    f.CompleteResultCellSerialRead(true);check(f.filesSaved==3&&!f.resultCellSerialPending);
-    f.StartResultCellSerialRead();clockTime+=10001;f.Timer_ResultCellSerialTimer(0);
-    check(f.resultCellSerialError&&f.filesSaved==3);
-    f.CompleteResultCellSerialRead(true);check(f.filesSaved==3); // SAVE cannot use an incomplete snapshot.
+    f.Timer_ResultSaveTimer(0);
+    check(f.resultSaveStep==RESULT_WAIT_OPERATOR&&f.filesSaved==2&&plc.pc[PC_D_IROCV_COMPLETE]==0);
+    f.CompleteResultCellSerialRead(true);check(f.filesSaved==3&&f.resultSaveStep==RESULT_WAIT_PLC_SEND);
+    f.StartResultCellSerialRead();clockTime+=10001;f.Timer_ResultSaveTimer(0);
+    check(f.resultSaveStep==RESULT_WAIT_OPERATOR&&f.filesSaved==3);
+    f.CompleteResultCellSerialRead(true);check(f.filesSaved==3);
     f.StartResultCellSerialRead();f.testSerialCount=400;plc.CellSerialReadComplete=true;
-    f.Timer_ResultCellSerialTimer(0);check(f.filesSaved==4); // Retry saves without remeasurement.
-    f.StartResultCellSerialRead();f.CancelResultCellSerialRead();plc.CellSerialReadComplete=true;
-    f.Timer_ResultCellSerialTimer(0);check(f.filesSaved==4); // Forced out/reset cancels late save.
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==4);
+    f.StartResultCellSerialRead();f.CancelResultSave();plc.CellSerialReadComplete=true;
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==4);
     clockTime=0xFFFFFF00UL;f.StartResultCellSerialRead();clockTime=0x00002700UL;
-    f.Timer_ResultCellSerialTimer(0);check(f.resultCellSerialError); // Tick rollover.
-    printf("PASS: %d checks: capture/continuous/chunks/TCP/reconnect/final save/errors/cancel\n",checks);
+    f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_WAIT_OPERATOR);
+
+    TTotalForm retry;
+    retry.failFileAttempts=1;retry.FinishMeasurement();
+    check(retry.fileAttempts==2&&retry.filesSaved==1&&retry.acc_totaltray==1);
+    TTotalForm fail;
+    fail.failFileAttempts=3;fail.FinishMeasurement();
+    check(fail.fileAttempts==2&&fail.filesSaved==0&&fail.acc_totaltray==1);
+    check(fail.resultSaveStep==RESULT_WAIT_PLC_SEND);
+    plc.transmitted=true;clockTime+=1000;plc.connected=false;
+    fail.Timer_ResultSaveTimer(0);check(fail.completeNotifications==0);
+    plc.connected=true;clockTime+=999;fail.Timer_ResultSaveTimer(0);check(fail.completeNotifications==0);
+    ++clockTime;fail.Timer_ResultSaveTimer(0);check(fail.completeNotifications==1);
+    TTotalForm cancel;
+    cancel.FinishMeasurement();cancel.CancelResultSave();plc.transmitted=true;clockTime+=2000;
+    cancel.Timer_ResultSaveTimer(0);check(cancel.completeNotifications==0&&plc.pc[PC_D_IROCV_COMPLETE]==0);
+
+    TTotalForm judge;
+    judge.tray.after_value[0]=999;judge.tray.ocv_value[0]=0;check(judge.JudgeCellResult(0)==CELL_CONTACT_NG);
+    judge.tray.after_value[0]=25;check(judge.JudgeCellResult(0)==CELL_IR_NG);
+    judge.tray.after_value[0]=15;check(judge.JudgeCellResult(0)==CELL_OCV_NG);
+    judge.tray.ocv_value[0]=2000;check(judge.JudgeCellResult(0)==CELL_OK);
+    judge.tray.after_value[0]=25;judge.tray.ocv_value[0]=0;
+    judge.tray.cell[1]=0;judge.tray.after_value[1]=999;
+    judge.SetRemeasureListAfter();judge.BadInformation();judge.WriteResultCode();
+    check(judge.measNgCount==1&&plc.pc[PC_D_IROCV_NG_COUNT]==2);
+    check(plc.resultCodes[0]==1&&plc.resultCodes[1]==1&&plc.resultCodes[2]==0);
+    check(judge.acc_totaltray==1&&judge.acc_finalng==1);
+    judge.PrepareRemeasureItems();check(judge.retest.pendingItems[0]==3);
+    judge.RemeasureExcute();check(judge.lastCommand.s=="IR*"&&judge.retest.cell[0]==CELL_IR_NG);
+    judge.RemeasureExcute();check(judge.retest.waitingItem==1); // Still waiting: no OCV yet.
+    judge.tray.after_value[0]=15;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
+    judge.RemeasureExcute();check(judge.lastCommand.s=="OCV"&&judge.retest.waitingItem==2);
+    judge.tray.ocv_value[0]=2000;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
+    judge.RemeasureExcute();check(judge.retest.cell[0]==CELL_OK&&judge.acc_totaltray==1&&judge.acc_finalng==0);
+    TTotalForm display;
+    display.irValueReceived[0]=false;display.ocvValueReceived[0]=false;
+    display.UpdateCellDisplay(0);check(display.panel[0]->Color==display.clLine);
+    display.tray.after_value[0]=25;display.irValueReceived[0]=true;
+    display.UpdateCellDisplay(0);check(display.panel[0]->Color==display.clBadIr);
+    display.ocvValueReceived[0]=true;display.UpdateCellDisplay(0);
+    check(display.panel[0]->Color==display.clBadIr); // 정상 OCV가 IR NG 표시를 지우지 않는다.
+    display.tray.after_value[0]=999;display.tray.ocv_value[0]=0;
+    display.UpdateCellDisplay(0);check(display.panel[0]->Color==display.clMeasureFail);
+    check(measureUI.ocvColor[0]==display.pocv->Color); // 상세 OCV NG도 함께 표시.
+    display.tray.after_value[0]=15;display.UpdateCellDisplay(0);
+    check(display.panel[0]->Color==display.pocv->Color); // 이전 CE 색상에 고정되지 않는다.
+    display.tray.ocv_value[0]=2000;display.panel[0]->Color=display.clMeasureFail;
+    display.UpdateCellDisplay(0);check(display.panel[0]->Color==display.clBothCheck);
+    printf("PASS: %d checks: serial/result states/retry/delay/cancel/judgment/NG/retest\n",checks);
     return 0;
 }

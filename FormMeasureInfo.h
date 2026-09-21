@@ -1,3 +1,4 @@
+#include "SiteConfig.h"
 //---------------------------------------------------------------------------
 
 #ifndef FormMeasureInfoH
@@ -154,10 +155,10 @@ private:	// User declarations
 	void __fastcall WriteResultFile2(AnsiString fn, int msaIndex, int nTotalCount);
     void __fastcall MakeReportFile(AnsiString fn_data, AnsiString fn_report, int nTotalCount);
 public:		// User declarations
-	TPanel *pir[400];
-	TPanel *pocv[400];
-    TPanel *pUIx[20];
-	TPanel *pUIy[20];
+	TPanel *pir[MAXCHANNEL];
+	TPanel *pocv[MAXCHANNEL];
+    TPanel *pUIx[CELL_COLUMN_COUNT];
+	TPanel *pUIy[CELL_ROW_COUNT];
     int stage;
 	DISPLAY_INF0 display;
 	int nStep;

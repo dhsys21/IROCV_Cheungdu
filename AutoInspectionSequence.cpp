@@ -13,7 +13,7 @@ TAutoInspectionData::TAutoInspectionData()
 }
 
 // 자동 검사 시작 단계를 TRAY IN 대기로 설정한다.
-TAutoInspectionSequence::TAutoInspectionSequence() : currentStep(STEP_WAIT_TRAY_IN), waitCount(0) {}
+TAutoInspectionSequence::TAutoInspectionSequence() : probeRemeasureDoneCount(0), automaticProbeRemeasure(false), currentStep(STEP_WAIT_TRAY_IN), waitCount(0) {}
 
 // 다음 단계로 변경하고 해당 단계의 대기 횟수를 0으로 초기화한다.
 void TAutoInspectionSequence::SetStep(TAutoInspectionStep step)
@@ -26,6 +26,8 @@ void TAutoInspectionSequence::SetStep(TAutoInspectionStep step)
 void TAutoInspectionSequence::Initialize(const TAutoInspectionSetting &setting)
 {
     sequenceSetting = setting;
+    probeRemeasureDoneCount = 0;
+    automaticProbeRemeasure = false;
     SetStep(STEP_WAIT_TRAY_IN);
 }
 
@@ -41,6 +43,8 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
                 SetStep(STEP_WAIT_TRAY_OUT);
                 return CMD_BYPASS_TRAY_OUT;
             }
+            probeRemeasureDoneCount = 0;
+            automaticProbeRemeasure = false;
             SetStep(STEP_READ_TRAY_ID);
             return CMD_TRAY_IN;
 
@@ -82,6 +86,8 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             if(!data.probeClosed || !data.trayIn) return CMD_NONE;
             {
                 const bool remeasure = currentStep == STEP_WAIT_REMEASURE_PROBE_CLOSE;
+                if(remeasure && automaticProbeRemeasure) ++probeRemeasureDoneCount;
+                automaticProbeRemeasure = false;
                 SetStep(STEP_WAIT_MEASURE_COMPLETE); // Set before sending; duplicate ticks cannot start twice.
                 return remeasure ? CMD_REMEASURE_START : CMD_MEASURE_START;
             }
@@ -128,6 +134,7 @@ bool TAutoInspectionSequence::StartRemeasure()
     // Existing remeasure buttons are also usable from the idle/manual UI.
     if(currentStep != STEP_WAIT_TRAY_IN && currentStep != STEP_WAIT_NG_ERROR && currentStep != STEP_WAIT_PROBE_OPEN)
         return false;
+    automaticProbeRemeasure = false; // 작업자가 직접 누른 재측정은 자동 횟수와 구분.
     SetStep(STEP_WAIT_REMEASURE_PROBE_CLOSE);
     return true;
 }
@@ -152,6 +159,13 @@ bool TAutoInspectionSequence::IsNgCountError(int ngCount, int cellCount, int ngL
 TAutoInspectionCommand TAutoInspectionSequence::AutomaticTrayOut(int ngCount, int cellCount, int ngLimit)
 {
     if(currentStep != STEP_WAIT_PROBE_OPEN) return CMD_NONE;
+    // 2번 재측정은 NG 알람 기준과 별개: 불량이 남고 설정 횟수가 남으면 먼저 재개폐.
+    if(ngCount > 0 && probeRemeasureDoneCount < sequenceSetting.probeRemeasureCount)
+    {
+        automaticProbeRemeasure = true;
+        SetStep(STEP_WAIT_REMEASURE_PROBE_CLOSE);
+        return CMD_REQUEST_PROBE_REMEASURE;
+    }
     if(IsNgCountError(ngCount, cellCount, ngLimit))
     {
         SetStep(STEP_WAIT_NG_ERROR);
@@ -165,6 +179,7 @@ TAutoInspectionCommand TAutoInspectionSequence::AutomaticTrayOut(int ngCount, in
 TAutoInspectionCommand TAutoInspectionSequence::ForceTrayOut()
 {
     if(currentStep == STEP_WAIT_TRAY_OUT) return CMD_NONE;
+    automaticProbeRemeasure = false;
     SetStep(STEP_WAIT_TRAY_OUT);
     return CMD_TRAY_OUT;
 }

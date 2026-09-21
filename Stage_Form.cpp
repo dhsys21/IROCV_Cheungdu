@@ -225,7 +225,8 @@ void __fastcall TTotalForm::ErrorMsg(int err)
 
 //---------------------------------------------------------------------------
 // 상태 이미지·상태 지속 시간·PLC TRAY/PROBE 표시등을 갱신한다. 자동 검사 단계는 변경하지 않는다.
-void __fastcall TTotalForm::StatusTimerTimer(TObject *Sender)
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 StatusTimerTimer. 설비 상태·알람·PLC 표시 갱신는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 {
 	RefreshStageStatusImage();
 	if(stage.now_status != stage.alarm_status){

@@ -21,12 +21,10 @@ TTotalForm *TotalForm;
 __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	: TForm(Owner)
 {
-	remLimit = 50;
 	senCnt = 0;
 	CurrentGrp = GrpMain;
 	sock = NULL;
 
-    clAverageOver = cl_avgover->Color;
 	clNoCell = cl_no->Color;
 	clBadIr = cl_badir->Color;
 	clCellError = cl_badocv->Color;
@@ -44,11 +42,14 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
     autoInspectionBusy = false;
     config.cell_serial_continuous_read = false;
     cellSerialContinuousReadForTray = false;
-    resultCellSerialPending = false;
-    resultCellSerialError = false;
-    resultCellSerialStartTime = 0;
+    resultSaveStep = RESULT_IDLE;
+    resultSaveStartTime = 0;
+    trayResultCounted = false;
+    countedFinalIrNg = 0;
+    config.probeRemeasureCount = 0;
+    config.closedProbeRemeasureMaxNgCount = DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT;
     tray.ams = false; // 설정을 처음 읽을 때 진행 중인 측정으로 오인하지 않게 한다.
-    NgCount = 0;
+    measNgCount = 0;
     showStartupChannelNumbers = true;
     memset(irValueReceived, 0, sizeof(irValueReceived));
     memset(ocvValueReceived, 0, sizeof(ocvValueReceived));
@@ -62,6 +63,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	pProcess[6] = pProbeOpen;
 	pProcess[7] = pTrayOut;
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::FormShow(TObject *Sender)
 {
@@ -100,7 +102,7 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
 	this->Height = pback->Height;
 
     pnlConfig->Width = 600;
-    pnlConfig->Height = 540; // [CELL SERIAL 공통] 수신 방식 설정 영역 포함.
+    pnlConfig->Height = 644; // [CELL SERIAL 공통] 수신 방식 설정 영역 포함.
 
 	this->ReadCaliboffset();                      //20171202 개별보정을 위해 추가
 
@@ -115,12 +117,14 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
     acc_finalng = 0;
     acc_totaltray = 0;
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::FormClose(TObject *Sender, TCloseAction &Action)
 {
-    CancelResultCellSerialRead();
+    CancelResultSave();
 	WriteRemeasureInfo();
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // 설정 및 측정 화면 버튼
@@ -136,6 +140,7 @@ void __fastcall TTotalForm::btnSaveConfigClick(TObject *Sender)
 		pnlConfig->Visible = false;
 	}
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
 {
@@ -152,6 +157,7 @@ void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
     RemeasureForm->Top = 70;
 	RemeasureForm->Visible = true;
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::localTestClick(TObject *Sender)
 {
@@ -160,6 +166,7 @@ void __fastcall TTotalForm::localTestClick(TObject *Sender)
 	MeasureInfoForm->pLocal->Visible = true;
 	bLocal = true;
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // 재측정 / 배출 버튼: 실제 처리는 Stage_Measurement / Stage_AutoInspection
@@ -168,23 +175,27 @@ void __fastcall TTotalForm::RemeasureAllBtnClick(TObject *Sender)
 {
     StartFullRemeasure();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::RemeasureBtnClick(TObject *Sender)
 {
     StartSelectedRemeasure();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::TrayOutBtnClick(TObject *Sender)
 {
     ForceTrayOut();
     VisibleBox(GrpMain);
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::AlarmConfirmBtnClick(TObject *Sender)
 {
 	MainBtnClick(Sender);
 
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnTrayOutClick(TObject *Sender)
 {
@@ -192,12 +203,13 @@ void __fastcall TTotalForm::btnTrayOutClick(TObject *Sender)
         ManualTrayOut();
 	}
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // 목록 그리기 / 트레이 ID 입력
 //===========================================================================
 void __fastcall TTotalForm::BadListDrawItem(TCustomListView *Sender,
-	  TListItem *Item, TRect &Rect, TOwnerDrawState TAutoInspectionStep)
+	  TListItem *Item, TRect &Rect, TOwnerDrawState drawState)
 {
 	if(Item->Selected ) {
 		BadList->Canvas->Brush->Color = clYellow;
@@ -225,6 +237,7 @@ void __fastcall TTotalForm::BadListDrawItem(TCustomListView *Sender,
 	}
 
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::pTrayidDblClick(TObject *Sender)
 {
@@ -233,6 +246,7 @@ void __fastcall TTotalForm::pTrayidDblClick(TObject *Sender)
 	editTrayId->Visible = true;
 	editTrayId->SetFocus();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::editTrayIdKeyDown(TObject *Sender, WORD &Key,
 		TShiftState Shift)
@@ -255,6 +269,7 @@ void __fastcall TTotalForm::editTrayIdKeyDown(TObject *Sender, WORD &Key,
 //		editTrayId->Visible = false;
 //	}
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // 장비 초기화 / 채널 마우스 표시 / 운전 모드
@@ -267,6 +282,7 @@ void __fastcall TTotalForm::btnResetClick(TObject *Sender)
 		OldSenCmd = "NONE";
 	}
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::ChInfoMouseEnter(TObject *Sender)
 {
@@ -277,6 +293,7 @@ void __fastcall TTotalForm::ChInfoMouseEnter(TObject *Sender)
 	pIrValue->Caption = FormatFloat("0.00",tray.after_value[pnl->Tag]);
 	pOcvValue->Caption = FormatFloat("0.0",tray.ocv_value[pnl->Tag]);
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::ChInfoMouseLeave(TObject *Sender)
 {
@@ -286,6 +303,7 @@ void __fastcall TTotalForm::ChInfoMouseLeave(TObject *Sender)
 	pOcvValue->Caption = "";
 
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::MainBtnClick(TObject *Sender)
 {
@@ -298,6 +316,7 @@ void __fastcall TTotalForm::MainBtnClick(TObject *Sender)
 			break;
 	}
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::chkBypassMouseUp(TObject *Sender,
       TMouseButton Button, TShiftState Shift, int X, int Y)
@@ -308,6 +327,7 @@ void __fastcall TTotalForm::chkBypassMouseUp(TObject *Sender,
 		}
 	}
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnManualClick(TObject *Sender)
 {
@@ -317,6 +337,7 @@ void __fastcall TTotalForm::btnManualClick(TObject *Sender)
 	this->CmdManualMod(true);
 	VisibleBox(GrpLocal);
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnAutoClick(TObject *Sender)
 {
@@ -328,6 +349,7 @@ void __fastcall TTotalForm::btnAutoClick(TObject *Sender)
 	this->CmdManualMod(false);
 	VisibleBox(GrpMain);
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // 화면 열기 / 암호 / 교정
@@ -339,6 +361,7 @@ void __fastcall TTotalForm::btnMeasureInfoClick(TObject *Sender)
     // 수신한 값은 유지하고, 미수신 항목은 채널/위치 번호를 표시한다.
     InitMeasureForm();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnConfigClick(TObject *Sender)
 {
@@ -354,11 +377,13 @@ void __fastcall TTotalForm::btnConfigClick(TObject *Sender)
 //	pnlConfig->Left = 10;
 //	pnlConfig->Top = 50;
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::PasswordBtnClick(TObject *Sender)
 {
     CheckPassword();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::PassEditKeyPress(TObject *Sender, System::WideChar &Key)
 {
@@ -368,11 +393,13 @@ void __fastcall TTotalForm::PassEditKeyPress(TObject *Sender, System::WideChar &
         Key = 0;
     }
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::cancelBtn2Click(TObject *Sender)
 {
     pnlConfig->Visible = false;
 }
+//---------------------------------------------------------------------------
 
 
 void __fastcall TTotalForm::localCaliClick(TObject *Sender)
@@ -385,12 +412,14 @@ void __fastcall TTotalForm::localCaliClick(TObject *Sender)
 
     CaliForm->ReadCaliboffset();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnCloseConnConfigClick(TObject *Sender)
 {
     chkCellSerialContinuousRead->Checked = config.cell_serial_continuous_read;
 	pnlConfig->Visible = false;
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // PLC / 측정장비 연결 버튼
@@ -401,11 +430,13 @@ void __fastcall TTotalForm::btnConnectPLCClick(TObject *Sender)
     ReadSystemInfo();
 	Mod_PLC->Connect(PLC_IPADDRESS, PLC_PLCPORT, PLC_PCPORT);
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnDisConnectPLCClick(TObject *Sender)
 {
     Mod_PLC->DisConnect();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::Timer_PLCConnectTimer(TObject *Sender)
 {
@@ -413,6 +444,7 @@ void __fastcall TTotalForm::Timer_PLCConnectTimer(TObject *Sender)
 		Mod_PLC->Connect(PLC_IPADDRESS, PLC_PLCPORT, PLC_PCPORT);
     Timer_PLCConnect->Enabled = false;
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnConnectIROCVClick(TObject *Sender)
 {
@@ -426,6 +458,7 @@ void __fastcall TTotalForm::btnConnectIROCVClick(TObject *Sender)
 			this->ReContactTimerTimer(ReContactTimer);
 	}
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnDisConnectIROCVClick(TObject *Sender)
 {
@@ -433,6 +466,7 @@ void __fastcall TTotalForm::btnDisConnectIROCVClick(TObject *Sender)
     config.recontact = true;
     this->ReContactTimerTimer(ReContactTimer);
 }
+//---------------------------------------------------------------------------
 
 //===========================================================================
 // 기존 시험용 UI / 속도 / 대기 시간 표시
@@ -442,6 +476,7 @@ void __fastcall TTotalForm::Button1Click(TObject *Sender)
 	SetRemeasureList();
     CmdTrayOut();
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::pReadyClick(TObject *Sender)
 {
@@ -450,20 +485,103 @@ void __fastcall TTotalForm::pReadyClick(TObject *Sender)
 										"Select [Tray Out] or [Restart]");
     Form_Error->Tag = this->Tag;
 }
+//---------------------------------------------------------------------------
 
-void __fastcall TTotalForm::chkUseAverageClick(TObject *Sender)
-{
-    if(chkUseAverage->Checked == true) config.average_use = true;
-    else config.average_use = false;
-}
+
 
 void __fastcall TTotalForm::rbSpeedFastClick(TObject *Sender)
 {
     TRadioButton *rb = (TRadioButton*)Sender;
     CmdSpeedSet(rb->Tag);
 }
+//---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::GroupBox8DblClick(TObject *Sender)
 {
     editMaxDelayTime->Visible = !editMaxDelayTime->Visible;
 }
+//---------------------------------------------------------------------------
+
+// 디자이너 이벤트 진입점: DFM에 연결된 함수는 이 폼 파일에 유지한다.
+// 실제 처리만 Stage_*.cpp로 분리해 이벤트 이동과 역할별 코드 정리를 함께 유지한다.
+// 자동측정 타이머 처리: Stage_AutoInspection.cpp의 ProcessAutoInspection를 확인한다.
+void __fastcall TTotalForm::Timer_AutoInspectionTimer(TObject *Sender)
+{
+    ProcessAutoInspection(Sender);
+}
+//---------------------------------------------------------------------------
+
+// 시리얼 수신·결과 저장·PLC 완료 대기: Stage_Measurement.cpp의 ProcessResultSave를 확인한다.
+void __fastcall TTotalForm::Timer_ResultSaveTimer(TObject *Sender)
+{
+    ProcessResultSave(Sender);
+}
+//---------------------------------------------------------------------------
+
+// 설비 상태·알람·PLC 표시 갱신: Stage_Form.cpp의 ProcessStageStatus를 확인한다.
+void __fastcall TTotalForm::StatusTimerTimer(TObject *Sender)
+{
+    ProcessStageStatus(Sender);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 연결 완료: Stage_comm.cpp의 ProcessEquipmentConnected를 확인한다.
+void __fastcall TTotalForm::ClientConnect(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+    ProcessEquipmentConnected(Sender, Socket);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 연결 진행: Stage_comm.cpp의 ProcessEquipmentConnecting를 확인한다.
+void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+    ProcessEquipmentConnecting(Sender, Socket);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 소켓 오류: Stage_comm.cpp의 ProcessEquipmentSocketError를 확인한다.
+void __fastcall TTotalForm::ClientError(TObject *Sender,
+	  TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
+{
+    ProcessEquipmentSocketError(Sender, Socket, ErrorEvent, ErrorCode);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 연결 해제: Stage_comm.cpp의 ProcessEquipmentDisconnected를 확인한다.
+void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+    ProcessEquipmentDisconnected(Sender, Socket);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 재접속: Stage_comm.cpp의 ProcessEquipmentReconnect를 확인한다.
+void __fastcall TTotalForm::ReContactTimerTimer(TObject *Sender)
+{
+    ProcessEquipmentReconnect(Sender);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 수신 프레임 분리: Stage_comm.cpp의 ProcessEquipmentSocketRead를 확인한다.
+void __fastcall TTotalForm::ClientRead(TObject *Sender,
+	  TCustomWinSocket *Socket)
+{
+    ProcessEquipmentSocketRead(Sender, Socket);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 수신 큐 처리: Stage_comm.cpp의 ProcessEquipmentReceiveQueue를 확인한다.
+void __fastcall TTotalForm::rxTimerTimer(TObject *Sender)
+{
+    ProcessEquipmentReceiveQueue(Sender);
+}
+//---------------------------------------------------------------------------
+
+// 측정장비 송신 큐 처리: Stage_comm.cpp의 ProcessEquipmentSendQueue를 확인한다.
+void __fastcall TTotalForm::SendTimerTimer(TObject *Sender)
+{
+    ProcessEquipmentSendQueue(Sender);
+}
+//---------------------------------------------------------------------------

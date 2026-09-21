@@ -32,6 +32,8 @@ TAutoInspectionSetting __fastcall TTotalForm::GetAutoInspectionSetting()
 {
     TAutoInspectionSetting setting;
     int delay = editMaxDelayTime->Text.ToIntDef(50);
+    setting.probeRemeasureCount = config.probeRemeasureCount < 0 ? 0 : config.probeRemeasureCount;
+    setting.closedProbeRemeasureMaxNgCount = config.closedProbeRemeasureMaxNgCount;
     setting.startDelayCount = delay < 0 ? 0 : delay;
     setting.cellSerialTimeoutCount = 50;
     return setting;
@@ -53,13 +55,14 @@ void __fastcall TTotalForm::ResetAutoInspection()
 {
     TAutoInspectionStep previous = autoInspection.GetStep();
     autoInspection.Initialize(GetAutoInspectionSetting());
-    NgCount = 0;
+    measNgCount = 0;
     WriteAutoStepLog(previous, "Reset");
 }
 
 //---------------------------------------------------------------------------
 // 자동모드 타이머: 오류 확인 → PLC 상태 읽기 → 단계 판단 → 명령 1회 실행 → 화면 갱신.
-void __fastcall TTotalForm::Timer_AutoInspectionTimer(TObject *Sender)
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 Timer_AutoInspectionTimer. 자동측정 타이머 처리는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
 {
     if(autoInspectionBusy) return;
     TAutoTimerGuard guard(autoInspectionBusy);
@@ -74,6 +77,9 @@ void __fastcall TTotalForm::Timer_AutoInspectionTimer(TObject *Sender)
         // advance during a connection failure, PLC error or local-mode block.
         if(CheckAutoInspectionError()) return;
 
+        // 측정 중 설정 변경으로 재측정 조건이 달라지지 않도록 두 값을 함께 고정한다.
+        autoInspection.SetNextTrayRemeasureSettings(
+            config.closedProbeRemeasureMaxNgCount, config.probeRemeasureCount);
         SetAutoReadySignalToPLC();
         TAutoInspectionData data = ReadAutoInspectionData();
         TAutoInspectionStep previous = autoInspection.GetStep();
@@ -154,7 +160,7 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
     data.bypass = chkBypass->Checked;
     data.cycleMode = chkCycle->Checked;
     data.cellCount = tray.cell_count;
-    data.ngCount = NgCount;
+    data.ngCount = measNgCount;
     data.ngLimit = editNgAlarmCount->Text.ToIntDef(10);
     if(autoInspection.GetStep() == STEP_READ_TRAY_ID)
     {
@@ -215,8 +221,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             showStartupChannelNumbers = false;
             PLCInitialization();
             InitTrayStruct();
-            NgCount = 0;
-            Mod_PLC->PLC_Write_Result = false;
+            measNgCount = 0;
             DisplayStatus(nREADY);
             break;
         case CMD_READ_TRAY_ID:
@@ -250,6 +255,32 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
                 WritePLCLog("AutoInspection", "CELL SERIAL Count Error. Serial = " +
                     IntToStr(data.serialCount) + ", CellData = " + IntToStr(data.cellCount));
             Form_CellIdError->DisplayErrorMessage(this->Tag);
+            break;
+        case CMD_REQUEST_PROBE_REMEASURE:
+            // 프로브 열림을 실제 확인한 뒤 요청한다. 기존 전체/불량셀 선택 기준 유지.
+            CancelResultSave();
+            resultSaveStep = RESULT_IDLE;
+            Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
+            // 재개폐 횟수와 닫힘 재측정 NG 제한은 별개. 전체/선택 전환은 사이트 정책 유지.
+            if(data.ngCount > PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD)
+            {
+                OnInit(); // 시리얼/파일명/트레이 누계는 보존한다.
+                memset(&retest, 0, sizeof(retest));
+                retest.waitingChannel = -1;
+                tray.rem_mode = 0;
+            }
+            else
+            {
+                PrepareRemeasureItems();
+                retest.re_excute = true;
+                tray.rem_mode = 1;
+            }
+            resultSaveStep = RESULT_IDLE;
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
+            WritePLCLog("PROBE REMEASURE", "Request " +
+                IntToStr(autoInspection.GetProbeRemeasureDoneCount() + 1) + "/" +
+                IntToStr(autoInspection.GetSetting().probeRemeasureCount));
             break;
         case CMD_MEASURE_START:
         case CMD_REMEASURE_START:
@@ -303,12 +334,18 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
 void __fastcall TTotalForm::DisplayAutoInspectionStep()
 {
     // [CELL SERIAL 공통] 최종 수신 대기/오류 문구를 기존 측정 대기 문구로 덮어쓰지 않는다.
-    if(resultCellSerialPending)
+    if(resultSaveStep == RESULT_WAIT_PLC_SEND)
     {
         Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
-        DisplayProcess(sBarcode, "CELL SERIAL", resultCellSerialError
+        DisplayProcess(sFinish, "RESULT SAVE", " Waiting for PLC results / COMPLETE delay ... ");
+        return;
+    }
+    if(IsWaitingForResultSave())
+    {
+        Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
+        DisplayProcess(sBarcode, "CELL SERIAL", (resultSaveStep == RESULT_WAIT_OPERATOR)
             ? AnsiString(" CELL SERIAL error - waiting for SAVE / CANCEL ... ")
-            : AnsiString(" Reading CELL SERIAL before result save ... "), resultCellSerialError);
+            : AnsiString(" Reading CELL SERIAL before result save ... "), (resultSaveStep == RESULT_WAIT_OPERATOR));
         return;
     }
     TAutoInspectionStep step = autoInspection.GetStep();
@@ -366,9 +403,10 @@ void __fastcall TTotalForm::DisplayAutoInspectionStep()
 // 예외 발생 단계와 원인을 기록하고 PC 자동 진행을 정지한다. 설비 비상정지 명령은 아니다.
 void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
 {
-    CancelResultCellSerialRead();
+    CancelResultSave();
     TAutoInspectionStep previous = autoInspection.GetStep();
     autoInspection.StopWithError();
+    resultSaveStep = RESULT_ERROR;
     // This stops PC sequence progression; it is NOT a PLC emergency stop.
     // Do not issue new probe/tray movements on an exception.
     Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
@@ -384,7 +422,7 @@ void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
 void __fastcall TTotalForm::AcceptCellSerialData()
 {
     // [CELL SERIAL 공통] 결과 저장 전 오류와 측정 시작 전 오류의 복귀 위치를 구분한다.
-    if(resultCellSerialPending && resultCellSerialError)
+    if(resultSaveStep == RESULT_WAIT_OPERATOR)
     {
         try { CompleteResultCellSerialRead(true); }
         catch(const Exception &error) { StopAutoInspectionOnError(error.Message); }
@@ -409,7 +447,7 @@ void __fastcall TTotalForm::AcceptCellSerialData()
 void __fastcall TTotalForm::RetryCellSerialRead()
 {
     // [CELL SERIAL 공통] 결과 저장 전 재시도는 측정 대신 시리얼만 다시 읽는다.
-    if(resultCellSerialPending && resultCellSerialError)
+    if(resultSaveStep == RESULT_WAIT_OPERATOR)
     {
         Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
         StartResultCellSerialRead();
@@ -448,9 +486,11 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
         return false;
     }
     WriteAutoStepLog(previous, "Operator remeasure");
+    CancelResultSave();
+    resultSaveStep = RESULT_IDLE;
     tray.ams = false;
     tray.amf = false;
-    NgCount = 0;
+    measNgCount = 0;
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
     return true;
@@ -476,7 +516,7 @@ void __fastcall TTotalForm::CmdTrayOut()
 // 수동 또는 운영자가 승인한 배출: NG를 다시 검사하지 않고 TRAY OUT을 요청한다.
 void __fastcall TTotalForm::ForceTrayOut()
 {
-    CancelResultCellSerialRead(); // [CELL SERIAL 공통] 배출 이후 지연된 결과 저장 방지.
+    CancelResultSave(); // [CELL SERIAL 공통] 배출 이후 지연된 결과 저장 방지.
     try
     {
         TAutoInspectionStep previous = autoInspection.GetStep();

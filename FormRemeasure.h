@@ -1,3 +1,4 @@
+#include "SiteConfig.h"
 //---------------------------------------------------------------------------
 
 #ifndef FormRemeasureH
@@ -112,10 +113,10 @@ public:		// User declarations
     int *acc_totaltray;
     int *acc_finalng;
 
-	TPanel *pre[400];
-	TPanel *pch[400];
-	TPanel *pUIx[20];
-	TPanel *pUIy[20];
+	TPanel *pre[MAXCHANNEL];
+	TPanel *pch[MAXCHANNEL];
+	TPanel *pUIx[CELL_COLUMN_COUNT];
+	TPanel *pUIy[CELL_ROW_COUNT];
 	int stage;
 
 	__fastcall TRemeasureForm(TComponent* Owner);

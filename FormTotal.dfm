@@ -1177,33 +1177,10 @@ object TotalForm: TTotalForm
         ParentFont = False
         TabOrder = 4
       end
-      object cl_avgover: TPanel
-        AlignWithMargins = True
-        Left = 7
-        Top = 191
-        Width = 125
-        Height = 29
-        Margins.Left = 2
-        Margins.Top = 1
-        Margins.Right = 2
-        Margins.Bottom = 1
-        Align = alTop
-        BevelOuter = bvNone
-        Caption = 'Avg. Fail'
-        Color = 1365955
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 5
-      end
       object cl_badir: TPanel
         AlignWithMargins = True
         Left = 7
-        Top = 222
+        Top = 191
         Width = 125
         Height = 29
         Margins.Left = 2
@@ -1221,12 +1198,12 @@ object TotalForm: TTotalForm
         Font.Style = [fsBold]
         ParentBackground = False
         ParentFont = False
-        TabOrder = 6
+        TabOrder = 5
       end
       object cl_badocv: TPanel
         AlignWithMargins = True
         Left = 7
-        Top = 253
+        Top = 222
         Width = 125
         Height = 29
         Margins.Left = 2
@@ -1244,12 +1221,12 @@ object TotalForm: TTotalForm
         Font.Style = [fsBold]
         ParentBackground = False
         ParentFont = False
-        TabOrder = 7
+        TabOrder = 6
       end
       object cl_no: TPanel
         AlignWithMargins = True
         Left = 7
-        Top = 284
+        Top = 253
         Width = 125
         Height = 29
         Margins.Left = 2
@@ -1290,7 +1267,7 @@ object TotalForm: TTotalForm
         Font.Style = [fsBold]
         ParentBackground = False
         ParentFont = False
-        TabOrder = 9
+        TabOrder = 7
       end
     end
     object pnlTrayIn: TAdvSmoothPanel
@@ -5545,7 +5522,7 @@ object TotalForm: TTotalForm
     Left = 728
     Top = 34
     Width = 600
-    Height = 540
+    Height = 644
     Cursor = crDefault
     CanMove = True
     Caption.Location = plCenterCenter
@@ -5579,33 +5556,6 @@ object TotalForm: TTotalForm
     Visible = False
     TabOrder = 7
     TMSStyle = 0
-    object grpCellSerialReadMode: TGroupBox
-      Left = 10
-      Top = 465
-      Width = 580
-      Height = 68
-      Caption = 'CELL SERIAL'
-      TabOrder = 14
-      object chkCellSerialContinuousRead: TCheckBox
-        Left = 10
-        Top = 18
-        Width = 558
-        Height = 20
-        Caption = 'Continuous read (PLC keeps data until TRAY OUT)'
-        Hint = 'Save to apply. Changes during inspection apply to the next tray.'
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 0
-      end
-      object lblCellSerialReadMode: TLabel
-        Left = 10
-        Top = 43
-        Width = 558
-        Height = 16
-        AutoSize = False
-        Caption = 'Unchecked: capture at TRAY IN / Checked: refresh before result save'
-      end
-    end
     object Label5: TLabel
       Left = 18
       Top = 10
@@ -5618,6 +5568,35 @@ object TotalForm: TTotalForm
       Font.Name = 'Tahoma'
       Font.Style = [fsBold, fsUnderline]
       ParentFont = False
+    end
+    object grpCellSerialReadMode: TGroupBox
+      Left = 10
+      Top = 569
+      Width = 580
+      Height = 68
+      Caption = 'CELL SERIAL'
+      TabOrder = 6
+      object lblCellSerialReadMode: TLabel
+        Left = 10
+        Top = 43
+        Width = 558
+        Height = 16
+        AutoSize = False
+        Caption = 
+          'Unchecked: capture at TRAY IN / Checked: refresh before result s' +
+          'ave'
+      end
+      object chkCellSerialContinuousRead: TCheckBox
+        Left = 10
+        Top = 18
+        Width = 558
+        Height = 20
+        Hint = 'Save to apply. Changes during inspection apply to the next tray.'
+        Caption = 'Continuous read (PLC keeps data until TRAY OUT)'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+      end
     end
     object GroupBox4: TGroupBox
       Left = 10
@@ -6053,7 +6032,7 @@ object TotalForm: TTotalForm
       Left = 10
       Top = 349
       Width = 580
-      Height = 110
+      Height = 214
       BevelInner = bvRaised
       BiDiMode = bdLeftToRight
       BorderStyle = bsSingle
@@ -6061,6 +6040,32 @@ object TotalForm: TTotalForm
       ParentBiDiMode = False
       ParentBackground = False
       TabOrder = 5
+      object lblProbeRemeasureCount: TLabel
+        Left = 10
+        Top = 158
+        Width = 380
+        Height = 17
+        AutoSize = False
+        Caption = 'PROBE OPEN/CLOSE REMEASURE COUNT (0 = OFF)'
+      end
+      object lblClosedProbeRemeasureMaxNgCount: TLabel
+        Left = 10
+        Top = 118
+        Width = 380
+        Height = 17
+        AutoSize = False
+        Caption = 'PROBE CLOSED: REMEASURE IF NG <= (0 = OFF)'
+      end
+      object lblRemeasureSettingsHelp: TLabel
+        Left = 10
+        Top = 188
+        Width = 550
+        Height = 17
+        AutoSize = False
+        Caption = 
+          'Closed: max. NG cells / Open-close: extra cycles. SAVE applies t' +
+          'o next tray.'
+      end
       object grpIrSpec: TGroupBox
         Left = 5
         Top = 10
@@ -6225,40 +6230,6 @@ object TotalForm: TTotalForm
         ParentShowHint = False
         ShowHint = False
         TabOrder = 2
-        object RemeasureChk: TCheckBox
-          Left = 238
-          Top = 5
-          Width = 111
-          Height = 17
-          Caption = 'Auto Remeasure'
-          Color = 15658734
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 0
-        end
-        object chkRemBypass: TCheckBox
-          Left = 4
-          Top = 5
-          Width = 218
-          Height = 17
-          Caption = 'Tray out when finish remeasure'
-          Checked = True
-          Color = 15658734
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          State = cbChecked
-          TabOrder = 1
-        end
       end
       object Panel15: TPanel
         Left = 6
@@ -6300,11 +6271,14 @@ object TotalForm: TTotalForm
         TabOrder = 4
         Text = '20'
       end
-      object RemeasureEdit: TEdit
+      object editProbeRemeasureCount: TEdit
         Left = 401
-        Top = 215
+        Top = 151
         Width = 100
         Height = 30
+        Hint = 
+          'Maximum additional open/close cycles per tray. 0 = off. Stops ea' +
+          'rly when all cells pass. Save applies to the next tray.'
         Alignment = taCenter
         AutoSize = False
         Font.Charset = DEFAULT_CHARSET
@@ -6316,128 +6290,33 @@ object TotalForm: TTotalForm
         ImeName = 'Microsoft Office IME 2007'
         NumbersOnly = True
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 5
-        Text = '2'
+        Text = '0'
       end
-      object grpIrAvg: TGroupBox
-        Left = 5
+      object editClosedProbeRemeasureMaxNgCount: TEdit
+        Left = 401
         Top = 111
-        Width = 280
-        Height = 50
-        Caption = 'IR SPEC (m'#937')'
+        Width = 100
+        Height = 30
+        Hint = 
+          'While probes remain closed, remeasure NG cells once when NG coun' +
+          't is 1 through this value (inclusive). 0 = off. Save applies to ' +
+          'the next tray.'
+        Alignment = taCenter
+        AutoSize = False
         Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
+        Font.Color = clBlack
         Font.Height = -13
         Font.Name = 'Tahoma'
         Font.Style = [fsBold]
+        NumbersOnly = True
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 6
-        object Label6: TLabel
-          Left = 20
-          Top = 28
-          Width = 30
-          Height = 16
-          Caption = 'Avg.'
-        end
-        object Label10: TLabel
-          Left = 130
-          Top = 28
-          Width = 82
-          Height = 16
-          Caption = 'Range (+/-)'
-        end
-        object editIrAvg: TEdit
-          Left = 60
-          Top = 22
-          Width = 50
-          Height = 24
-          Alignment = taCenter
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ImeName = 'Microsoft Office IME 2007'
-          ParentFont = False
-          TabOrder = 0
-          Text = '2'
-        end
-        object editIrRange: TEdit
-          Left = 220
-          Top = 22
-          Width = 50
-          Height = 24
-          Alignment = taCenter
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ImeName = 'Microsoft Office IME 2007'
-          ParentFont = False
-          TabOrder = 1
-          Text = '2'
-        end
-      end
-      object grpOcvAvg: TGroupBox
-        Left = 290
-        Top = 111
-        Width = 280
-        Height = 50
-        Caption = 'OCV SPEC (mV)'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -13
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentFont = False
-        TabOrder = 7
-        object Label11: TLabel
-          Left = 20
-          Top = 28
-          Width = 30
-          Height = 16
-          Caption = 'Avg.'
-        end
-        object Label12: TLabel
-          Left = 130
-          Top = 28
-          Width = 82
-          Height = 16
-          Caption = 'Range (+/-)'
-        end
-        object editOcvAvg: TEdit
-          Left = 60
-          Top = 22
-          Width = 50
-          Height = 24
-          Alignment = taCenter
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ImeName = 'Microsoft Office IME 2007'
-          ParentFont = False
-          TabOrder = 0
-          Text = '2'
-        end
-        object editOcvRange: TEdit
-          Left = 220
-          Top = 22
-          Width = 50
-          Height = 24
-          Alignment = taCenter
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -13
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ImeName = 'Microsoft Office IME 2007'
-          ParentFont = False
-          TabOrder = 1
-          Text = '2'
-        end
+        Text = '49'
       end
       object Panel2: TPanel
         Left = 291
@@ -6476,28 +6355,9 @@ object TotalForm: TTotalForm
         ImeName = 'Microsoft Office IME 2007'
         NumbersOnly = True
         ParentFont = False
-        TabOrder = 9
+        TabOrder = 7
         Text = '5'
       end
-    end
-    object chkUseAverage: TCheckBox
-      Left = 456
-      Top = 7
-      Width = 128
-      Height = 25
-      Caption = 'Use Average'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clBlue
-      Font.Height = -16
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = False
-      TabOrder = 6
-      Visible = False
-      OnClick = chkUseAverageClick
-      OnMouseUp = chkBypassMouseUp
     end
     object GroupBox6: TGroupBox
       Left = 10
@@ -6827,10 +6687,10 @@ object TotalForm: TTotalForm
     Left = 646
     Top = 8
   end
-  object Timer_ResultCellSerial: TTimer
+  object Timer_ResultSave: TTimer
     Enabled = False
     Interval = 200
-    OnTimer = Timer_ResultCellSerialTimer
+    OnTimer = Timer_ResultSaveTimer
     Left = 810
     Top = 8
   end

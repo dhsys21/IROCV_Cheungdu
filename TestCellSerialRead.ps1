@@ -20,9 +20,11 @@ $plcMethods = Read-TestMethods 'Modplc.cpp' 'TMod_PLC' @(
     'IsCellSerialReadComplete','IsCellSerialReadActive','GetCellSerialReadWords',
     'PLC_Recv_Interface_CellSerial','ClientSocket_PLCRead')
 $formMethods = Read-TestMethods 'Stage_TrayData.cpp' 'TTotalForm' @(
-    'ApplyCellSerialReadMode','StartResultCellSerialRead','ShowResultCellSerialError',
-    'CompleteResultCellSerialRead','Timer_ResultCellSerialTimer','CancelResultCellSerialRead')
-$formMethods += "`r`n" + (Read-TestMethods 'Stage_Measurement.cpp' 'TTotalForm' @('CmdForceStop'))
+    'ApplyCellSerialReadMode')
+$formMethods += "`r`n" + (Read-TestMethods 'FormTotal.cpp' 'TTotalForm' @('Timer_ResultSaveTimer'))
+$formMethods += "`r`n" + (Read-TestMethods 'Stage_Measurement.cpp' 'TTotalForm' @('StartResultCellSerialRead','ShowResultCellSerialError','CompleteResultCellSerialRead','ProcessResultSave','CancelResultSave','FinishMeasurement','SaveMeasurementResult','JudgeCellResult','SetRemeasureList','SetRemeasureListAfter','PrepareRemeasureItems','RemeasureExcute'))
+$formMethods += "`r`n" + (Read-TestMethods 'Stage_PlcData.cpp' 'TTotalForm' @('BadInformation','WriteResultCode'))
+$formMethods += "`r`n" + (Read-TestMethods 'Stage_CellDisplay.cpp' 'TTotalForm' @('UpdateCellDisplay'))
 $template = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'CellSerialReadTests.cpp.in'),[Text.Encoding]::UTF8)
 $testSource = $template.Replace('@@PLC_METHODS@@',$plcMethods).Replace('@@FORM_METHODS@@',$formMethods)
 $testOutput = Join-Path ([IO.Path]::GetTempPath()) ('irocv-serial-tests-' + [Guid]::NewGuid().ToString('N'))
@@ -31,7 +33,7 @@ New-Item -ItemType Directory -Path $testOutput | Out-Null
 [IO.File]::WriteAllText((Join-Path $testOutput 'CellSerialReadTests.cpp'),$testSource,$encoding)
 Push-Location $testOutput
 try {
-    & $Compiler '-tWC' '-eCellSerialReadTests.exe' 'CellSerialReadTests.cpp'
+    & $Compiler '-tWC' "-I$PSScriptRoot" '-eCellSerialReadTests.exe' 'CellSerialReadTests.cpp'
     if($LASTEXITCODE -ne 0) { throw "CELL SERIAL test compile failed: $LASTEXITCODE" }
     & .\CellSerialReadTests.exe
     if($LASTEXITCODE -ne 0) { throw "CELL SERIAL tests failed: $LASTEXITCODE" }

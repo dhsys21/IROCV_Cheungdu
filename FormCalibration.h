@@ -1,3 +1,4 @@
+#include "SiteConfig.h"
 //---------------------------------------------------------------------------
 
 #ifndef FormCalibrationH
@@ -81,10 +82,10 @@ public:		// User declarations
 
 	int stage;
 
-	TPanel *pmeasure[400];
-	TEdit *pstandard[400];
-	TPanel *pch[400];
-	TPanel *poffset[400];
+	TPanel *pmeasure[MAXCHANNEL];
+	TEdit *pstandard[MAXCHANNEL];
+	TPanel *pch[MAXCHANNEL];
+	TPanel *poffset[MAXCHANNEL];
 
     bool modecalib;
 

@@ -224,7 +224,8 @@ void __fastcall TTotalForm::MakeData(int tx_mode, AnsiString cmd, AnsiString par
 
 //---------------------------------------------------------------------------
 // 장비 소켓 연결 완료: 송신 상태와 화면을 초기화하고 현재 모드 정보를 적용한다.
-void __fastcall TTotalForm::ClientConnect(TObject *Sender,
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientConnect. 측정장비 연결 완료는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	pConInfo->Font->Color = clrConInfo->Color;
@@ -246,7 +247,8 @@ void __fastcall TTotalForm::ClientConnect(TObject *Sender,
 
 //---------------------------------------------------------------------------
 // 장비 소켓 연결 중 표시를 갱신한다. 연결 완료로 간주하지 않는다.
-void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientConnecting. 측정장비 연결 진행는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentConnecting(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	pConInfo->Font->Color = clRed;
@@ -256,7 +258,8 @@ void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
 
 //---------------------------------------------------------------------------
 // 장비 소켓 오류 처리: 연결을 닫고 미연결 이미지를 갱신한다.
-void __fastcall TTotalForm::ClientError(TObject *Sender,
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientError. 측정장비 소켓 오류는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentSocketError(TObject *Sender,
 	  TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
 {
 	AnsiString str;
@@ -269,7 +272,8 @@ void __fastcall TTotalForm::ClientError(TObject *Sender,
 
 //---------------------------------------------------------------------------
 // 장비 연결 해제 처리: 연결 표시를 바꾸며 자동 검사 단계 자체는 보존한다.
-void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientDisconnect. 측정장비 연결 해제는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentDisconnected(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	pConInfo->Font->Color = clRed;
@@ -281,7 +285,8 @@ void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
 
 //---------------------------------------------------------------------------
 // 설정된 재접속 조건에 따라 장비 소켓 연결을 다시 요청한다.
-void __fastcall TTotalForm::ReContactTimerTimer(TObject *Sender)
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 ReContactTimerTimer. 측정장비 재접속는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentReconnect(TObject *Sender)
 {
 		ReContactTimer->Enabled = false;
 		if(config.recontact == true)
@@ -290,7 +295,8 @@ void __fastcall TTotalForm::ReContactTimerTimer(TObject *Sender)
 
 //---------------------------------------------------------------------------
 // 장비 소켓에서 받은 문자열을 수신 큐에 넣는다. 명령별 처리는 OnReceiveStage에서 한다.
-void __fastcall TTotalForm::ClientRead(TObject *Sender,
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientRead. 측정장비 수신 프레임 분리는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentSocketRead(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	AnsiString msg;
@@ -320,7 +326,8 @@ void __fastcall TTotalForm::ClientRead(TObject *Sender,
 
 //---------------------------------------------------------------------------
 // 수신 큐를 읽어 COMM_RECEIVE 메시지로 전달한다.
-void __fastcall TTotalForm::rxTimerTimer(TObject *Sender)
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 rxTimerTimer. 측정장비 수신 큐 처리는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentReceiveQueue(TObject *Sender)
 {
 	AnsiString RxStr;
 	bool flag;
@@ -335,7 +342,8 @@ void __fastcall TTotalForm::rxTimerTimer(TObject *Sender)
 
 //---------------------------------------------------------------------------
 // 예약된 장비 명령의 송신·재전송을 처리한다. 자동 검사 진행 타이머와 구분한다.
-void __fastcall TTotalForm::SendTimerTimer(TObject *Sender)
+// 디자이너 이벤트 진입점은 FormTotal.cpp의 SendTimerTimer. 측정장비 송신 큐 처리는 이 파일에서 유지한다.
+void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 {
 	if(q_cmd.empty() == false){
 		SendTimer->Interval = 700;
@@ -545,7 +553,8 @@ void __fastcall TTotalForm::StageLocalRemeasure(bool frm)
 	if(GrpRemeasure->Visible == true){
 		VisibleBox(GrpMain);
 
-		if(retest.cnt_error > remLimit){
+        // OP 박스 요청의 전체/선택 기준. Config의 닫힘 유지 재측정 제한과는 별개.
+		if(retest.cnt_error > PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD){
 			retest.re_excute = false;	// 전체 재측정
 		}
 		else{
@@ -683,7 +692,7 @@ void __fastcall TTotalForm::InitEquipStatus(int cmd)
 	switch(cmd)
 	{
 		case RDY:
-			//this->CmdForceStop();
+			//this->FinishMeasurement();
 			//this->DisplayStatus(nIN);
 			//ProcessError("Tray In", "",  "Please select the following actions : ", "Inspection start or  eject tray");
 			break;

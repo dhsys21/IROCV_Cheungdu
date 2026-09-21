@@ -245,7 +245,7 @@ void __fastcall TMeasureInfoForm::MakeUIPanel(AnsiString type)
             pUIy[index] = new TPanel(this);
 
             SetUIOption(pUIx[index], nx, Panel35->Top, nw, nh, index);
-            pUIx[index]->Caption = (index * 20 + 1);
+            pUIx[index]->Caption = (index * CELL_COLUMN_COUNT + 1);
             SetUIOption(pUIy[index], Panel35->Width-nw-9, ny-1, nw, nh, index);
             pUIx[index]->ParentBackground = false;
             pUIy[index]->ParentBackground = false;
@@ -405,7 +405,7 @@ void __fastcall TMeasureInfoForm::btnAutoClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::btnStopClick(TObject *Sender)
 {
-	BaseForm->nForm[stage]->CmdForceStop();
+	BaseForm->nForm[stage]->FinishMeasurement();
     Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_PROB_CLOSE, 0);
 	BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MANUAL STOP");
 	probetimer->Enabled = true;
@@ -520,7 +520,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 
 				if(msaCount >= Edit1->Text.ToInt())
 				{
-					BaseForm->nForm[stage]->CmdForceStop();
+					BaseForm->nForm[stage]->FinishMeasurement();
                     MakeReportFile(msaFN, msaReportFN, msaCount);
 					BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA COMPLETE");
 					msaTimer->Enabled = false;
@@ -529,7 +529,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 					MSA_COUNT_CHECK->Caption = "";
 				}else
 				{
-					BaseForm->nForm[stage]->CmdForceStop();
+					BaseForm->nForm[stage]->FinishMeasurement();
 					BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA Nth-TIME STOP");
 					nStep = 0;
 				}
@@ -563,7 +563,7 @@ void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 
 void __fastcall TMeasureInfoForm::advMSAStopClick(TObject *Sender)
 {
-	BaseForm->nForm[stage]->CmdForceStop();
+	BaseForm->nForm[stage]->FinishMeasurement();
 	BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA TIMER STOP BUTTON");
 	msaTimer->Enabled = false;
 
@@ -646,8 +646,8 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 	AnsiString filename, str;
 	AnsiString dir;
 	AnsiString ir, ocv, repeat, serial;
-	AnsiString irValues[100][400], ocvValues[100][400];
-	double irSum, ocvSum, irMin[400], irMax[400], ocvMin[400], ocvMax[400];
+	AnsiString irValues[100][MAXCHANNEL], ocvValues[100][MAXCHANNEL];
+	double irSum, ocvSum, irMin[MAXCHANNEL], irMax[MAXCHANNEL], ocvMin[MAXCHANNEL], ocvMax[MAXCHANNEL];
 	AnsiString tempvalue;
 
 	int nRepeat = 0;
@@ -661,17 +661,17 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 		sList_value->Delimiter=',';
 		sList_value->DelimitedText = sList_line->Strings[i].Trim();
 
-		for(int nIndex = 1; nIndex < 401; nIndex++){
+		for(int nIndex = 1; nIndex < MAXCHANNEL + 1; nIndex++){
 			if(sList_value->Strings[nIndex].Trim() == "") tempvalue = "0";
 			else tempvalue = sList_value->Strings[nIndex].Trim();
 //			irValues[nRepeat][nIndex - 1] = sList_value->Strings[nIndex].Trim();
 			irValues[nRepeat][nIndex - 1] = tempvalue;
 		}
-		for(int nIndex = 401; nIndex < 801; nIndex++){
+		for(int nIndex = MAXCHANNEL + 1; nIndex < MAXCHANNEL * 2 + 1; nIndex++){
 			if(sList_value->Strings[nIndex].Trim() == "") tempvalue = "0";
 			else tempvalue = sList_value->Strings[nIndex].Trim();
 //			ocvValues[nRepeat][nIndex - 257] = sList_value->Strings[nIndex].Trim();
-			ocvValues[nRepeat][nIndex - 401] = tempvalue;
+			ocvValues[nRepeat][nIndex - (MAXCHANNEL + 1)] = tempvalue;
 		}
 		nRepeat++;
 	}
@@ -804,13 +804,13 @@ void __fastcall TMeasureInfoForm::initChart(int ir_min, int ir_max, int ocv_min,
 	OcvChart->LeftAxis->Minimum = ocv_min - 200;
 
 	IrChart->Series[1]->AddXY(1, ir_max);
-	IrChart->Series[1]->AddXY(400, ir_max);
+	IrChart->Series[1]->AddXY(MAXCHANNEL, ir_max);
 	OcvChart->Series[1]->AddXY(1, ocv_max);
-	OcvChart->Series[1]->AddXY(400, ocv_max);
+	OcvChart->Series[1]->AddXY(MAXCHANNEL, ocv_max);
 
 	IrChart->Series[2]->AddXY(1, ir_min);
-	IrChart->Series[2]->AddXY(400, ir_min);
+	IrChart->Series[2]->AddXY(MAXCHANNEL, ir_min);
 	OcvChart->Series[2]->AddXY(1, ocv_min);
-	OcvChart->Series[2]->AddXY(400, ocv_min);
+	OcvChart->Series[2]->AddXY(MAXCHANNEL, ocv_min);
 }
 //---------------------------------------------------------------------------

@@ -46,7 +46,7 @@ void __fastcall TTotalForm::InitMeasureForm()
 	MeasureInfoForm->display.measure_result = tray.measure_result;	// ir 결과
 	MeasureInfoForm->pstage->Caption = lblTitle->Caption;
     for(int i = 0; i < MAXCHANNEL; ++i)
-        SetProcessColor(i, GetColorIndex(panel[i]->Color));
+        UpdateCellDisplay(i);
 
 //	MeasureInfoForm->pLocal->Visible = false;
 //	MeasureInfoForm->grpRemeasure->Visible = false;
@@ -63,8 +63,8 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 
 	if(type == "3" || type == "4")
 	{
-    	nh = (pBase->Height-21)/LINECOUNT;
-		nw = (pBase->Width-21)/LINECOUNT;
+        nh = (pBase->Height-21)/CELL_ROW_COUNT;
+		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
 		nx = pBase->Width - nw - 1;
 //		nx = 1;
 //		ny = pBase->Height - nh - 1;
@@ -91,7 +91,7 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 			panel[index]->Tag = index;
 	//		panel[index]->Caption = index;
 
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
+			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
 			panel[index]->ShowHint = true;
 
 			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
@@ -117,8 +117,8 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 	}
 	else if(type == "1")
 	{
-        nh = (pBase->Height-21)/LINECOUNT;
-		nw = (pBase->Width-21)/LINECOUNT;
+        nh = (pBase->Height-21)/CELL_ROW_COUNT;
+		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
 //		nx = pBase->Width - nw - 1;
 		nx = 1;
 		ny = pBase->Height - nh - 1;
@@ -146,7 +146,7 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 			panel[index]->Tag = index;
 	//		panel[index]->Caption = index;
 
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
+			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
 			panel[index]->ShowHint = true;
 
 			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
@@ -166,8 +166,8 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 	}
     else if(type == "2")
 	{
-        nh = (pBase->Height-21)/LINECOUNT;
-		nw = (pBase->Width-21)/LINECOUNT;
+        nh = (pBase->Height-21)/CELL_ROW_COUNT;
+		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
 		nx = pBase->Width - nw - 1;
 		ny = pBase->Height - nh - 1;
 
@@ -188,7 +188,7 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 			panel[index]->Tag = index;
 	//		panel[index]->Caption = index;
 
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
+			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
 			panel[index]->ShowHint = true;
 
 			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
@@ -208,8 +208,8 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 	}
     else if(type == "5")
 	{
-        nh = (pBase->Height-21)/LINECOUNT;
-		nw = (pBase->Width-21)/LINECOUNT;
+        nh = (pBase->Height-21)/CELL_ROW_COUNT;
+		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
 		nx = pBase->Width - nw - 1;
 		ny = pBase->Height - nh - 1;
 
@@ -230,7 +230,7 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 			panel[index]->Tag = index;
 	//		panel[index]->Caption = index;
 
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
+			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
 			panel[index]->ShowHint = true;
 
 			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
@@ -254,92 +254,47 @@ void __fastcall TTotalForm::MakePanel(AnsiString type)
 
 //---------------------------------------------------------------------------
 // 셀 유무/판정 색상 갱신. IR·OCV 수신 여부를 각각 확인하여 실제 값 또는 미수신 공란을 표시한다.
-void __fastcall TTotalForm::SetProcessColor(int index, int clr)
+void __fastcall TTotalForm::UpdateCellDisplay(int index)
 {
-	TColor basic;
-
-	TColor irColor = cl_line->Color;
-	TColor ocvColor = cl_line->Color;
-	AnsiString sir, socv;
-	basic = panel[index]->Color;
-
-    // IR과 OCV는 따로 도착한다. 수신 전 숫자를 측정값으로 표시하지 않는다.
-    sir = "";
-    socv = "";
+    if(index < 0 || index >= MAXCHANNEL) return;
+    // 색상은 결과 표시 전용. 기존 패널 색상과 IR/OCV 수신 순서에 의존하지 않는다.
+    TColor basic = clLine, irColor = clLine, ocvColor = clLine;
+    AnsiString sir = "", socv = "";
     if(showStartupChannelNumbers)
     {
         sir = IntToStr(index + 1);
-        socv = IntToStr(index / LINECOUNT + 1) + "-" + IntToStr(index % LINECOUNT + 1);
+        socv = IntToStr(index / CELL_COLUMN_COUNT + 1) + "-" + IntToStr(index % CELL_COLUMN_COUNT + 1);
     }
-
-	if(tray.cell[index] == 1){
-
-        if(irValueReceived[index])
-			sir = FormatFloat("0.00", tray.after_value[index]);
-        if(ocvValueReceived[index])
-			socv = FormatFloat("0.0", tray.ocv_value[index]);
-
-		switch(clr){
-			case Line:
-				basic = clLine;
-				break;
-			case BadIr:
-				basic = clBadIr;
-				irColor = clBadIr;
-				break;
-			case AverageOver:
-				basic = clAverageOver;
-                irColor = clAverageOver;
-                break;
-			case BadOcv:
-				if(basic == clMeasureFail)
-				{
-					irColor = clMeasureFail;
-				}
-				else
-				{
-					basic = pocv->Color;
-					ocvColor = pocv->Color;
-                }
-				break;
-			case IrCheck:
-				if(basic != clMeasureFail){
-					if(basic == clOcvCheck)basic = clBothCheck;
-					else basic = clIrCheck;
-				}else{
-					basic = clIrCheck;
-				}
-				break;
-			case OcvCheck:
-				if(basic == clMeasureFail){
-					irColor = clMeasureFail;
-				}else{
-					if(basic == clIrCheck)basic = clBothCheck;
-					else basic = clOcvCheck;
-				}
-				break;
-			case MeasureFail:
-				basic = clMeasureFail;
-				irColor = clMeasureFail;
-				break;
-		}
-	}
-	else{
-        if(irValueReceived[index] || ocvValueReceived[index])
+    const bool hasIr = irValueReceived[index], hasOcv = ocvValueReceived[index];
+    if(tray.cell[index] == 1)
+    {
+        bool irNg = false, ocvNg = false;
+        if(hasIr)
         {
-            sir = "NO";
-            socv = "CELL";
+            sir = FormatFloat("0.00", tray.after_value[index]);
+            irNg = tray.after_value[index] < config.ir_min || tray.after_value[index] > config.ir_max;
+            irColor = tray.after_value[index] == 999 ? clMeasureFail : (irNg ? clBadIr : clIrCheck);
         }
-
-		if(clr == CellError){
-			WriteCommLog("ETC", "CellError");
-			basic = clCellError;
-		}else{
-			if(basic == clLine)basic = clNoCell;
-		}
-		irColor = basic;
-		ocvColor = basic;
-	}
+        if(hasOcv)
+        {
+            socv = FormatFloat("0.0", tray.ocv_value[index]);
+            ocvNg = tray.ocv_value[index] < config.ocv_min || tray.ocv_value[index] > config.ocv_max;
+            ocvColor = ocvNg ? pocv->Color : clOcvCheck;
+        }
+        if(hasIr && tray.after_value[index] == 999) basic = clMeasureFail;
+        else if(hasIr && irNg) basic = clBadIr;
+        else if(hasOcv && ocvNg) basic = pocv->Color;
+        else if(hasIr && hasOcv) basic = clBothCheck;
+        else if(hasIr) basic = clIrCheck;
+        else if(hasOcv) basic = clOcvCheck;
+    }
+    else if(hasIr || hasOcv)
+    {
+        sir = "NO"; socv = "CELL";
+        basic = ((hasIr && tray.measure_result[index] == GO) ||
+                 (hasOcv && tray.ocv_value[index] > 1500)) ? clCellError : clNoCell;
+        irColor = ocvColor = basic;
+    }
 
 	panel[index]->Color = basic;
 
@@ -351,20 +306,6 @@ void __fastcall TTotalForm::SetProcessColor(int index, int clr)
 }
 
 //---------------------------------------------------------------------------
-// 현재 채널 패널 색상을 표시용 상태 번호로 변환한다.
-int __fastcall TTotalForm::GetColorIndex(TColor clr)
-{
-	if(clr == clNoCell)		return 1;
-	if(clr == clBadIr )		return 2;
-	if(clr == clCellError )	return 3;
-	if(clr == clLine )		return 4;
-	if(clr == clIrCheck )	return 5;
-	if(clr == clOcvCheck )	return 6;
-	if(clr == clBothCheck)	return 7;
-	if(clr==clMeasureFail)	return 8;
-	if(clr == pocv->Color) 	return 9;
-	return 100;
-}
 
 //---------------------------------------------------------------------------
 // CELL DATA의 셀 유무를 채널 화면에 반영한다. 측정값 수신 여부는 변경하지 않는다.
@@ -373,11 +314,10 @@ void __fastcall TTotalForm::DisplayTrayInfo()
 	
 	for(int i=0; i<MAXCHANNEL; ++i){
 		if(tray.cell[i] == 1){
-			SetProcessColor(i, Line);
+			UpdateCellDisplay(i);
 		}
 		else{
-			SetProcessColor(i, NoCell);
+			UpdateCellDisplay(i);
 		}
 	}
 }
-

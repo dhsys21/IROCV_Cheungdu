@@ -37,8 +37,6 @@ const int OcvCheck = 6;
 const int BothCheck = 7;
 const int MeasureFail = 8;
 const int BadOcv = 9;
-const int AverageOver = 10;
-
 using namespace std;
 
 
@@ -190,8 +188,7 @@ __published:	// IDE-managed Components
 	TImage *Image5;
 	TAdvSmoothButton *localTest;
 	TTimer *Timer_AutoInspection;
-    TTimer *Timer_ResultCellSerial;
-    void __fastcall Timer_ResultCellSerialTimer(TObject *Sender);
+    TTimer *Timer_ResultSave;
     TGroupBox *grpCellSerialReadMode;
     TCheckBox *chkCellSerialContinuousRead;
     TLabel *lblCellSerialReadMode;
@@ -292,11 +289,13 @@ __published:	// IDE-managed Components
 	TPanel *Panel8;
 	TEdit *ocvEdit2;
 	TPanel *Panel7;
-	TCheckBox *RemeasureChk;
-	TCheckBox *chkRemBypass;
 	TPanel *Panel15;
 	TEdit *editNgAlarmCount;
-	TEdit *RemeasureEdit;
+    TEdit *editProbeRemeasureCount;
+    TLabel *lblProbeRemeasureCount;
+    TEdit *editClosedProbeRemeasureMaxNgCount;
+    TLabel *lblClosedProbeRemeasureMaxNgCount;
+    TLabel *lblRemeasureSettingsHelp;
 	TAdvSmoothButton *btnMeasureInfo;
 	TPanel *pBase;
 	TPanel *Panel1;
@@ -305,21 +304,9 @@ __published:	// IDE-managed Components
 	TPanel *cl_ocv;
 	TPanel *cl_irocv;
 	TPanel *pocv;
-	TPanel *cl_avgover;
 	TPanel *cl_badir;
 	TPanel *cl_badocv;
 	TPanel *cl_no;
-	TGroupBox *grpIrAvg;
-	TLabel *Label6;
-	TLabel *Label10;
-	TEdit *editIrAvg;
-	TEdit *editIrRange;
-	TGroupBox *grpOcvAvg;
-	TLabel *Label11;
-	TLabel *Label12;
-	TEdit *editOcvAvg;
-	TEdit *editOcvRange;
-	TCheckBox *chkUseAverage;
 	TPanel *cl_ce;
 	TTimer *TrayDownTimer;
 	TTimer *TrayUpTimer;
@@ -346,6 +333,8 @@ __published:	// IDE-managed Components
 	TRadioButton *rbSpeedFast;
 	TRadioButton *rbSpeedSlow;
 	TEdit *editMaxDelayTime;
+    // IDE 관리 영역: 컴포넌트 선언은 위에, 이벤트 함수 선언은 아래에 모은다.
+    // 이벤트 선언 뒤에 컴포넌트를 추가하면 폼 디자이너가 해석하지 못할 수 있다.
 	void __fastcall ClientConnect(TObject *Sender,
 		  TCustomWinSocket *Socket);
 	void __fastcall ClientDisconnect(TObject *Sender,
@@ -361,14 +350,13 @@ __published:	// IDE-managed Components
 	void __fastcall ClientRead(TObject *Sender, TCustomWinSocket *Socket);
 	void __fastcall btnRemeasureInfoClick(TObject *Sender);
 	void __fastcall RemeasureAllBtnClick(TObject *Sender);
-	//void __fastcall BitmapBtn5Click(TObject *Sender);
 	void __fastcall RemeasureBtnClick(TObject *Sender);
 	void __fastcall localTestClick(TObject *Sender);
 	void __fastcall AlarmConfirmBtnClick(TObject *Sender);
 	void __fastcall btnAutoClick(TObject *Sender);
 	void __fastcall btnTrayOutClick(TObject *Sender);
 	void __fastcall BadListDrawItem(TCustomListView *Sender, TListItem *Item,
-          TRect &Rect, TOwnerDrawState TAutoInspectionStep);
+          TRect &Rect, TOwnerDrawState drawState);
 	void __fastcall StatusTimerTimer(TObject *Sender);
 	void __fastcall pTrayidDblClick(TObject *Sender);
 	void __fastcall editTrayIdKeyDown(TObject *Sender, WORD &Key,
@@ -384,6 +372,7 @@ __published:	// IDE-managed Components
 	void __fastcall btnMeasureInfoClick(TObject *Sender);
 	void __fastcall TrayOutBtnClick(TObject *Sender);
 	void __fastcall Timer_AutoInspectionTimer(TObject *Sender);
+    void __fastcall Timer_ResultSaveTimer(TObject *Sender);
 	void __fastcall btnConfigClick(TObject *Sender);
 	void __fastcall localCaliClick(TObject *Sender);
 	void __fastcall btnCloseConnConfigClick(TObject *Sender);
@@ -393,7 +382,6 @@ __published:	// IDE-managed Components
 	void __fastcall btnConnectIROCVClick(TObject *Sender);
 	void __fastcall Button1Click(TObject *Sender);
 	void __fastcall pReadyClick(TObject *Sender);
-	void __fastcall chkUseAverageClick(TObject *Sender);
 	void __fastcall btnDisConnectIROCVClick(TObject *Sender);
 	void __fastcall PasswordBtnClick(TObject *Sender);
 	void __fastcall cancelBtn2Click(TObject *Sender);
@@ -402,24 +390,54 @@ __published:	// IDE-managed Components
 	void __fastcall GroupBox8DblClick(TObject *Sender);
 
 private:
+    // 디자이너 이벤트 정의는 반드시 FormTotal.cpp에 둔다. 아래는 역할별 파일의 실제 처리 함수.
+    // Stage_AutoInspection.cpp: 자동측정 타이머 처리. Timer_AutoInspectionTimer에서 한 번 호출한다.
+    void __fastcall ProcessAutoInspection(TObject *Sender);
+    // Stage_Measurement.cpp: 시리얼 수신·결과 저장·PLC 완료 대기. Timer_ResultSaveTimer에서 한 번 호출한다.
+    void __fastcall ProcessResultSave(TObject *Sender);
+    // Stage_Form.cpp: 설비 상태·알람·PLC 표시 갱신. StatusTimerTimer에서 한 번 호출한다.
+    void __fastcall ProcessStageStatus(TObject *Sender);
+    // Stage_comm.cpp: 측정장비 연결 완료. ClientConnect에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentConnected(TObject *Sender, TCustomWinSocket *Socket);
+    // Stage_comm.cpp: 측정장비 연결 진행. ClientConnecting에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentConnecting(TObject *Sender, TCustomWinSocket *Socket);
+    // Stage_comm.cpp: 측정장비 소켓 오류. ClientError에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentSocketError(TObject *Sender, TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode);
+    // Stage_comm.cpp: 측정장비 연결 해제. ClientDisconnect에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentDisconnected(TObject *Sender, TCustomWinSocket *Socket);
+    // Stage_comm.cpp: 측정장비 재접속. ReContactTimerTimer에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentReconnect(TObject *Sender);
+    // Stage_comm.cpp: 측정장비 수신 프레임 분리. ClientRead에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentSocketRead(TObject *Sender, TCustomWinSocket *Socket);
+    // Stage_comm.cpp: 측정장비 수신 큐 처리. rxTimerTimer에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentReceiveQueue(TObject *Sender);
+    // Stage_comm.cpp: 측정장비 송신 큐 처리. SendTimerTimer에서 한 번 호출한다.
+    void __fastcall ProcessEquipmentSendQueue(TObject *Sender);
     // [CELL SERIAL 공통] 트레이 초기화 시 확정한 모드. 검사 도중 설정 저장으로 바꾸지 않는다.
     bool cellSerialContinuousReadForTray;
-    // [CELL SERIAL 공통] 결과 저장 직전 수신 대기/오류 선택 대기. 자동/수동 모두 동일하게 처리한다.
-    bool resultCellSerialPending;
-    bool resultCellSerialError;
-    DWORD resultCellSerialStartTime; // 새 전체 수신 요청 시각. 10초 제한에 사용.
+    // Stage_Measurement.cpp: 자동/수동 공통 결과 마감. 상태에 따라 시리얼/PLC 타이머를 진행한다.
+    TResultSaveStep resultSaveStep; // 파일/시리얼/PLC 완료 대기를 한 상태로 관리.
+    DWORD resultSaveStartTime; // 현재 비동기 대기 시작 시각(ms).
+    AnsiString resultFileName; // 같은 트레이 재측정은 같은 파일을 덮어쓴다.
+    bool trayResultCounted; // 생산 트레이 수는 한 번만 집계한다.
+    int countedFinalIrNg; // 재측정으로 바뀐 최종 IR/접촉 NG 누계를 보정한다.
     // [CELL SERIAL 공통] 저장 설정을 다음 트레이/대기 상태에 적용한다.
     void __fastcall ApplyCellSerialReadMode();
     // [CELL SERIAL 공통] 결과 저장용 새 전체 수신을 요청하고 전용 타이머로 완료를 기다린다.
     void __fastcall StartResultCellSerialRead();
     // [CELL SERIAL 공통] 결과 저장 시리얼 오류창. 자동 배출/COMPLETE/파일 저장은 보류한다.
     void __fastcall ShowResultCellSerialError(AnsiString reason);
-    // [CELL SERIAL 공통] 초기화/강제 배출 시 지연된 결과 저장을 취소한다.
-    void __fastcall CancelResultCellSerialRead();
+    // 초기화/강제 배출 시 모든 지연 저장·완료 신호를 취소한다.
+    void __fastcall CancelResultSave();
     // [CELL SERIAL 공통] 수신/개수 확인 후 또는 운영자 SAVE 승인 후 최종 결과를 저장한다.
     void __fastcall CompleteResultCellSerialRead(bool operatorOverride);
-    // [CELL SERIAL 공통] 시리얼 준비 이후의 공통 NG/측정값/결과파일/COMPLETE 처리.
-    void __fastcall SaveMeasurementResult();
+    // NG/PLC 버퍼/파일 작성. 수동은 true로 호출해 시리얼 없이 저장하며 자동은 기존 검사 유지.
+    // 실제 COMPLETE는 Timer_ResultSave에서 지연 출력한다.
+    void __fastcall SaveMeasurementResult(bool saveWithoutCellSerial = false);
+    // 측정값만으로 현재 셀 판정. 이전 색상/이전 불량의 영향을 받지 않는다.
+    int __fastcall JudgeCellResult(int index);
+    // 재측정할 IR/OCV 항목을 현재 값으로 준비한다. 최종 판정값은 변경하지 않는다.
+    void __fastcall PrepareRemeasureItems();
     // ===== 데이터: 기존 접근 범위 유지 =====
     // 현재 표시 중인 화면 그룹.
     TGroupBox *CurrentGrp;
@@ -439,7 +457,6 @@ private:
     TCustomWinSocket *sock;
     // 프레임 경계에 걸친 미처리 수신 문자열.
     AnsiString remainMsg;
-    TColor clAverageOver;
     TColor clNoCell;
     TColor clBadIr;
     TColor clCellError;
@@ -457,7 +474,7 @@ private:
     // 준비~배출 8단계의 진행 표시 패널.
     TPanel *pProcess[8];
     // NG 오류창 기준 개수: 존재 셀의 IR/OCV/접촉 불량만 집계.
-    int NgCount;
+    int measNgCount;
 
     // 장비 수신 메시지와 C++ 처리 함수 연결
     BEGIN_MESSAGE_MAP
@@ -504,14 +521,14 @@ private:
     void __fastcall StartSelectedRemeasure();
     // IR 응답 문자열을 값/채널로 해석하고 일반 측정 또는 교정 화면에 전달한다.
     void __fastcall ProcessIr(AnsiString param);
-    // 채널 IR 수신 처리: 보정·판정·수신 표시를 갱신한다. 평균 계산 플래그와 표시용 수신 여부는 별개다.
+    // 채널 IR 수신 처리: 보정·판정·수신 표시를 갱신한다. 화면은 수신 여부와 현재 측정값으로 갱신한다.
     void __fastcall InsertIrValue(int pos, float value, AnsiString result);
     // OCV 응답 문자열을 값/채널로 해석하고 채널 판정 및 필요 시 다음 재측정을 진행한다.
     void __fastcall ProcessOcv(AnsiString param);
-    // 채널 OCV 수신 처리: 규격 판정·평균 집계·화면을 갱신한다.
+    // 채널 OCV 수신 처리: 규격 판정·화면을 갱신한다.
     void __fastcall InsertOcvValue(int pos, float value);
     // 장비의 GO/HI/LO/CE 등 판정 문자를 기존 내부 결과 코드로 변환한다.
-    int __fastcall GetReslut(AnsiString result);
+    int __fastcall GetResult(AnsiString result);
 
     // ===== Stage_TrayData.cpp =====
     // 수신 버퍼의 400셀 시리얼을 복사하고 비어 있지 않은 개수를 반환한다. 완료 판정은 호출부에서 한다.
@@ -527,9 +544,7 @@ private:
     // 설비 배치 타입에 맞춰 메인 화면의 400채널 패널을 생성한다.
     void __fastcall MakePanel(AnsiString type);
     // 셀 유무/판정 색상 갱신. 시작 안내 번호/트레이 투입 후 공란/각각 수신한 실제 값을 표시한다.
-    void __fastcall SetProcessColor(int index, int clr);
-    // 현재 채널 패널 색상을 표시용 상태 번호로 변환한다.
-    int __fastcall GetColorIndex(TColor clr);
+    void __fastcall UpdateCellDisplay(int index);
     // 수신 표시 초기화. 프로그램 시작은 번호, 트레이 투입/측정 이후는 공란.
     void __fastcall InitCellDisplay();
 
@@ -565,7 +580,7 @@ private:
     void __fastcall WriteSystemInfo();
     void __fastcall ReadSystemInfo();
     void __fastcall ReadCellInfo();
-    void __fastcall WriteResultFile();
+    bool __fastcall WriteResultFile(); // 파일 쓰기 1회. 실패 시 false, 재시도 정책은 호출부.
     void __fastcall ErrorLog();
     void __fastcall ReadCaliboffset();
 
@@ -577,12 +592,12 @@ public:
     STAGE_INFO stage;
     CONFIG config;
     TRAY_INFO tray;
-    TPanel *panel[400];
+    TPanel *panel[MAXCHANNEL];
     TPanel *pdev[8];
-    int acc_remeasure[400];
-    int acc_totaluse[400];
-    int chMap[401];
-    int chReverseMap[401];
+    int acc_remeasure[MAXCHANNEL];
+    int acc_totaluse[MAXCHANNEL];
+    int chMap[MAXCHANNEL + 1];
+    int chReverseMap[MAXCHANNEL + 1];
     int acc_totaltray;
     int acc_finalng;
     int acc_cnt;
@@ -599,8 +614,6 @@ public:
     int senCnt;
     AnsiString OldSenCmd;
     AnsiString OldPLCStatus, PLCStatus, OldErrorCheckStatus;
-    // 기존 자동 개별 재측정 대상 개수 제한.
-    int remLimit;
     // 수동 측정 운전 여부.
     bool bLocal;
 
@@ -624,17 +637,20 @@ public:
     // ===== Stage_Measurement.cpp =====
     // 수동 측정 초기화: 내부 값은 0, 화면은 수신 전까지 공란.
     void __fastcall OnInit();
-    // 전체 측정 시작: 표시·수신 플래그·평균 누계를 초기화하고 AMS 명령을 예약한다.
+    // 전체 측정 시작: 표시·수신 플래그를 초기화하고 AMS 명령을 예약한다.
     void __fastcall CmdAutoTest();
     // 결과 마감: STP/프로브 열림 요청 → NG·결과 코드·값·파일 작성 → COMPLETE → 자동 단계 완료 통지.
-    void __fastcall CmdForceStop();
+    void __fastcall FinishMeasurement();
     // [CELL SERIAL 공통] 수동/MSA 반복 측정도 이전 결과 저장 대기가 끝난 뒤 다음 측정을 시작한다.
-    bool IsWaitingForResultSave() const { return resultCellSerialPending; }
+    bool IsWaitingForResultSave() const {
+        return resultSaveStep == RESULT_WAIT_SERIAL || resultSaveStep == RESULT_WAIT_OPERATOR ||
+               resultSaveStep == RESULT_WRITE_FILE || resultSaveStep == RESULT_WAIT_PLC_SEND;
+    }
     // AMF 수신 후 처리: 운전 모드에 따라 결과 마감 또는 기존 자동 개별 재측정을 수행한다.
     void __fastcall ResponseAutoTestFinish();
     // 재측정 목록의 다음 IR/OCV를 요청한다. 더 없으면 최종 판정과 결과 마감을 수행한다.
     void __fastcall RemeasureExcute();
-    // 전체 측정 후 재측정 대상 집계. 기존 remLimit 조건에 따라 개별 재측정 또는 결과 마감한다.
+    // 전체 측정 후 재측정 대상 집계. SiteConfig.h의 개수 조건에 따라 개별 재측정 또는 결과 마감한다.
     void __fastcall SetRemeasureList();
     // 개별 재측정 후 최종 불량 목록을 다시 집계한다. 측정 명령은 보내지 않는다.
     void __fastcall SetRemeasureListAfter();
@@ -642,9 +658,9 @@ public:
     // ===== Stage_PlcData.cpp =====
     // PC→PLC 검사 출력과 결과 버퍼 초기화. 기존 주소·초기값·출력 순서를 유지한다.
     void __fastcall PLCInitialization();
-    // PLC용 NG 비트/수량과 오류창용 NgCount 집계. NgCount는 존재하는 IR/OCV/접촉 불량 셀만 센다.
-    void __fastcall BadInfomation();
-    // PLC 셀별 결과 작성: BadInfomation이 작성한 최종 OK/NG 비트와 동일하게 OK=0, NG=1.
+    // PLC용 NG 비트/수량과 오류창용 measNgCount 집계. measNgCount는 존재하는 IR/OCV/접촉 불량 셀만 센다.
+    void __fastcall BadInformation();
+    // PLC 셀별 결과 작성: BadInformation이 작성한 최종 OK/NG 비트와 동일하게 OK=0, NG=1.
     void __fastcall WriteResultCode();
     // IR/OCV 값을 PLC 결과 버퍼에 쓴다. 인자 없는 함수는 측정값, int 인자는 초기화 값이다.
     void __fastcall WriteIROCVValue();

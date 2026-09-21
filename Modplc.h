@@ -39,7 +39,9 @@ const int PLC_D_INTERFACE_START_DEV_NUM	 			=	44000;
 const int PLC_D_INTERFACE_LEN 						= 	100;
 
 const int PLC_D_CELL_SERIAL_NUM                     =	{95000};
+// PLC 공간은 실채널 수와 별개다. 256채널 사이트가 400채널 PLC 공간을 쓸 수도 있다.
 const int PLC_D_CELL_SERIAL_CHANNEL_COUNT           =   400;
+typedef char CheckSerialChannelCapacity[(MAXCHANNEL <= PLC_D_CELL_SERIAL_CHANNEL_COUNT) ? 1 : -1];
 const int PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL       =   10;
 const int PLC_D_CELL_SERIAL_TRAYID_LEN              =   10;
 const int PLC_D_CELL_SERIAL_LEN                     =   PLC_D_CELL_SERIAL_TRAYID_LEN
@@ -65,6 +67,10 @@ const int PC_D_INTERFACE_IR_RESULT_LEN              =	400;
 
 
 //---------------------------------------------------------------------------
+// 사용 채널이 PLC 예약 공간을 넘으면 컴파일 단계에서 발견한다.
+typedef char CheckIrCapacity[(MAXCHANNEL * 2 <= PC_D_INTERFACE_IR_LEN) ? 1 : -1];
+typedef char CheckOcvCapacity[(MAXCHANNEL * 2 <= PC_D_INTERFACE_OCV_LEN) ? 1 : -1];
+typedef char CheckResultCapacity[(MAXCHANNEL <= PC_D_INTERFACE_IR_RESULT_LEN) ? 1 : -1];
 //	PLC - PC Interface
 //---------------------------------------------------------------------------
 // PLC - IR/OCV
@@ -238,6 +244,7 @@ public:		// User declarations
 
 	void __fastcall SetData(unsigned char (*data)[2], int column, int num, bool flag);
 	void __fastcall SetDouble(unsigned char (*data)[2], int column, double value);
+	// 문자열 쓰기 확장용 API. 현재 호출이 없더라도 유지한다.
 	void __fastcall SetString(unsigned char (*data)[2], int column, AnsiString msg);
 
 	int __fastcall GetData(unsigned char (*data)[2], int column, int num);
@@ -245,10 +252,10 @@ public:		// User declarations
 	AnsiString __fastcall GetString(unsigned char (*data)[2], int column, int count);
 
 //---------------------------------------------------------------------------
-//  실제호출함수
-    AnsiString __fastcall GetCellSrial(int plc_address, int index, int size);
-    AnsiString __fastcall GetCellSrialTrayId(int plc_address, int size);
-    double __fastcall GetCellSrialValue(int plc_address);
+// 수신 완료된 시리얼 버퍼 조회. 통신 요청은 StartCellSerialRead()가 담당한다.
+    AnsiString __fastcall GetCellSerial(int plc_address, int index, int size);
+    AnsiString __fastcall GetCellSerialTrayId(int plc_address, int size);
+    double __fastcall GetCellSerialValue(int plc_address);
     void __fastcall StartCellSerialRead();
     // [CELL SERIAL 공통] false=명시 요청 때만, true=일반 데이터와 번갈아 상시 수신.
     void __fastcall SetCellSerialContinuousRead(bool enabled);
@@ -257,6 +264,7 @@ public:		// User declarations
 
     AnsiString __fastcall GetPlcValue(int plc_address, int size);
     double __fastcall GetPlcValue(int plc_address);
+    // PLC 비트 읽기 확장용 API.
     int __fastcall GetPlcData(int plc_address, int bit_num);
     double __fastcall GetValue(int pc_address);
     void __fastcall SetValue(int pc_address, int value);
@@ -268,7 +276,13 @@ public:		// User declarations
     int __fastcall GetIrValue(int pc_address, int index);
     int __fastcall GetOcvValue(int pc_address, int index);
 
-    bool PLC_Write_Result; //voltage, current 값은 필요 시에만 쓰기를 한다.
+    // PC 내부 전송 확인: 새 PLC 비트 없이 결과/IR/OCV 각 블록의 송신 여부를 추적한다.
+    void __fastcall BeginResultTransmission();
+    bool __fastcall WasResultTransmitted();
+    bool __fastcall IsResultConnectionReady();
+private:
+    unsigned int resultSentParts;
+public:
     //* PLC DATA
     int currentReadTask;
     int CellSerialIndex;

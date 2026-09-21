@@ -50,7 +50,6 @@ void __fastcall TForm_Language::LanguageChange(int LangIndex)
         BaseForm->nForm[i]->cl_irocv->Caption = vle->Values["IROCV"];
         BaseForm->nForm[i]->pocv->Caption = vle->Values["OCVFAIL"];
         BaseForm->nForm[i]->cl_ce->Caption = vle->Values["IRFAIL"];
-        BaseForm->nForm[i]->cl_avgover->Caption = vle->Values["AVGFAIL"];
         BaseForm->nForm[i]->cl_badir->Caption = vle->Values["FAIL"];
         BaseForm->nForm[i]->cl_badocv->Caption = vle->Values["OUTFLOW"];
         BaseForm->nForm[i]->cl_no->Caption = vle->Values["NOCELL"];

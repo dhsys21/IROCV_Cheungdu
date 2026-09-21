@@ -8,7 +8,17 @@ CELL SERIAL 현장별 수신 방식은 Configuration의 `Continuous read`로 선
 해제=기존 TRAY IN 수신 보관, 체크=상시 수신 후 결과 저장 직전 새 전체 수신본을 반영합니다.
 공통 주석은 `[CELL SERIAL 공통]`이며 자세한 설정/저장/오류 복귀는 CODE_STRUCTURE.md에 정리했습니다.
 
+수동측정은 위 설정과 관계없이 CELL SERIAL 없이 결과를 저장합니다.
+수동 화면 또는 Local 모드에서는 최종 시리얼 수신·개수 검사·시리얼 오류창을 생략하고,
+이전 트레이 시리얼이 섞이지 않도록 CSV의 CELL_ID를 공란으로 저장합니다.
+자동측정의 시리얼 오류 처리와 기존 PLC 결과 송신/완료 순서는 유지합니다.
+
 ## 코드 용어
+
+디자이너 이벤트 진입점은 FormTotal.cpp에 유지합니다.
+Timer_AutoInspectionTimer는 Stage_AutoInspection.cpp의 ProcessAutoInspection을,
+Timer_ResultSaveTimer는 Stage_Measurement.cpp의 ProcessResultSave를 호출합니다.
+코드 탐색용 이벤트 함수와 실제 처리 구현을 구분하며 실행 순서/조건은 동일합니다.
 
 추상적인 이름 대신 설비 동작과 진행 단계를 구분하는 이름을 사용합니다.
 
@@ -81,15 +91,15 @@ DisplayAutoInspectionStep();
 
 ## 유지한 생산 규칙
 
-- `NgCount`는 **존재하는 셀 중 IR/OCV/접촉 불량**만 집계합니다. PLC 전송용 `ngCount`와 통합하지 않습니다. `BadInfomation`의 집계식은 변경하지 않았습니다.
-- 자동 배출은 `NgCount > 설정값` 또는 존재하는 셀 전부 NG일 때 대기합니다. 설정값과 같은 개수는 허용하며, 셀이 0개인 상황을 전량 NG로 오판하지 않습니다.
+- `measNgCount`는 **존재하는 셀 중 IR/OCV/접촉 불량**만 집계합니다. PLC 전송용 `ngCount`와 통합하지 않습니다. `BadInformation`의 집계식은 변경하지 않았습니다.
+- 자동 배출은 `measNgCount > 설정값` 또는 존재하는 셀 전부 NG일 때 대기합니다. 설정값과 같은 개수는 허용하며, 셀이 0개인 상황을 전량 NG로 오판하지 않습니다.
 - NG 대기 진입 시 TRAY OUT을 내보내지 않고 `nFinish`도 표시하지 않습니다. Tray Out 버튼은 NG 재검사 없이 배출, Restart는 TRAY IN부터 다시 시작합니다.
 - 수동 배출과 BYPASS는 NG 조건을 적용하지 않습니다. 수동 배출 버튼별 기존 PROBE OPEN/COMPLETE 출력은 유지합니다.
 - CELL SERIAL START/COMPLETE 핸드셰이크는 사용하지 않습니다. 기존 Modplc의 820워드 × 4 + 730워드 수신 완료를 확인한 뒤 개수를 비교합니다.
 - SERIAL 오류창의 SAVE는 불일치/타임아웃 데이터를 사용자가 명시적으로 승인하는 기존 동작입니다. CANCEL은 분할 수신을 처음부터 재시도합니다.
   단, 새 상시 모드의 **결과 저장 전** 오류에서는 SAVE도 전체 수신 완료본에만 허용합니다. 미완료이면 CANCEL로 다시 수신해야 합니다.
 - 지연 설정 단위는 기존 **자동 타이머의 유효 호출 횟수**입니다. 타이머는 200ms, 제한값 50은 51회째 만료(정상 주기에서 약 10.2초)입니다. 통신/PLC 오류 중에는 호출 횟수를 진행하지 않고 복구 후 같은 상태에서 재개합니다. 실제 벽시계 기준 타임아웃으로 바꾸지 않았습니다.
-  새 상시 모드의 결과 저장 전 수신 대기는 별도 `Timer_ResultCellSerial`에서 실제 경과 10초를 제한으로 사용합니다.
+  새 상시 모드의 결과 저장 전 수신 대기는 별도 `Timer_ResultSave`에서 실제 경과 10초를 제한으로 사용합니다.
 - TRAY ID, PROBE CLOSED, 측정 응답, PROBE OPEN, TRAY OUT에 새로운 제한 시간이나 자동 강제배출 정책을 임의로 추가하지 않았습니다. 현장별 제한 시간이 필요하면 정책과 테스트를 함께 추가해야 합니다.
 - PLC 주소, IR/OCV 계산·판정·스케일, 결과 파일 형식, 자동 개별 재측정 조건은 유지합니다.
 
@@ -141,3 +151,43 @@ DisplayAutoInspectionStep();
 8. 설정/파일 예외 시 자동 진행 중지와 운영자 초기화 절차.
 
 `SetAutoMeasureComplete`는 기존 결과 처리 함수의 반환을 확인하는 경계입니다. PLC가 실제로 데이터를 수신했다는 ACK나 디스크 저장 성공까지 새로 검증하는 것은 아닙니다. 기존 통신 재전송·프레임 해석·파일 I/O의 오류 검증은 별도 범위입니다. 운영 버전 교체 전 이 점과 현장 안전 인터록을 확인해야 합니다.
+
+## 유지보수 정리 (2026-09-21)
+
+### 사이트 변경 위치
+- `SiteConfig.h`: 실제 행/열(20×20=400, 16×16=256), 재측정 개수 기준, 완료 신호 지연(ms).
+- `Modplc.h`: PLC 주소/예약 채널 수/전송 길이. 실제 256채널이어도 PLC 공간 400채널을 유지할 수 있으므로 자동 축소하지 않는다.
+- 배열·채널 반복·MSA 결과 배열은 MAXCHANNEL을 사용한다. 화면의 사이트별 방향/장식 좌표와 매핑 파일은 별도로 확인한다.
+- PLC 결과는 OK=0 / NG=1. 측정 NG 수량은 존재 셀만, PLC NG 수량은 기존 정책대로 빈 채널 포함.
+
+### 재측정 두 종류
+1. 닫힌 프로브 유지: 전체 측정 뒤 NG가 Config의 최대 개수 **이하**이면 불량 항목을 한 번 확인. 0이면 생략하며, 기본값 49로 기존 정책을 유지한다. Config 재개폐 횟수와 무관.
+2. 프로브 재개폐: 열림 확인 뒤 NG가 남으면 추가 재측정. Config REMEASURE=0이면 끔, N이면 최대 N회. 중간에 NG가 없어지면 종료.
+   기존 선택 기준은 50개 초과 전체 / 50개 이하 불량셀. 횟수는 닫힘 확인 후 실제 시작 때 증가하고 새 트레이에서 초기화한다.
+- 이전 AUTO_CHECK=false 설정은 처음 읽을 때 0회로 이관하며, 설정 저장 후에는 횟수 하나만 사용한다.
+- 재측정 중 설정 변경은 다음 트레이부터 적용한다.
+- Config PROBE CLOSED: REMEASURE IF NG <=: MAIN/CLOSED_PROBE_REMEASURE_MAX_NG_COUNT에 저장(0~MAXCHANNEL). 설정값 포함: 50이면 NG 1~50개만 재측정한다. 음수는 0, 채널 수 초과는 MAXCHANNEL, 잘못된 숫자는 기본값 49로 정규화한다.
+- Config PROBE OPEN/CLOSE REMEASURE COUNT: 기존 MAIN/REMEASURE 키 유지. 최초 측정을 제외한 추가 횟수이며 0은 끔. 음수/잘못된 숫자는 0으로 처리한다.
+- 두 항목은 SAVE 후 다음 트레이부터 적용한다. 재개폐 때의 전체/선택 전환 기준(50개 초과 전체)은 PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD로 따로 유지한다.
+- `retest.cell`은 최종 판정, `pendingItems / waitingChannel / waitingItem`은 재측정 요청 진행이다.
+- 판정 우선순위는 접촉(4) > IR(2) > OCV(3). 이전 불량·화면 색상을 판정 근거로 사용하지 않는다.
+
+### 결과 마감과 화면
+- `FinishMeasurement` → 최종 시리얼(상시 모드만) → `SaveMeasurementResult` → `Timer_ResultSaveTimer`.
+- `resultSaveStep`: 대기 / 시리얼 대기 / 작업자 대기 / 파일 작성 / PLC 전송 대기 / 완료 / 취소 / 오류.
+- 참고용 CSV는 최초 시도 + 재시도 1회. 두 번 실패해도 로그 후 생산 진행. 시리얼 오류는 기존 작업자 선택 유지.
+- 파일명은 분 단위 유지. 같은 트레이 전체/선택 재측정은 파일명을 보존해 최종값으로 덮어쓴다.
+- 임시 파일을 완전히 쓴 후 교체하므로 실패할 때 이전 결과를 먼저 삭제하지 않는다.
+- 생산 트레이 수는 한 번 집계하고 재측정에 따른 최종 IR/접촉 NG 누계 차이만 보정한다.
+- COMPLETE는 새 판정/IR/OCV 블록 송신 + 최소 1000ms 후 출력. UI 스레드 Sleep은 사용하지 않는다.
+- 이 확인은 TCP 송신 확인이며 PLC 내부 반영 ACK는 아니다. PLC 신호는 추가하지 않는다.
+- 초기화/강제 배출은 지연 완료를 취소한다. 수동/BYPASS 배출은 기존 NG 무시 정책 유지.
+- `UpdateCellDisplay`는 현재 수신 여부/값으로 색상을 다시 만든다. 이전 색상이나 응답 순서에 의존하지 않는다.
+- 평균 기준 판정 설정과 미계산 평균/시그마 CSV 항목은 제거했다. 기존 파일 소비자가 있으면 헤더 호환성을 확인한다.
+- `SetString / GetPlcData / GetCellSerial*`은 확장용 PLC API로 유지한다.
+
+### 추가 회귀 검사
+`TestAutoInspection.ps1`: 설정 0/1/2회, NG 소멸 조기 종료, 횟수 소진, 강제 배출.
+`TestCellSerialRead.ps1`: 실제 메서드 추출로 시리얼·판정 우선순위·화면·재측정 요청·중복 집계·저장 재시도·완료 지연 검증.
+`TestResultFile.ps1`: 실제 임시 파일로 CSV 생성 실패/부분 쓰기/덮어쓰기/파일 잠금을 검사한다.
+검사는 생산 실행 파일을 실행하거나 PLC/측정장비에 접속하지 않는다.

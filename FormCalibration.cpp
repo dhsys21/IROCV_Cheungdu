@@ -96,14 +96,14 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 //			ny = ny + nh;
 			if(index % 2 == 0) nx += 2;
 //			if(index % 2 == 0) nx -= 2;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
 				ny = ny - nh - nh  - 1;
 //				ny = ny + nh + nh + 1;
 				nx = 4;
 //				nx = 1300;
-				if( (index / 20) % 10 == 0) ny -= 3;
-//				if( (index / 20) % 10 == 0) ny += 3;
+				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny -= 3;
+//				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny += 3;
 			}
 			index -= 1;
 		}
@@ -114,7 +114,7 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 		ny = 600;
 		nw = 30;
 		nh = 20;
-		for(int index=0; index<400;){
+		for(int index=0; index< MAXCHANNEL;){
 			pch[index] = new TPanel(this);
 			SetOption(pch[index], nx, ny, nw, nh-1, index);
 			pch[index]->Caption = pch[index]->Hint;
@@ -154,11 +154,11 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 			nx = nx - nw - 3;
 			ny = ny - nh;
 			if(index % 2 == 0) nx -= 2;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
 				ny = ny - nh - nh  - 1;
 				nx = 1200;
-				if( (index / 20) % 4 == 0) ny -= 3;
+				if( (index / CELL_COLUMN_COUNT) % 4 == 0) ny -= 3;
 			}
 		}
 	}
@@ -168,7 +168,7 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 		ny = 600;
 		nw = 30;
 		nh = 20;
-		for(int index=0; index<400;){
+		for(int index=0; index< MAXCHANNEL;){
 			pch[index] = new TPanel(this);
 			SetOption(pch[index], nx, ny, nw, nh-1, index);
 			pch[index]->Caption = pch[index]->Hint;
@@ -208,11 +208,11 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 			nx = nx + nw + 3;
 			ny = ny - nh;
 			if(index % 2 == 0) nx += 2;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
 				ny = ny - nh - nh  - 1;
 				nx = 4;
-				if( (index / 20) % 4 == 0) ny -= 3;
+				if( (index / CELL_COLUMN_COUNT) % 4 == 0) ny -= 3;
 			}
 		}
 	}
@@ -265,13 +265,13 @@ void __fastcall TCaliForm::MakePanel(AnsiString type)
 			//nx = nx + nw + 3;
 			//ny = ny - nh;
 			//if(index % 2 == 0) nx += 2;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
                 nx = nx - 2 * nw - 3;
                 ny = 600;
                 //nx = nx + nw + 3;
 				//nx = 4;
-				//if( (index / 20) % 4 == 0) ny -= 3;
+				//if( (index / CELL_COLUMN_COUNT) % 4 == 0) ny -= 3;
 			}
 		}
 	}
@@ -295,7 +295,7 @@ void __fastcall TCaliForm::SetOption(TPanel *pnl, int nx, int ny, int nw, int nh
 	pnl->BevelKind = bkNone;
 	pnl->BevelOuter = bvNone;
 	pnl->Tag = index;
-	pnl->Hint = IntToStr((index/20)+1) + "-" + IntToStr((index+20)%20 + 1);
+	pnl->Hint = IntToStr((index / CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index+20)%20 + 1);
 	pnl->ShowHint = false;
 }
 //---------------------------------------------------------------------------
@@ -334,7 +334,7 @@ void __fastcall TCaliForm::PanelDblClick(TObject *Sender)
 
 void __fastcall TCaliForm::btnStopClick(TObject *Sender)
 {
-	BaseForm->nForm[stage]->CmdForceStop();
+	BaseForm->nForm[stage]->FinishMeasurement();
 }
 //---------------------------------------------------------------------------
 

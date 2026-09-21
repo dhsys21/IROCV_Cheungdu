@@ -16,10 +16,23 @@ void __fastcall TTotalForm::WriteSystemInfo()
 	file = (AnsiString)BIN_PATH + "SystemInfo_"+ IntToStr(this->Tag) + ".inf";
 
 	ini = new TIniFile(file);
-
-	ini->WriteBool("MAIN", "AUTO_CHECK", RemeasureChk->Checked);
-	ini->WriteInteger("MAIN", "REMEASURE", RemeasureEdit->Text.ToIntDef(0));
-	ini->WriteBool("MAIN", "REM_BYPASS", chkRemBypass->Checked);
+	// 0=재개폐 없음. 기존 REMEASURE 키를 유지하며 음수는 0으로 정규화한다.
+    int probeCount = editProbeRemeasureCount->Text.ToIntDef(0);
+    if(probeCount < 0) probeCount = 0;
+    // 닫힘 상태의 재측정 허용 NG 개수: 이하 조건, 0=생략. 채널 수 범위로 제한.
+    int maxNgCount = editClosedProbeRemeasureMaxNgCount->Text.ToIntDef(
+        DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT);
+    if(maxNgCount < 0) maxNgCount = 0;
+    if(maxNgCount > MAXCHANNEL) maxNgCount = MAXCHANNEL;
+    ini->WriteInteger("MAIN", "CLOSED_PROBE_REMEASURE_MAX_NG_COUNT", maxNgCount);
+    ini->WriteInteger("MAIN", "REMEASURE", probeCount);
+    editClosedProbeRemeasureMaxNgCount->Text = maxNgCount;
+    editProbeRemeasureCount->Text = probeCount;
+    ini->DeleteKey("MAIN", "AUTO_CHECK");
+    ini->DeleteKey("MAIN", "REM_BYPASS");
+    ini->DeleteKey("MAIN", "USE_AVERAGE");
+    ini->DeleteKey("MAIN", "IR_RANGE");
+    ini->DeleteKey("MAIN", "OCV_RANGE");
     // [CELL SERIAL 공통] 미체크=TRAY IN 보관(기존), 체크=상시 수신/결과 직전 재확인.
     // 실제 적용은 ReadSystemInfo 및 다음 InitTrayStruct에서 한다. 현재 트레이 모드는 유지한다.
     ini->WriteBool("CELL_SERIAL", "CONTINUOUS_READ", chkCellSerialContinuousRead->Checked);
@@ -33,12 +46,10 @@ void __fastcall TTotalForm::WriteSystemInfo()
 
     ini->WriteString("NG_ALARM_COUNT", "COUNT", editNgAlarmCount->Text);
 	ini->WriteInteger("MAIN", "REMEASURE_ALARM_COUNT", editRemeasureAlarmCount->Text.ToIntDef(3));
-
-	config.remeasure_use = RemeasureChk->Checked;
-	config.remeasure_cnt = RemeasureEdit->Text.ToIntDef(1);
+	config.probeRemeasureCount = probeCount;
+    config.closedProbeRemeasureMaxNgCount = maxNgCount;
 	config.remeasure_alarm_cnt = editRemeasureAlarmCount->Text.ToIntDef(3);
     RemeasureForm->pcolor2->Caption = config.remeasure_alarm_cnt;
-	config.remeasure_bypass = chkRemBypass->Checked;
 
     ini->WriteString("CELLINFO", "MODELNAME", editModelName->Text);
     ini->WriteString("PASSWORD", "PWD", editPwd->Text);
@@ -49,19 +60,13 @@ void __fastcall TTotalForm::WriteSystemInfo()
     else if(rbSpeedMed->Checked) speedmode = "1";
     else if(rbSpeedFast->Checked) speedmode = "2";
     ini->WriteString("MAIN", "SPEED_MODE", speedmode);
-	//* 최대/최소 대신에 평균값 +/- 범위로 변경
+
 	//* 2022 11 07
-	ini->WriteBool("MAIN", "USE_AVERAGE", chkUseAverage->Checked);
-	ini->WriteFloat("MAIN", "IR_RANGE", BaseForm->StringToDouble(editIrRange->Text, 5));
-	ini->WriteFloat("MAIN", "OCV_RANGE", BaseForm->StringToDouble(editOcvRange->Text, 1000));
 
 	ini->WriteFloat("MAIN", "IR1", BaseForm->StringToDouble(irEdit1->Text, 12));
 	ini->WriteFloat("MAIN", "IR2", BaseForm->StringToDouble(irEdit2->Text, 20));
 	ini->WriteFloat("MAIN", "OCV1", BaseForm->StringToDouble(ocvEdit1->Text, 1000));
 	ini->WriteFloat("MAIN", "OCV2", BaseForm->StringToDouble(ocvEdit2->Text, 3000));
-
-	config.ir_range = BaseForm->StringToDouble(editIrRange->Text, 5);
-	config.ocv_range = BaseForm->StringToDouble(editOcvRange->Text, 1000);
 
 	config.ir_min = BaseForm->StringToDouble(irEdit1->Text, 12);
 	config.ir_max = BaseForm->StringToDouble(irEdit2->Text, 5);
@@ -79,15 +84,23 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	file = (AnsiString)BIN_PATH + "SystemInfo_"+ IntToStr(this->Tag) + ".inf";
 
 	ini = new TIniFile(file);
-	config.remeasure_use = ini->ReadBool("MAIN", "AUTO_CHECK", true);
     // [CELL SERIAL 공통] 기존 INI에 키가 없으면 기존 TRAY IN 수신 방식으로 동작한다.
     config.cell_serial_continuous_read = ini->ReadBool("CELL_SERIAL", "CONTINUOUS_READ", false);
     chkCellSerialContinuousRead->Checked = config.cell_serial_continuous_read;
-    if(autoInspection.GetStep() == STEP_WAIT_TRAY_IN && !resultCellSerialPending && (!tray.ams || tray.amf))
+    if(autoInspection.GetStep() == STEP_WAIT_TRAY_IN && !IsWaitingForResultSave() && (!tray.ams || tray.amf))
         ApplyCellSerialReadMode();
-	config.remeasure_cnt = ini->ReadInteger("MAIN", "REMEASURE", 1);
+    // 기존 파일에 새 키가 없으면 49개 이하를 유지. 0은 닫힘 재측정만 생략한다.
+    config.closedProbeRemeasureMaxNgCount = ini->ReadInteger(
+        "MAIN", "CLOSED_PROBE_REMEASURE_MAX_NG_COUNT", DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT);
+    if(config.closedProbeRemeasureMaxNgCount < 0) config.closedProbeRemeasureMaxNgCount = 0;
+    if(config.closedProbeRemeasureMaxNgCount > MAXCHANNEL) config.closedProbeRemeasureMaxNgCount = MAXCHANNEL;
+    // 기존 REMEASURE 키는 추가 재개폐 횟수 전용. 닫힘 NG 개수 설정과 혼용하지 않는다.
+	config.probeRemeasureCount = ini->ReadInteger("MAIN", "REMEASURE", 0);
+    if(config.probeRemeasureCount < 0) config.probeRemeasureCount = 0;
+    // 이전 버전의 Auto Remeasure 미체크는 0회로 이관. 새 설정은 횟수 하나만 사용.
+    if(ini->ValueExists("MAIN", "AUTO_CHECK") && !ini->ReadBool("MAIN", "AUTO_CHECK", false))
+        config.probeRemeasureCount = 0;
     config.remeasure_alarm_cnt = ini->ReadInteger("MAIN", "REMEASURE_ALARM_COUNT", 5);
-	config.remeasure_bypass = 	ini->ReadBool("MAIN", "REM_BYPASS", false);
 
     //* 측정속도
     AnsiString speedmode = "2";
@@ -97,30 +110,22 @@ void __fastcall TTotalForm::ReadSystemInfo()
     else if(speedmode == "2") rbSpeedFast->Checked = true;
 
     editNgAlarmCount->Text = ini->ReadString("NG_ALARM_COUNT", "COUNT", "20");
-	//* IR SPEC (min/max 로 한번검사 + average +/-로 한번 더 검사)
-	config.average_use = ini->ReadBool("MAIN", "USE_AVERAGE", true);
+
 	config.ir_min = ini->ReadFloat("MAIN", "IR1", 10);
 	config.ir_max = ini->ReadFloat("MAIN", "IR2", 40);
-	config.ir_range = ini->ReadFloat("MAIN", "IR_RANGE", 5);
 
 	irEdit1->Text = config.ir_min;
 	irEdit2->Text = config.ir_max;
-	editIrRange->Text = config.ir_range;
 
     pnlIRSpec->Caption = "IR : " + FormatFloat("0.0", config.ir_min)  + " ~ " + FormatFloat("0.0", config.ir_max);
 
-	//* OCV SPEC (min/max 로 한번검사 + average +/-로 한번 더 검사)
 	config.ocv_min = ini->ReadFloat("MAIN", "OCV1", 500);
 	config.ocv_max = ini->ReadFloat("MAIN", "OCV2", 3000);
-	config.ocv_range = ini->ReadFloat("MAIN", "OCV_RANGE", 1000);
 
 	ocvEdit1->Text = config.ocv_min;
 	ocvEdit2->Text = config.ocv_max;
-	editOcvRange->Text = config.ocv_range;
 
     pnlOCVSpec->Caption = "OCV : " + FormatFloat("0.0", config.ocv_min) + " ~ " + FormatFloat("0.0", config.ocv_max);
-
-	//VisibleSpec(config.ir_average_use);
 
 	editPLCIPAddress->Text = ini->ReadString("IROCV_PLC", "IP", "17.91.80.220");
 	editPLCPortPC->Text = ini->ReadString("IROCV_PLC", "PORT1", "5007");
@@ -139,13 +144,10 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	editModelName->Text = ini->ReadString("CELLINFO", "MODELNAME", "20PQ");
     editPwd->Text = ini->ReadString("PASSWORD", "PWD", "Eveml@123");
     config.pwd = editPwd->Text;
-
-	chkUseAverage->Checked = config.average_use;
-	RemeasureChk->Checked = config.remeasure_use;
-	RemeasureEdit->Text = config.remeasure_cnt;
+    editClosedProbeRemeasureMaxNgCount->Text = config.closedProbeRemeasureMaxNgCount;
+	editProbeRemeasureCount->Text = config.probeRemeasureCount;
 	editRemeasureAlarmCount->Text = config.remeasure_alarm_cnt;
 	RemeasureForm->pcolor2->Caption = config.remeasure_alarm_cnt;
-	chkRemBypass->Checked = config.remeasure_bypass;
 
 	delete ini;
 }
@@ -317,37 +319,31 @@ void __fastcall TTotalForm::WritePLCLog(AnsiString Type, AnsiString Msg)
 	FileClose(file_handle);
 }
 
-void __fastcall TTotalForm::WriteResultFile()
+bool __fastcall TTotalForm::WriteResultFile()
 {
-	int file_handle;
-	AnsiString filename, dupFileName;
+	int file_handle = -1;
+    AnsiString filename;
+    try
+    {
 	AnsiString dir;
 	AnsiString cell, cell_id, ir, ocv, ch, ok_ng;
 
 	dir = (AnsiString)DATA_PATH + Now().FormatString("yyyymmdd") + "\\";// + lblTitle->Caption + "\\";
 	ForceDirectories((AnsiString)dir);
+    if(resultFileName.IsEmpty())
+        resultFileName = dir + editModelName->Text + "-" + tray.trayid + "-" + Now().FormatString("yymmddhhnn") + ".csv";
+    filename = resultFileName + ".tmp";
 
-	//filename =  dir + editModelName->Text + "-" + tray.trayid +  "-" + Now().FormatString("yymmddhhnnss") + ".csv";
-    filename =  dir + editModelName->Text + "-" + tray.trayid +  "-" + Now().FormatString("yymmddhhnn") + ".csv";
-
-	if(FileExists(filename)){
-		DeleteFile(filename);
-	}
 
 	file_handle = FileCreate(filename);
-	FileSeek(file_handle, 0, 0);
+	if(file_handle < 0) return false;
 
 	AnsiString file;
 	file = "Tray ID," + tray.trayid + "\n";
     file = file + "ARRIVE TIME," + m_dateTime.FormatString("yyyy/mm/dd hh:nn:ss") + "\r\n";
 	file = file + "FINISH TIME," + Now().FormatString("yyyy/mm/dd hh:nn:ss") + "\r\n";
 	file = file + "IR Min.," + FormatFloat("0.0", config.ir_min) + ",IR Max.," + FormatFloat("0.0", config.ir_max) + "\n";
-	if(config.average_use == true)
-		file = file + "OCV Min., 100, OCV Max.,4200\n";
-	else
 		file = file + "OCV Min.," + FormatFloat("0.0", config.ocv_min) + ",OCV Max.," + FormatFloat("0.0", config.ocv_max) + "\n";
-	file = file + "IR Avg.," + tray.ir_avg + ",IR Range," + config.ir_range + ",IR Sigma," + tray.ir_sigma + "\r\n";
-	file = file + "OCV Avg.," + tray.ocv_avg + ",OCV Range," + config.ocv_range + ",OCV Sigma," + tray.ocv_sigma + "\r\n";
 	file = file + "CH,CELL,CELL_ID,IR,OCV,RESULT\n";
 
 	for(int i=0; i<MAXCHANNEL; ++i){
@@ -361,16 +357,17 @@ void __fastcall TTotalForm::WriteResultFile()
 		{
 			if(retest.cell[i] == 0) ok_ng = "OK";
 			else if(retest.cell[i] == 2) ok_ng = "IR SPEC NG";
-            else if(retest.cell[i] == 5) ok_ng = "IR Avg. NG";
+
 			else if(retest.cell[i] == 3) ok_ng = "OCV SPEC NG";
-            else if(retest.cell[i] == 6) ok_ng = "OCV Avg. NG";
+
             else if(retest.cell[i] == 4) ok_ng = "Contact NG";
 
 			cell = "O";
 		}
 		else if(tray.cell[i] == 0)
 		{
-			if(panel[i]->Color == clCellError) ok_ng = "NG(No Cell)";
+			if((irValueReceived[i] && tray.measure_result[i] == GO) ||
+               (ocvValueReceived[i] && tray.ocv_value[i] > 1500)) ok_ng = "NG(No Cell)";
 			else ok_ng = "No Cell";
 
 			cell = "X";
@@ -378,8 +375,22 @@ void __fastcall TTotalForm::WriteResultFile()
 
 		file = file + ch + "," + cell + "," + cell_id + ", " + ir + "," + ocv + "," + ok_ng +"\n";
 	}
-	FileWrite(file_handle, file.c_str(), file.Length());
-	FileClose(file_handle);
+    const int written = FileWrite(file_handle, file.c_str(), file.Length());
+    FileClose(file_handle);
+    file_handle = -1;
+    if(written != file.Length()) { DeleteFile(filename); return false; }
+    // 완성된 임시 파일만 최종 경로로 교체. 재측정/재시도에서도 기존 결과를 먼저 지우지 않는다.
+    if(!MoveFileExA(filename.c_str(), resultFileName.c_str(),
+        MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+    { DeleteFile(filename); return false; }
+    return true;
+    }
+    catch(...)
+    {
+        if(file_handle >= 0) FileClose(file_handle);
+        if(!filename.IsEmpty()) DeleteFile(filename);
+        return false;
+    }
 }
 
 void __fastcall TTotalForm::ErrorLog()

@@ -34,8 +34,7 @@ const int nOCV			=   3;
 //---------------------------------------------------------------------------
 //	Channel 갯수
 //---------------------------------------------------------------------------
-const int MAXCHANNEL = 400;
-const int LINECOUNT	= 20;
+#include "SiteConfig.h"
 
 const int SEND = 1;
 const int RECEIVE = 2;
@@ -159,38 +158,24 @@ typedef struct{
     bool ams;
     bool amf;
 	AnsiString trayid;
-	int cell[400];
+	int cell[MAXCHANNEL];
 	AnsiString cell_type;
 	AnsiString lotid;
-	AnsiString cell_serial[400];
+	AnsiString cell_serial[MAXCHANNEL];
 	int cell_count;
 	int rem_mode;
-	float orginal_value[400];
-	float after_value[400];
-	float ocv_value[400];
-	float Cali_value[400];
-	int measure_result[400];
+	float orginal_value[MAXCHANNEL];
+	float after_value[MAXCHANNEL];
+	float ocv_value[MAXCHANNEL];
+	float Cali_value[MAXCHANNEL];
+	int measure_result[MAXCHANNEL];
 	bool first;
-	AnsiString precharger[400];
-	AnsiString precharge_volt[400];
+	AnsiString precharger[MAXCHANNEL];
+	AnsiString precharge_volt[MAXCHANNEL];
 	AnsiString arrive;
     AnsiString finish;
 	AnsiString cell_model;
 	AnsiString lot_number;
-
-	double ir_range;
-	double ir_sigma;
-	double ir_avg;
-	double ir_avgAll;
-	int ir_avgAll_count;
-	bool ir_flag[400];
-
-	double ocv_range;
-    double ocv_sigma;
-	double ocv_avg;
-	double ocv_avgAll;
-	int ocv_avgAll_count;
-	bool ocv_flag[400];
 }TRAY_INFO;
 
 typedef struct{
@@ -201,14 +186,17 @@ typedef struct{
 	int alarm_status;
 	int alarm_cnt;
 	int now_status;
-	double ir_offset[400];
+	double ir_offset[MAXCHANNEL];
 }STAGE_INFO;
 
 typedef struct{
 	bool re_excute;
 	int cnt_error;
-	int cell[400];
-	int cnt_remeasure;
+	int cell[MAXCHANNEL];
+	// 최종 판정(cell)과 다음 재측정 항목을 분리한다: 비트 1=IR, 2=OCV.
+    int pendingItems[MAXCHANNEL];
+    int waitingChannel; // 응답 대기 채널. -1이면 요청 없음.
+    int waitingItem; // 1=IR, 2=OCV.
 	int re_index;
 }REMEASURE;
 
@@ -216,15 +204,11 @@ typedef struct{
 	bool recontact;
 	double ir_min;
 	double ir_max;
-	double ir_range;
 	double ocv_min;
 	double ocv_max;
-	double ocv_range;
-	bool average_use;
-	int remeasure_cnt;
+    int closedProbeRemeasureMaxNgCount; // 닫힘 유지 재측정: NG 1~설정값 이하, 0=생략.
+	int probeRemeasureCount; // 프로브 재개폐 추가 횟수. 0=사용 안 함, 최초 측정 제외.
     int remeasure_alarm_cnt;
-	bool remeasure_use;
-	bool remeasure_bypass;
     // [CELL SERIAL 공통] false=TRAY IN 수신 보관, true=상시 수신 후 결과 저장 직전 재확인.
     bool cell_serial_continuous_read;
     AnsiString pwd;

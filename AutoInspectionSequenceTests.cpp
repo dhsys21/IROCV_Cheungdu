@@ -254,14 +254,91 @@ static void DelayAndPause()
         CHECK(strcmp(TAutoInspectionSequence::GetStepName((TAutoInspectionStep)s), "InvalidState") != 0);
 }
 
+// 프로브 재개폐 추가 횟수(0/1/2), 성공 조기 종료, 중복 닫힘, 다음 트레이 초기화.
+static void ProbeRemeasureCounts()
+{
+    for(int limit = 0; limit <= 2; ++limit)
+    {
+        Fixture f;
+        f.setting.probeRemeasureCount = limit;
+        f.seq.Initialize(f.setting);
+        f.ToProbeOpen();
+        f.data.probeOpen = true;
+        f.data.ngCount = 1; // NG 알람 한도 미만도 재개폐 대상이다.
+        for(int round = 0; round < limit; ++round)
+        {
+            CHECK(f.seq.RunAutoStep(f.data) == CMD_REQUEST_PROBE_REMEASURE);
+            CHECK(f.seq.GetProbeRemeasureDoneCount() == round);
+            f.data.probeClosed = false;
+            CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+            f.data.probeClosed = true;
+            CHECK(f.seq.RunAutoStep(f.data) == CMD_REMEASURE_START);
+            CHECK(f.seq.GetProbeRemeasureDoneCount() == round + 1);
+            CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+            CHECK(f.seq.SetMeasureComplete());
+        }
+        CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_OUT);
+        f.data.trayIn = false;
+        CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_OUT_COMPLETE);
+        f.data.trayIn = true;
+        CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_IN);
+        CHECK(f.seq.GetProbeRemeasureDoneCount() == 0);
+    }
+    Fixture good;
+    good.setting.probeRemeasureCount = 2;
+    good.seq.Initialize(good.setting);
+    good.ToProbeOpen();
+    good.data.probeOpen = true;
+    good.data.ngCount = 1;
+    CHECK(good.seq.RunAutoStep(good.data) == CMD_REQUEST_PROBE_REMEASURE);
+    CHECK(good.seq.RunAutoStep(good.data) == CMD_REMEASURE_START);
+    CHECK(good.seq.SetMeasureComplete());
+    good.data.ngCount = 0;
+    CHECK(good.seq.RunAutoStep(good.data) == CMD_TRAY_OUT);
+    CHECK(good.seq.GetProbeRemeasureDoneCount() == 1);
+
+    Fixture exhausted;
+    exhausted.setting.probeRemeasureCount = 1;
+    exhausted.seq.Initialize(exhausted.setting);
+    exhausted.ToProbeOpen();
+    exhausted.data.probeOpen = true;
+    exhausted.data.ngCount = 400;
+    CHECK(exhausted.seq.RunAutoStep(exhausted.data) == CMD_REQUEST_PROBE_REMEASURE);
+    CHECK(exhausted.seq.RunAutoStep(exhausted.data) == CMD_REMEASURE_START);
+    CHECK(exhausted.seq.SetMeasureComplete());
+    CHECK(exhausted.seq.RunAutoStep(exhausted.data) == CMD_NG_ERROR);
+    CHECK(exhausted.seq.ForceTrayOut() == CMD_TRAY_OUT);
+    CHECK(exhausted.seq.RunAutoStep(exhausted.data) == CMD_NONE);
+}
+
 int main()
 {
+    // The two settings are independent and are frozen after TRAY IN.
+    Fixture settings;
+    CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 49);
+    settings.seq.SetNextTrayRemeasureSettings(50, 2);
+    CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 50);
+    CHECK(settings.seq.GetSetting().probeRemeasureCount == 2);
+    settings.ToResults();
+    settings.seq.SetNextTrayRemeasureSettings(0, 0);
+    CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 50);
+    CHECK(settings.seq.GetSetting().probeRemeasureCount == 2);
+    settings.seq.Initialize(settings.setting);
+    settings.seq.SetNextTrayRemeasureSettings(-1, -1);
+    CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 0);
+    CHECK(settings.seq.GetSetting().probeRemeasureCount == 0);
+    settings.seq.SetNextTrayRemeasureSettings(MAXCHANNEL + 1, 0);
+    CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == MAXCHANNEL);
+    settings.seq.SetNextTrayRemeasureSettings(0, 3);
+    CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 0);
+    CHECK(settings.seq.GetSetting().probeRemeasureCount == 3);
+    ProbeRemeasureCounts();
     NormalCycle();
     SerialCountAndTimeout();
     NgChoices();
     BypassAndManual();
     GuardsAndRemeasure();
     DelayAndPause();
-    printf("PASS: %d checks across 6 scenario groups\n", checks);
+    printf("PASS: %d checks across 8 scenario groups\n", checks);
     return 0;
 }

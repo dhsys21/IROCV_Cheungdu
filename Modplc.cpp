@@ -54,8 +54,7 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	memset(pc_Interface_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_LEN1 * 2);
     memset(pc_Interface_Ir_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_IR_LEN * 2);
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
-
-    PLC_Write_Result = false; //voltage, current 값은 필요 시에만 쓰기를 한다.
+    resultSentParts = 0;
     cellSerialContinuousRead = false; // [CELL SERIAL 공통] 기존 TRAY IN 수신이 기본값.
     ResetCellSerialRead();
     currentWriteTask = nPCDATA;
@@ -191,6 +190,7 @@ int __fastcall TMod_PLC::GetCellSerialReadWords(int index)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::PC_Initialization()
 {
+    resultSentParts = 0; // 재접속 후 이전 전송 표식을 사용하지 않는다.
 	pc_Read = "";
 	pc_ReadFlag = true;
 	pc_ReadCount = 0;
@@ -260,37 +260,10 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
 		{
 			if(pc_index == PC_INDEX_INTERFACE)
 			{
-//				PC_DataChange(0, PC_D_INTERFACE_START_DEV_NUM1, DEVCODE_D, PC_D_INTERFACE_LEN1);
-//                //* Heart Beat
-//				if(BaseForm->nForm[0]->Client->Active)
-//				{
-//					bool flag = GetData(pc_Interface_Data, PC_D_HEART_BEAT, 0);
-//					SetDouble(pc_Interface_Data, PC_D_HEART_BEAT, (int)!flag);
-//				}
-//
-//				//* General Data, Result Data, Min/Max Data, IR Data
-//				ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
-//				ClientSocket_PC->Socket->SendBuf(&pc_Interface_Data, sizeof(pc_Interface_Data));
-//
-//                //* IR, OCV Data
-//                if(PLC_Write_Result == true && GetPlcValue(PLC_D_IROCV_COMPLETE) == 0){
-//                    Sleep(50);
-//                    PC_DataChange(0, PC_D_INTERFACE_IR, DEVCODE_D, PC_D_INTERFACE_IR_LEN);
-//                    ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
-//                    ClientSocket_PC->Socket->SendBuf(&pc_Interface_Ir_Data, sizeof(pc_Interface_Ir_Data));
-//
-//                    Sleep(50);
-//                    PC_DataChange(0, PC_D_INTERFACE_OCV, DEVCODE_D, PC_D_INTERFACE_OCV_LEN);
-//                    ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
-//                    ClientSocket_PC->Socket->SendBuf(&pc_Interface_Ocv_Data, sizeof(pc_Interface_Ocv_Data));
-//                } else if(GetPlcValue(PLC_D_IROCV_COMPLETE) == 1){
-//                    //PLC_Write_Result = false;
-//                    SetValue(PC_D_IROCV_COMPLETE, 0);
-//                }
-
                 switch(currentWriteTask)
                 {
                     case nPCDATA:
+                    {
                         //* Heart Beat
                         if(BaseForm->nForm[0]->Client->Active)
                         {
@@ -309,25 +282,36 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
 
                         Sleep(30);
                         PC_DataChange(0, PC_D_INTERFACE_IR_RESULT, DEVCODE_D, PC_D_INTERFACE_IR_RESULT_LEN);
-                        ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
-                        ClientSocket_PC->Socket->SendBuf(&pc_Interface_Result_Code, sizeof(pc_Interface_Result_Code));
+                        const int headerBytes = ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));
+                        const int dataBytes = ClientSocket_PC->Socket->SendBuf(&pc_Interface_Result_Code, sizeof(pc_Interface_Result_Code));
+                        if(headerBytes == static_cast<int>(sizeof(pc_Data)) && dataBytes == static_cast<int>(sizeof(pc_Interface_Result_Code)))
+                            resultSentParts |= 1;
 
                         currentWriteTask = nIR;
                         break;
+                    }
                     case nIR:
+                    {
                         PC_DataChange(0, PC_D_INTERFACE_IR, DEVCODE_D, PC_D_INTERFACE_IR_LEN);
-                        ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
-                        ClientSocket_PC->Socket->SendBuf(&pc_Interface_Ir_Data, sizeof(pc_Interface_Ir_Data));
+                        const int headerBytes = ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));
+                        const int dataBytes = ClientSocket_PC->Socket->SendBuf(&pc_Interface_Ir_Data, sizeof(pc_Interface_Ir_Data));
+                        if(headerBytes == static_cast<int>(sizeof(pc_Data)) && dataBytes == static_cast<int>(sizeof(pc_Interface_Ir_Data)))
+                            resultSentParts |= 2;
 
                         currentWriteTask = nOCV;
                         break;
+                    }
                     case nOCV:
+                    {
                         PC_DataChange(0, PC_D_INTERFACE_OCV, DEVCODE_D, PC_D_INTERFACE_OCV_LEN);
-                        ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
-                        ClientSocket_PC->Socket->SendBuf(&pc_Interface_Ocv_Data, sizeof(pc_Interface_Ocv_Data));
+                        const int headerBytes = ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));
+                        const int dataBytes = ClientSocket_PC->Socket->SendBuf(&pc_Interface_Ocv_Data, sizeof(pc_Interface_Ocv_Data));
+                        if(headerBytes == static_cast<int>(sizeof(pc_Data)) && dataBytes == static_cast<int>(sizeof(pc_Interface_Ocv_Data)))
+                            resultSentParts |= 4;
 
                         currentWriteTask = nPCDATA;
                         break;
+                    }
                 }
 				pc_ReadFlag = false;
 			}
@@ -660,19 +644,19 @@ double __fastcall TMod_PLC::GetValue(int pc_address)
     return value;
 }
 //---------------------------------------------------------------------------
-AnsiString __fastcall TMod_PLC::GetCellSrial(int plc_address, int index, int size)
+AnsiString __fastcall TMod_PLC::GetCellSerial(int plc_address, int index, int size)
 {
     AnsiString value = GetString(plc_Interface_Cell_Serial, plc_address + index * 10, size);
     return value;
 }
 //---------------------------------------------------------------------------
-AnsiString __fastcall TMod_PLC::GetCellSrialTrayId(int plc_address, int size)
+AnsiString __fastcall TMod_PLC::GetCellSerialTrayId(int plc_address, int size)
 {
     AnsiString value = GetString(plc_Interface_Cell_Serial, plc_address, size);
     return value;
 }
 //---------------------------------------------------------------------------
-double __fastcall TMod_PLC::GetCellSrialValue(int plc_address)
+double __fastcall TMod_PLC::GetCellSerialValue(int plc_address)
 {
     double value = GetDouble(plc_Interface_Cell_Serial, plc_address);
     return value;
@@ -734,3 +718,14 @@ int __fastcall TMod_PLC::GetOcvValue(int pc_address, int index)
 
 
 
+//---------------------------------------------------------------------------
+// 최종 버퍼 준비 직후 호출. 이후 세 블록이 각각 실제 송신된 경우만 완료 지연을 끝낸다.
+// TCP 송신 확인이며 PLC 내부 반영 ACK를 의미하지 않는다.
+void __fastcall TMod_PLC::BeginResultTransmission() { resultSentParts = 0; }
+bool __fastcall TMod_PLC::WasResultTransmitted() { return resultSentParts == 7; }
+bool __fastcall TMod_PLC::IsResultConnectionReady()
+{
+    return ClientSocket_PC->Active && ClientSocket_PC->Socket->Connected &&
+           ClientSocket_PLC->Active && ClientSocket_PLC->Socket->Connected &&
+           GetPlcValue(PLC_D_IROCV_ERROR) == 0;
+}

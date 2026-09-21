@@ -71,7 +71,7 @@ void __fastcall TForm_PLCInterface::SetListViewPLC()
 	AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_IROCV_TRAY_ID), "TRAY ID");
 
 	// CELL INFO => 1 : YES, 0 : NO
-	for(int i = 0; i < 25; i++)
+	for(int i = 0; i < CELL_DATA_WORD_COUNT; i++)
 	{
 		AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_IROCV_TRAY_CELL_DATA + i), "TRAY CELL DATA #" + IntToStr(i + 1));
 	}
@@ -107,7 +107,7 @@ void __fastcall TForm_PLCInterface::SetListViewPC()
 	AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_START_DEV_NUM1 + PC_D_IROCV_OCV_MIN), "IROCV OCV MIN.");
 	AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_START_DEV_NUM1 + PC_D_IROCV_OCV_MAX), "IROCV OCV MAX.");
 
-	for(int i = 0; i < 25; i++)
+	for(int i = 0; i < CELL_DATA_WORD_COUNT; i++)
 		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_START_DEV_NUM1 + PC_D_IROCV_MEASURE_OK_NG + i), "IR/OCV OK/NG DATA #" + IntToStr(i + 1));
 
     for(int channel = 0; channel < MAXCHANNEL; channel += channelStep){
@@ -203,7 +203,7 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
             ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetString(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_ID, 10);
 
             AnsiString cell_info;
-            for(int i = 0; i < 25; i++)
+            for(int i = 0; i < CELL_DATA_WORD_COUNT; i++)
             {
                 cell_info = "";
                 for(int j = 0; j < 16; j++)
@@ -215,9 +215,9 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
             }
 
             //* CELL SERIAL
-            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSrialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
+            ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSerialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
             for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
-                ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSrial(PLC_D_IROCV_CELL_SERIAL, channel, PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
+                ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSerial(PLC_D_IROCV_CELL_SERIAL, channel, PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
         }
 
         if(Mod_PLC->ClientSocket_PC->Active)    //    PC ป๓ลย
@@ -242,7 +242,7 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
             ListView_PC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_OCV_MAX);
 
             AnsiString okng_bin;
-            for(int i = 0; i < 25; i++)
+            for(int i = 0; i < CELL_DATA_WORD_COUNT; i++)
             {
                 okng_bin = "";
                 for(int j = 0; j < 16; j++)
@@ -487,7 +487,7 @@ bool __fastcall TForm_PLCInterface::ApplyNgChannels(AnsiString channelText)
 		delete tokens;
 	}
 
-	for(int i = 0; i < 25; ++i)
+	for(int i = 0; i < CELL_DATA_WORD_COUNT; ++i)
 	{
 		for(int j = 0; j < 16; j++)
 		{
@@ -526,7 +526,6 @@ void __fastcall TForm_PLCInterface::btnAllNgClick(TObject *Sender)
 
 void __fastcall TForm_PLCInterface::btnWriteIrOcvValueClick(TObject *Sender)
 {
-    Mod_PLC->PLC_Write_Result = true;
 	double ir_base = BaseForm->StringToDouble(editIR->Text, 1);
 	double ocv_base = BaseForm->StringToDouble(editOCV->Text, 1);
 	int channelIncrement = chkChannelIncrement->Checked
@@ -552,5 +551,3 @@ void __fastcall TForm_PLCInterface::btnWriteIrOcvValueClick(TObject *Sender)
 		+ " CH / increment " + IntToStr(channelIncrement), clGreen);
 }
 //---------------------------------------------------------------------------
-
-

@@ -281,7 +281,7 @@ void __fastcall TRemeasureForm::MakePanel(AnsiString type)
 		ny = nh*2+5;
 
 		TColor clr;
-		for(int index=0; index<400;){
+		for(int index=0; index< MAXCHANNEL;){
 			pch[index] = new TPanel(this);
 			pre[index] = new TPanel(this);
 
@@ -302,13 +302,13 @@ void __fastcall TRemeasureForm::MakePanel(AnsiString type)
 			if(index % 2 == 0) nx -= 2;
 //			if(index % 10 == 0) nx += 1;
 			if(index % 10 == 0) nx -= 2;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
 //				ny = ny - nh - nh  - 2;
 				ny = ny + nh + nh  + 3;
 				nx = Panel2->Width - (nw+2);
-//				if( (index / 20) % 10 == 0) ny -= 2;
-				if( (index / 20) % 10 == 0) ny += 3;
+//				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny -= 2;
+				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny += 3;
 			}
 		}
 	}
@@ -326,7 +326,7 @@ void __fastcall TRemeasureForm::MakePanel(AnsiString type)
 		ny = Panel2->Height - (nh*2+2);
 
 		TColor clr;
-		for(int index=0; index<400;){
+		for(int index=0; index< MAXCHANNEL;){
 			pch[index] = new TPanel(this);
 			pre[index] = new TPanel(this);
 			pch[index]->ParentBackground = false;
@@ -346,11 +346,11 @@ void __fastcall TRemeasureForm::MakePanel(AnsiString type)
 			nx = nx + nw + 1;
 			if(index % 2 == 0) nx += 1;
 			if(index % 10 == 0) nx += 1;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
 				ny = ny - nh - nh  - 2;
 				nx = Panel35->Width*0.8 + 5;
-				if( (index / 20) % 10 == 0) ny -= 2;
+				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny -= 2;
 			}
 		}
     }
@@ -383,12 +383,12 @@ void __fastcall TRemeasureForm::MakePanel(AnsiString type)
 			if(index % 40 == 0) nx -= 1;
 			if(index % 200 == 0) nx -= 1;
             if(index % 10 == 0) ny -= 2;
-			if(index % 20 == 0)
+			if(index % CELL_COLUMN_COUNT == 0)
 			{
                 nx = nx - nw - 1;
                 ny = Panel2->Height - (nh*2+2);
 				//nx = Panel2->Width - (nw + 2);
-				//if( (index / 20) % 10 == 0) ny -= 2;
+				//if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny -= 2;
 			}
 		}
     }
@@ -432,7 +432,7 @@ void __fastcall TRemeasureForm::MakeUIPanel()
         }
     }
     else{
-        for(int index = 0; index < 20;){
+        for(int index = 0; index < CELL_COLUMN_COUNT;){
             pUIx[index] = new TPanel(this);
             pUIy[index] = new TPanel(this);
 
@@ -467,7 +467,7 @@ void __fastcall TRemeasureForm::SetOption(TPanel *pnl, int nx, int ny, int nw, i
 	pnl->BevelKind = bkNone;
 	pnl->BevelOuter = bvNone;
 	pnl->Tag = index; // index + 16
-	pnl->Hint = "POS : " + IntToStr((index/20)+1) + "-" + IntToStr((index%20)+1);
+	pnl->Hint = "POS : " + IntToStr((index / CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index % CELL_COLUMN_COUNT)+1);
     pnl->OnClick = ChInfoMouseClick;
 //    pnl->OnMouseLeave = ChInfoMouseLeave;
 
@@ -575,7 +575,7 @@ void __fastcall TRemeasureForm::ChInfoMouseClick(TObject *Sender)
 	int index;
 	index = pnl->Tag;
 	pChannel->Caption = index + 1;
-    pPos->Caption = IntToStr((index/20)+1) + "-" + IntToStr((index%20)+1);
+    pPos->Caption = IntToStr((index / CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index % CELL_COLUMN_COUNT)+1);
     pNgTotalUse->Caption = IntToStr(acc_remeasure[index]) + " / " + IntToStr(acc_totaluse[index]);
 }
 //---------------------------------------------------------------------------

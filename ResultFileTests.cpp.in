@@ -1,0 +1,72 @@
+// 실제 CSV 작성 메서드와 실제 임시 파일을 검증한다. VCL 폼/설비는 실행하지 않는다.
+#include <System.hpp>
+#include <System.SysUtils.hpp>
+#include <System.Classes.hpp>
+#include <Winapi.Windows.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include "SiteConfig.h"
+using namespace System;
+using namespace System::Sysutils;
+using namespace System::Classes;
+const char *DATA_PATH = ".\\results\\";
+const int GO = 0;
+int createFailures=0,shortWrites=0;
+int TestFileCreate(const AnsiString &path) {
+    if(createFailures>0){--createFailures;return -1;}
+    return FileCreate(path);
+}
+int TestFileWrite(int handle,const void *data,int count) {
+    if(shortWrites>0){--shortWrites;return FileWrite(handle,data,count-1);}
+    return FileWrite(handle,data,count);
+}
+class TTotalForm {
+public:
+    struct Edit {AnsiString Text;} model,*editModelName;
+    struct {double ir_min,ir_max,ocv_min,ocv_max;} config;
+    struct {AnsiString trayid,cell_serial[MAXCHANNEL];int cell[MAXCHANNEL],measure_result[MAXCHANNEL];
+        double after_value[MAXCHANNEL],ocv_value[MAXCHANNEL];} tray;
+    struct {int cell[MAXCHANNEL];} retest;
+    AnsiString resultFileName;
+    TDateTime m_dateTime;
+    bool irValueReceived[MAXCHANNEL],ocvValueReceived[MAXCHANNEL];
+    TTotalForm():editModelName(&model),m_dateTime(Now()) {
+        model.Text="TEST";tray.trayid="TRAY01";
+        config.ir_min=10;config.ir_max=20;config.ocv_min=1000;config.ocv_max=3000;
+        for(int i=0;i<MAXCHANNEL;++i){tray.cell[i]=1;tray.cell_serial[i]="CELL";
+            tray.after_value[i]=15;tray.ocv_value[i]=2000;tray.measure_result[i]=GO;
+            retest.cell[i]=0;irValueReceived[i]=ocvValueReceived[i]=true;}
+    }
+    bool __fastcall WriteResultFile();
+};
+#define FileCreate TestFileCreate
+#define FileWrite TestFileWrite
+@@WRITE_RESULT_FILE@@
+#undef FileCreate
+#undef FileWrite
+int checks=0;
+#define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d\n",__LINE__);exit(1);}}while(0)
+AnsiString ReadFileText(const AnsiString &path) {
+    TStringList *lines=new TStringList;
+    try {lines->LoadFromFile(path);return lines->Text;}
+    __finally {delete lines;}
+    return "";
+}
+int main() {
+    TTotalForm f;
+    createFailures=1;CHECK(!f.WriteResultFile());CHECK(f.WriteResultFile());
+    const AnsiString path=f.resultFileName, original=ReadFileText(path);
+    CHECK(original.Pos("CH,CELL,CELL_ID,IR,OCV,RESULT")>0);
+    f.tray.after_value[0]=25;f.retest.cell[0]=CELL_IR_NG;
+    shortWrites=1;CHECK(!f.WriteResultFile());CHECK(ReadFileText(path)==original);
+    CHECK(!FileExists(path+".tmp"));
+    CHECK(f.WriteResultFile());CHECK(f.resultFileName==path);
+    CHECK(ReadFileText(path).Pos("IR SPEC NG")>0);
+    CHECK(!FileExists(path+".tmp"));
+    // 교체 실패(기존 결과를 다른 프로그램이 열어둔 경우)도 false이며 기존 결과를 보존한다.
+    HANDLE locked=CreateFileA(path.c_str(),GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
+    CHECK(locked!=INVALID_HANDLE_VALUE);CHECK(!f.WriteResultFile());CloseHandle(locked);
+    CHECK(f.WriteResultFile());
+    printf("PASS: %d actual CSV file checks\n",checks);
+    return 0;
+}
