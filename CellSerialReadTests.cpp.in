@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdexcept>
 #include "SiteConfig.h"
+#include "CellJudgment.h"
 typedef unsigned long DWORD;
 struct TObject {};
 struct AnsiString {
@@ -88,7 +89,7 @@ struct ErrorForm {
     Timer bring,off;Timer *Timer_BringToFront,*timerErrorOff;
     ErrorForm():stage(0),shown(0),Timer_BringToFront(&bring),timerErrorOff(&off){}
     void ChangeMessage(AnsiString,AnsiString,AnsiString){}
-    void DisplayErrorMessage(int n){stage=n;++shown;Mod_PLC->SetValue(PC_D_IROCV_ERROR,1);}
+    void DisplayErrorMessage(int n){stage=n;++shown;} // Display must not control PLC.
     void Close(){}
 } errorForm;
 ErrorForm *Form_CellIdError=&errorForm;
@@ -99,7 +100,7 @@ public:
         struct Setting { int closedProbeRemeasureMaxNgCount; } setting;
         const Setting &GetSetting() const { return setting; }
     } autoInspection;
-    int Tag,filesSaved,trayFilesSaved,testSerialCount,reads,stops;
+    int Tag,filesSaved,trayFilesSaved,testSerialCount,reads,stops,serialWarnings;
     int fileAttempts,failFileAttempts,completeNotifications,measNgCount,acc_totaltray,acc_finalng;
     int acc_totaluse[MAXCHANNEL],acc_remeasure[MAXCHANNEL],chReverseMap[MAXCHANNEL+1];
     bool cellSerialContinuousReadForTray,trayResultCounted,bLocal,fileContainedSerial;
@@ -120,7 +121,7 @@ public:
     TTotalForm():Tag(0),filesSaved(0),trayFilesSaved(0),testSerialCount(MAXCHANNEL),reads(0),stops(0),
       cellSerialContinuousReadForTray(false),resultSaveStep(RESULT_IDLE),
       resultSaveStartTime(0),Timer_ResultSave(&timer),Panel_State(&statePanel){
-        showStartupChannelNumbers=false;
+        showStartupChannelNumbers=false;serialWarnings=0;
         bLocal=false;fileContainedSerial=false;trayFileLoads=0;
         stage.arl=nAuto;
         autoInspection.setting.closedProbeRemeasureMaxNgCount=49;
@@ -138,8 +139,7 @@ public:
     }
     void __fastcall ApplyCellSerialReadMode();
     void __fastcall StartResultCellSerialRead();
-    void __fastcall ShowResultCellSerialError(AnsiString reason);
-    void __fastcall CompleteResultCellSerialRead(bool operatorOverride);
+    void __fastcall CompleteResultCellSerialRead();
     void __fastcall Timer_ResultSaveTimer(TObject *Sender);
     void __fastcall ProcessResultSave(TObject *Sender);
     void __fastcall CancelResultSave();
@@ -151,12 +151,15 @@ public:
     void __fastcall PrepareRemeasureItems();
     void __fastcall RemeasureExcute();
     void __fastcall BadInformation();
-    void __fastcall WriteResultCode();
     void __fastcall UpdateCellDisplay(int index);
     void MakeData(int,AnsiString command,AnsiString param=""){lastCommand=command;}
-    void WritePLCLog(AnsiString,AnsiString){}
+    void WritePLCLog(AnsiString type,AnsiString){if(type.s=="CELL SERIAL WARNING")++serialWarnings;}
     void DisplayStatus(int){}
-    int ReadCellSerial(){++reads;return testSerialCount;}
+    int ReadCellSerial(){
+        ++reads;
+        for(int i=0;i<MAXCHANNEL;++i)tray.cell_serial[i]=i<testSerialCount?"CURRENT-ID":"";
+        return testSerialCount;
+    }
     void SaveTrayInfo(AnsiString){++trayFilesSaved;}
     bool LoadTrayInfo(AnsiString){++trayFileLoads;return true;}
     void ReadCellInfo(){}
@@ -171,7 +174,8 @@ public:
 };
 @@FORM_METHODS@@
 int checks=0;
-void check(bool ok){if(!ok){printf("FAIL at check %d\n",checks);exit(1);}++checks;}
+void checkAtLine(bool ok,int line){if(!ok){printf("FAIL at check %d, line %d\n",checks,line);exit(1);}++checks;}
+#define check(condition) checkAtLine((condition),__LINE__)
 std::string response(int words,unsigned char marker,int error=0){
     unsigned char h[11]={0xD0,0,3,3,0xFF,3,0,0,0,0,0};
     int bytes=words*2+2;h[7]=bytes&255;h[8]=bytes>>8;h[9]=error&255;h[10]=error>>8;
@@ -275,6 +279,7 @@ int main(){
     f.FinishMeasurement();check(f.filesSaved==1); // Duplicate after completion also ignored.
     f.Timer_ResultSaveTimer(0);check(f.completeNotifications==1);
     f.resultSaveStep=RESULT_IDLE;
+    const int cacheLoadsBeforeContinuous=f.trayFileLoads;
     f.config.cell_serial_continuous_read=true;f.ApplyCellSerialReadMode();
     f.FinishMeasurement();check(f.resultSaveStep==RESULT_WAIT_SERIAL&&f.filesSaved==1&&plc.pc[PC_D_IROCV_COMPLETE]==0);
     f.FinishMeasurement();check(f.filesSaved==1);
@@ -284,19 +289,34 @@ int main(){
     check(plc.pc[PC_D_IROCV_COMPLETE]==0&&f.reads==1);
     plc.transmitted=true;clockTime+=1000;f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_COMPLETE);
     f.tray.cell_count=0;
+    const int previousErrors=errorForm.shown;
+    plc.pc[PC_D_IROCV_ERROR]=0;
     f.StartResultCellSerialRead();f.testSerialCount=399;plc.CellSerialReadComplete=true;
     f.Timer_ResultSaveTimer(0);
-    check(f.resultSaveStep==RESULT_WAIT_OPERATOR&&f.filesSaved==2&&plc.pc[PC_D_IROCV_COMPLETE]==0);
-    f.CompleteResultCellSerialRead(true);check(f.filesSaved==3&&f.resultSaveStep==RESULT_WAIT_PLC_SEND);
+    check(f.filesSaved==3&&f.resultSaveStep==RESULT_WAIT_PLC_SEND&&f.serialWarnings==1);
+    check(errorForm.shown==previousErrors&&plc.pc[PC_D_IROCV_ERROR]==0);
+    check(f.fileContainedSerial&&f.tray.cell_serial[0].s=="CURRENT-ID");
+    check(f.tray.cell_serial[399].IsEmpty()&&f.trayFileLoads==cacheLoadsBeforeContinuous);
+    f.CompleteResultCellSerialRead();check(f.filesSaved==3); // Duplicate cannot save twice.
+    // At timeout no old/partial ID or .Tray cache may enter the result.
+    for(int c=0;c<MAXCHANNEL;++c)f.tray.cell_serial[c]="OLD-ID";
     f.StartResultCellSerialRead();clockTime+=10001;f.Timer_ResultSaveTimer(0);
-    check(f.resultSaveStep==RESULT_WAIT_OPERATOR&&f.filesSaved==3);
-    f.CompleteResultCellSerialRead(true);check(f.filesSaved==3);
+    check(f.resultSaveStep==RESULT_WAIT_PLC_SEND&&f.filesSaved==4&&f.serialWarnings==2);
+    check(errorForm.shown==previousErrors&&plc.pc[PC_D_IROCV_ERROR]==0&&!f.fileContainedSerial);
+    for(int c=0;c<MAXCHANNEL;++c)check(f.tray.cell_serial[c].IsEmpty());
+    check(f.trayFileLoads==cacheLoadsBeforeContinuous);
+    f.CompleteResultCellSerialRead();check(f.filesSaved==4);
     f.StartResultCellSerialRead();f.testSerialCount=400;plc.CellSerialReadComplete=true;
-    f.Timer_ResultSaveTimer(0);check(f.filesSaved==4);
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==5&&f.serialWarnings==2);
     f.StartResultCellSerialRead();f.CancelResultSave();plc.CellSerialReadComplete=true;
-    f.Timer_ResultSaveTimer(0);check(f.filesSaved==4);
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==5);
     clockTime=0xFFFFFF00UL;f.StartResultCellSerialRead();clockTime=0x00002700UL;
-    f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_WAIT_OPERATOR);
+    f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_WAIT_PLC_SEND&&f.filesSaved==6);
+    // Completion at the timeout boundary wins. Do not clear errors from another cause.
+    f.StartResultCellSerialRead();clockTime+=RESULT_SERIAL_TIMEOUT_MS;plc.CellSerialReadComplete=true;
+    plc.pc[PC_D_IROCV_ERROR]=1;
+    f.Timer_ResultSaveTimer(0);check(f.filesSaved==7&&f.fileContainedSerial);
+    check(plc.pc[PC_D_IROCV_ERROR]==1&&f.trayFilesSaved==0&&errorForm.shown==previousErrors);
 
     TTotalForm retry;
     retry.failFileAttempts=1;retry.FinishMeasurement();
@@ -320,10 +340,19 @@ int main(){
     judge.tray.ocv_value[0]=2000;check(judge.JudgeCellResult(0)==CELL_OK);
     judge.tray.after_value[0]=25;judge.tray.ocv_value[0]=0;
     judge.tray.cell[1]=0;judge.tray.after_value[1]=999;
-    judge.SetRemeasureListAfter();judge.BadInformation();judge.WriteResultCode();
+    judge.SetRemeasureListAfter();judge.BadInformation();
     check(judge.measNgCount==1&&plc.pc[PC_D_IROCV_NG_COUNT]==2);
     check(plc.resultCodes[0]==1&&plc.resultCodes[1]==1&&plc.resultCodes[2]==0);
     check(judge.acc_totaltray==1&&judge.acc_finalng==1);
+    // Repeated publication must not double-count, and overwrites stale PLC codes/bits.
+    plc.resultCodes[2]=1;
+    plc.SetData(plc.pc_Interface_Data,PC_D_IROCV_MEASURE_OK_NG,2,true);
+    judge.BadInformation();
+    check(judge.acc_totaltray==1&&judge.acc_finalng==1);
+    for(int i=0;i<MAXCHANNEL;++i)
+        check(plc.resultCodes[i] == (plc.GetData(plc.pc_Interface_Data,
+            PC_D_IROCV_MEASURE_OK_NG+i/16,i%16) ? 1 : 0));
+    check(plc.resultCodes[2]==0);
     judge.PrepareRemeasureItems();check(judge.retest.pendingItems[0]==3);
     judge.RemeasureExcute();check(judge.lastCommand.s=="IR*"&&judge.retest.cell[0]==CELL_IR_NG);
     judge.RemeasureExcute();check(judge.retest.waitingItem==1); // Still waiting: no OCV yet.
@@ -331,6 +360,29 @@ int main(){
     judge.RemeasureExcute();check(judge.lastCommand.s=="OCV"&&judge.retest.waitingItem==2);
     judge.tray.ocv_value[0]=2000;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
     judge.RemeasureExcute();check(judge.retest.cell[0]==CELL_OK&&judge.acc_totaltray==1&&judge.acc_finalng==0);
+    // Any NG cause selects both IR and OCV; OK and empty cells are excluded.
+    TTotalForm both;
+    both.tray.after_value[0]=25; // IR-only NG.
+    both.tray.ocv_value[1]=0;    // OCV-only NG.
+    both.tray.after_value[2]=999;
+    both.tray.cell[3]=0;both.tray.after_value[3]=999;
+    both.PrepareRemeasureItems();
+    check(both.retest.pendingItems[0]==3 && both.retest.pendingItems[1]==3);
+    check(both.retest.pendingItems[2]==3 && both.retest.pendingItems[3]==0);
+    check(both.retest.pendingItems[4]==0);
+    both.tray.rem_mode=1;
+    for(int i=0;i<3;++i) {
+        both.RemeasureExcute();
+        check(both.retest.waitingChannel==i && both.lastCommand.s=="IR*");
+        both.retest.waitingChannel=-1;both.retest.waitingItem=0;
+        both.RemeasureExcute();
+        check(both.retest.waitingChannel==i && both.lastCommand.s=="OCV");
+        both.retest.waitingChannel=-1;both.retest.waitingItem=0;
+    }
+    check(JudgeCellValues(10,1000,10,20,1000,3000).result==CELL_OK);
+    check(JudgeCellValues(20,3000,10,20,1000,3000).result==CELL_OK);
+    check(JudgeCellValues(999,0,10,20,1000,3000).result==CELL_CONTACT_NG);
+    check(JudgeCellValues(21,0,10,20,1000,3000).result==CELL_IR_NG);
     TTotalForm display;
     display.irValueReceived[0]=false;display.ocvValueReceived[0]=false;
     display.UpdateCellDisplay(0);check(display.panel[0]->Color==display.clLine);

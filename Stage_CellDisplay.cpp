@@ -5,6 +5,7 @@
 #pragma hdrstop
 
 #include "FormTotal.h"
+#include "CellJudgment.h"
 #include "RVMO_main.h"
 
 
@@ -268,20 +269,22 @@ void __fastcall TTotalForm::UpdateCellDisplay(int index)
     const bool hasIr = irValueReceived[index], hasOcv = ocvValueReceived[index];
     if(tray.cell[index] == 1)
     {
+        const TCellJudgment judgment = JudgeCellValues(tray.after_value[index], tray.ocv_value[index],
+            config.ir_min, config.ir_max, config.ocv_min, config.ocv_max);
         bool irNg = false, ocvNg = false;
         if(hasIr)
         {
             sir = FormatFloat("0.00", tray.after_value[index]);
-            irNg = tray.after_value[index] < config.ir_min || tray.after_value[index] > config.ir_max;
-            irColor = tray.after_value[index] == 999 ? clMeasureFail : (irNg ? clBadIr : clIrCheck);
+            irNg = judgment.irNg;
+            irColor = judgment.contactNg ? clMeasureFail : (irNg ? clBadIr : clIrCheck);
         }
         if(hasOcv)
         {
             socv = FormatFloat("0.0", tray.ocv_value[index]);
-            ocvNg = tray.ocv_value[index] < config.ocv_min || tray.ocv_value[index] > config.ocv_max;
+            ocvNg = judgment.ocvNg;
             ocvColor = ocvNg ? pocv->Color : clOcvCheck;
         }
-        if(hasIr && tray.after_value[index] == 999) basic = clMeasureFail;
+        if(hasIr && judgment.contactNg) basic = clMeasureFail;
         else if(hasIr && irNg) basic = clBadIr;
         else if(hasOcv && ocvNg) basic = pocv->Color;
         else if(hasIr && hasOcv) basic = clBothCheck;

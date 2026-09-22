@@ -7,6 +7,7 @@
 #include "FormTotal.h"
 #include "RVMO_main.h"
 #include "FormCalibration.h"
+#include "CellJudgment.h"
 
 //---------------------------------------------------------------------------
 // 수동 측정 초기화: 내부 값은 0으로 지우고 화면은 수신 전까지 공란으로 표시한다.
@@ -136,15 +137,8 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 
 		if(tray.measure_result[index] == GO)
 		{
-			if(tray.after_value[index] >= config.ir_min && tray.after_value[index] <= config.ir_max)
-			{
-				UpdateCellDisplay(index);
-
-			}
-			else
-			{
-				UpdateCellDisplay(index);
-            }
+            // 규격 판정은 공통 판정 함수를 사용하는 화면/최종 집계에서 처리한다.
+            UpdateCellDisplay(index);
 		}
 		else
 		{
@@ -263,12 +257,8 @@ void __fastcall TTotalForm::SetRemeasureList()
 int __fastcall TTotalForm::JudgeCellResult(int index)
 {
     if(tray.cell[index] != 1) return CELL_OK;
-    if(tray.after_value[index] == 999) return CELL_CONTACT_NG;
-    if(tray.after_value[index] < config.ir_min || tray.after_value[index] > config.ir_max)
-        return CELL_IR_NG;
-    if(tray.ocv_value[index] < config.ocv_min || tray.ocv_value[index] > config.ocv_max)
-        return CELL_OCV_NG;
-    return CELL_OK;
+    return JudgeCellValues(tray.after_value[index], tray.ocv_value[index],
+        config.ir_min, config.ir_max, config.ocv_min, config.ocv_max).result;
 }
 
 // 현재 값으로 최종 판정을 재계산한다. 접촉 > IR > OCV. 이전 판정값을 유지하지 않는다.
@@ -294,7 +284,8 @@ void __fastcall TTotalForm::SetRemeasureListAfter()
     tray.first = false;
 }
 
-// 불량 셀의 IR/OCV 요청 목록. 판정 배열(retest.cell)은 진행 표식으로 사용하지 않는다.
+// 불량 셀은 원인과 관계없이 IR과 OCV를 모두 재측정한다.
+// pendingItems의 1/2는 송신 순서 관리용이며 불량 원인 분류가 아니다.
 void __fastcall TTotalForm::PrepareRemeasureItems()
 {
     retest.re_index = 0;
@@ -304,10 +295,7 @@ void __fastcall TTotalForm::PrepareRemeasureItems()
     {
         retest.pendingItems[i] = 0;
         if(tray.cell[i] != 1) continue;
-        if(tray.after_value[i] == 999 || tray.after_value[i] < config.ir_min ||
-           tray.after_value[i] > config.ir_max) retest.pendingItems[i] |= 1;
-        if(tray.ocv_value[i] < config.ocv_min || tray.ocv_value[i] > config.ocv_max)
-            retest.pendingItems[i] |= 2;
+        if(JudgeCellResult(i) != CELL_OK) retest.pendingItems[i] = 3; // IR 다음 OCV.
     }
 }
 
@@ -360,17 +348,16 @@ void __fastcall TTotalForm::FinishMeasurement()
 }
 
 //---------------------------------------------------------------------------
-// [CELL SERIAL 공통] 자동=시리얼 확인 후 저장, 수동=시리얼 없이 저장. PLC 완료 처리는 공통 유지.
+// 자동=모드별 시리얼 확인 후 저장. 수동/상시 수신 타임아웃=ID 없이 저장. PLC 완료 처리는 공통.
 void __fastcall TTotalForm::SaveMeasurementResult(bool saveWithoutCellSerial)
 {
     if(resultSaveStep != RESULT_WRITE_FILE) return;
     BadInformation();
-    WriteResultCode();
     ReadCellInfo();
     WriteIROCVValue();
     if(saveWithoutCellSerial)
     {
-        // 수동 결과에 이전 트레이 시리얼을 넣지 않는다. .Tray 복원/PLC 시리얼 읽기도 생략.
+        // 수동/타임아웃 결과에 이전 트레이 ID를 넣지 않는다. 캐시 복원/PLC 읽기도 생략.
         for(int i = 0; i < MAXCHANNEL; ++i) tray.cell_serial[i] = "";
     }
     else if(!cellSerialContinuousReadForTray && !LoadTrayInfo(tray.trayid))
@@ -434,55 +421,35 @@ void __fastcall TTotalForm::StartResultCellSerialRead()
 }
 
 //---------------------------------------------------------------------------
-// [CELL SERIAL 공통] 시간 초과/개수 불일치는 결과 저장과 자동 배출을 보류한다.
-// SAVE=완료 데이터 운영자 승인 저장, CANCEL=새 전체 수신 재시도.
-void __fastcall TTotalForm::ShowResultCellSerialError(AnsiString reason)
+// 상시 읽기 전용 결과 검사. 불일치/타임아웃은 로그만 남기고 오류창 없이 저장한다.
+// 완료본은 그대로 사용하고, 타임아웃은 이전/부분 데이터를 쓰지 않도록 ID를 공란 저장한다.
+void __fastcall TTotalForm::CompleteResultCellSerialRead()
 {
-    Timer_ResultSave->Enabled = false;
-    resultSaveStep = RESULT_WAIT_OPERATOR;
-    Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
-    Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
-    DisplayStatus(nEND);
-    Panel_State->Caption = " CELL SERIAL error - result save waiting ... ";
-    WritePLCLog("CELL SERIAL ERROR", reason);
-    Form_CellIdError->ChangeMessage("CELL SERIAL - RESULT SAVE", reason,
-        "SAVE: use completed data / CANCEL: read again");
-    Form_CellIdError->DisplayErrorMessage(this->Tag);
-}
-
-//---------------------------------------------------------------------------
-// [CELL SERIAL 공통] 완료본을 트레이에 복사한다. 상시 모드는 이전 .Tray 파일로 덮어쓰지 않는다.
-// SAVE 승인도 전체 수신 전에는 허용하지 않아 이전 트레이/조각 데이터를 결과에 넣지 않는다.
-void __fastcall TTotalForm::CompleteResultCellSerialRead(bool operatorOverride)
-{
-    if(resultSaveStep != RESULT_WAIT_SERIAL && resultSaveStep != RESULT_WAIT_OPERATOR) return;
-    if(!Mod_PLC->IsCellSerialReadComplete())
-    {
-        ShowResultCellSerialError("No complete CELL SERIAL data. Select CANCEL to read again.");
+    if(resultSaveStep != RESULT_WAIT_SERIAL) return;
+    const bool complete = Mod_PLC->IsCellSerialReadComplete();
+    // 전체 수신 완료 또는 제한시간 경과일 때만 저장한다.
+    if(!complete && static_cast<DWORD>(GetTickCount() - resultSaveStartTime) < RESULT_SERIAL_TIMEOUT_MS)
         return;
-    }
-    const int serialCount = ReadCellSerial();
-    // 자동 결과 저장은 캐시가 아닌 현재 CELL DATA의 실제 셀 개수와 비교한다.
-    int cellCount = 0;
-    for(int i = 0; i < MAXCHANNEL; ++i)
-        if(tray.cell[i] == 1) ++cellCount;
-    if(!operatorOverride && serialCount != cellCount)
-    {
-        ShowResultCellSerialError("Serial count " + IntToStr(serialCount)
-            + " / Cell count " + IntToStr(cellCount));
-        return;
-    }
     Timer_ResultSave->Enabled = false;
-    WritePLCLog("CELL SERIAL", (operatorOverride ? AnsiString("Operator SAVE: ") : AnsiString("Final read OK: "))
-        + IntToStr(serialCount) + " / " + IntToStr(cellCount));
-    SaveTrayInfo(tray.trayid);
-    Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
+    if(complete)
+    {
+        const int serialCount = ReadCellSerial();
+        int cellCount = 0;
+        for(int i = 0; i < MAXCHANNEL; ++i)
+            if(tray.cell[i] == 1) ++cellCount;
+        WritePLCLog(serialCount == cellCount ? "CELL SERIAL" : "CELL SERIAL WARNING",
+            "Final serial count " + IntToStr(serialCount) + " / Cell count " + IntToStr(cellCount)
+            + (serialCount == cellCount ? " (OK)" : " (mismatch; save completed data)"));
+    }
+    else
+        WritePLCLog("CELL SERIAL WARNING", "Final read timeout (10 seconds); save with empty CELL IDs");
+    // 상시 모드는 .Tray 캐시를 저장/복원하지 않는다. 다른 원인의 PLC 오류도 해제하지 않는다.
     resultSaveStep = RESULT_WRITE_FILE;
-    SaveMeasurementResult();
+    SaveMeasurementResult(!complete);
 }
 
 //---------------------------------------------------------------------------
-// [CELL SERIAL 공통] 완료를 먼저 확인하고 미완료면 요청 후 10초에 오류로 전환한다.
+// [CELL SERIAL 공통] 완료를 먼저 확인한다. 상시 읽기는 10초 초과 시 ID 없이 저장한다.
 // unsigned 경과시간 계산은 GetTickCount의 약 49일 주기 순환도 처리한다.
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 Timer_ResultSaveTimer. 시리얼 수신·결과 저장·PLC 완료 대기는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
@@ -492,9 +459,9 @@ void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
     {
         if(resultSaveStep == RESULT_WAIT_SERIAL)
         {
-            if(Mod_PLC->IsCellSerialReadComplete()) CompleteResultCellSerialRead(false);
+            if(Mod_PLC->IsCellSerialReadComplete()) CompleteResultCellSerialRead();
             else if(static_cast<DWORD>(GetTickCount() - resultSaveStartTime) >= RESULT_SERIAL_TIMEOUT_MS)
-                ShowResultCellSerialError("CELL SERIAL final read timeout (10 seconds).");
+                CompleteResultCellSerialRead();
         }
         else if(resultSaveStep == RESULT_WAIT_PLC_SEND)
         {
@@ -523,13 +490,6 @@ void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
 void __fastcall TTotalForm::CancelResultSave()
 {
     Timer_ResultSave->Enabled = false;
-    if(resultSaveStep == RESULT_WAIT_OPERATOR && Form_CellIdError->stage == this->Tag)
-    {
-        Form_CellIdError->Timer_BringToFront->Enabled = false;
-        Form_CellIdError->timerErrorOff->Enabled = false;
-        Form_CellIdError->Close();
-        Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-    }
     // 초기화/강제 배출 후 늦은 시리얼 응답이나 1초 타이머가 완료를 출력하지 못하게 한다.
     resultSaveStep = RESULT_CANCELLED;
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);

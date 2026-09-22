@@ -7,7 +7,7 @@
 // PLC 신호와 검사 수량의 기본값을 초기화한다.
 TAutoInspectionData::TAutoInspectionData()
     : trayIn(false), bypass(false), trayIdReady(false), cycleMode(false),
-      serialComplete(false), probeClosed(false), probeOpen(false),
+      cellSerialContinuousRead(false), serialComplete(false), probeClosed(false), probeOpen(false),
       autoMode(false), cellCount(0), serialCount(0), ngCount(0), ngLimit(10)
 {
 }
@@ -61,6 +61,12 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             if(waitCount < UINT_MAX) ++waitCount;
             if(data.cellCount <= 0 && !data.cycleMode) return CMD_NONE;
             if(waitCount <= sequenceSetting.startDelayCount) return CMD_NONE;
+            // 상시 읽기는 투입 시 시리얼을 기다리거나 비교하지 않는다.
+            if(data.cellSerialContinuousRead)
+            {
+                SetStep(STEP_WAIT_PROBE_CLOSE);
+                return CMD_PROBE_CLOSE;
+            }
             SetStep(STEP_WAIT_CELL_SERIAL);
             return CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL;
 

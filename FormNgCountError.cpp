@@ -21,22 +21,13 @@ void __fastcall TForm_NgCountError::DisplayErrorMessage(AnsiString title, WideSt
 	{
 		Timer_BringToFront->Enabled = true;
 
-		Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
+		// PLC 오류 출력은 검사 처리에서 담당한다. 이 함수는 화면만 표시한다.
 
 		Label_Title->Caption = title;
 		Label_Msg1->Caption = msg1;
 		Label_Msg2->Caption = msg2;
 
-		int width = 0;
-		if(Label_Title->Width > width) width = Label_Title->Width;
-		if(Label_Msg1->Width > width) width = Label_Msg1->Width;
-		if(Label_Msg2->Width > width) width = Label_Msg2->Width;
-
-		this->Width = width + 60;
-
-		Label_Title->Left = (this->Width / 2) - (Label_Title->Width / 2);
-		btnTrayOut->Left = (this->Width / 2) - 150;
-		btnOK->Left = (this->Width / 2) + 50;
+        // 크기/글꼴/줄바꿈/버튼 위치는 DFM에서 함께 관리한다.
 
 		SaveErrorLog(title, msg1, msg2);
 
@@ -80,11 +71,10 @@ void __fastcall TForm_NgCountError::SaveErrorLog(AnsiString title, AnsiString ms
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::btnTrayOutClick(TObject *Sender)
 {
-    Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-    BaseForm->nForm[stage]->ForceTrayOut();
     Timer_BringToFront->Enabled = false;
     timerErrorOff->Enabled = false;
     Close();
+    BaseForm->nForm[stage]->ForceTrayOut();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::btnOKClick(TObject *Sender)
@@ -102,16 +92,9 @@ void __fastcall TForm_NgCountError::Timer_BringToFrontTimer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::timerErrorOffTimer(TObject *Sender)
 {
-    if(Mod_PLC->GetValue(PC_D_IROCV_ERROR) == 1)
-	{
-		Label_Msg2->Caption = "Please check PLC whether PC ERROR is 0 ...";
-		Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-	}
-	else
-	{
-        Timer_BringToFront->Enabled = false;
-		timerErrorOff->Enabled = false;
-        this->Close();
-    }
+    // 이전 창의 닫기 타이머가 새 검사 오류를 해제하지 않도록 화면만 정리한다.
+    Timer_BringToFront->Enabled = false;
+    timerErrorOff->Enabled = false;
+    Close();
 }
 //---------------------------------------------------------------------------

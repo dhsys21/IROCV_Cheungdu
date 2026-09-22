@@ -425,18 +425,16 @@ private:
     void __fastcall ApplyCellSerialReadMode();
     // [CELL SERIAL 공통] 결과 저장용 새 전체 수신을 요청하고 전용 타이머로 완료를 기다린다.
     void __fastcall StartResultCellSerialRead();
-    // [CELL SERIAL 공통] 결과 저장 시리얼 오류창. 자동 배출/COMPLETE/파일 저장은 보류한다.
-    void __fastcall ShowResultCellSerialError(AnsiString reason);
     // 초기화/강제 배출 시 모든 지연 저장·완료 신호를 취소한다.
     void __fastcall CancelResultSave();
-    // [CELL SERIAL 공통] 수신/개수 확인 후 또는 운영자 SAVE 승인 후 최종 결과를 저장한다.
-    void __fastcall CompleteResultCellSerialRead(bool operatorOverride);
-    // NG/PLC 버퍼/파일 작성. 수동은 true로 호출해 시리얼 없이 저장하며 자동은 기존 검사 유지.
+    // 상시 읽기 결과 검사: 개수 불일치/타임아웃은 로그만 기록하고 오류창 없이 저장.
+    void __fastcall CompleteResultCellSerialRead();
+    // NG/PLC 버퍼/파일 작성. 수동 또는 상시 읽기 타임아웃은 true로 호출해 ID 없이 저장.
     // 실제 COMPLETE는 Timer_ResultSave에서 지연 출력한다.
     void __fastcall SaveMeasurementResult(bool saveWithoutCellSerial = false);
     // 측정값만으로 현재 셀 판정. 이전 색상/이전 불량의 영향을 받지 않는다.
     int __fastcall JudgeCellResult(int index);
-    // 재측정할 IR/OCV 항목을 현재 값으로 준비한다. 최종 판정값은 변경하지 않는다.
+    // 불량 셀마다 IR/OCV 두 항목의 요청을 준비한다. 최종 판정값은 변경하지 않는다.
     void __fastcall PrepareRemeasureItems();
     // ===== 데이터: 기존 접근 범위 유지 =====
     // 현재 표시 중인 화면 그룹.
@@ -643,7 +641,7 @@ public:
     void __fastcall FinishMeasurement();
     // [CELL SERIAL 공통] 수동/MSA 반복 측정도 이전 결과 저장 대기가 끝난 뒤 다음 측정을 시작한다.
     bool IsWaitingForResultSave() const {
-        return resultSaveStep == RESULT_WAIT_SERIAL || resultSaveStep == RESULT_WAIT_OPERATOR ||
+        return resultSaveStep == RESULT_WAIT_SERIAL ||
                resultSaveStep == RESULT_WRITE_FILE || resultSaveStep == RESULT_WAIT_PLC_SEND;
     }
     // AMF 수신 후 처리: 운전 모드에 따라 결과 마감 또는 기존 자동 개별 재측정을 수행한다.
@@ -658,10 +656,8 @@ public:
     // ===== Stage_PlcData.cpp =====
     // PC→PLC 검사 출력과 결과 버퍼 초기화. 기존 주소·초기값·출력 순서를 유지한다.
     void __fastcall PLCInitialization();
-    // PLC용 NG 비트/수량과 오류창용 measNgCount 집계. measNgCount는 존재하는 IR/OCV/접촉 불량 셀만 센다.
+    // 최종 판정으로 PLC NG 비트/코드/수량을 함께 작성. measNgCount는 실제 셀의 불량만 센다.
     void __fastcall BadInformation();
-    // PLC 셀별 결과 작성: BadInformation이 작성한 최종 OK/NG 비트와 동일하게 OK=0, NG=1.
-    void __fastcall WriteResultCode();
     // IR/OCV 값을 PLC 결과 버퍼에 쓴다. 인자 없는 함수는 측정값, int 인자는 초기화 값이다.
     void __fastcall WriteIROCVValue();
     // IR/OCV 값을 PLC 결과 버퍼에 쓴다. 인자 없는 함수는 측정값, int 인자는 초기화 값이다.

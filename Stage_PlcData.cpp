@@ -70,21 +70,8 @@ void __fastcall TTotalForm::WriteIROCVValue(int initValue)
 }
 
 //---------------------------------------------------------------------------
-// PLC 셀별 결과 코드 작성: OK=0, NG=1. BadInformation()으로 최종 NG 비트를 만든 뒤 호출한다.
-// 내부 재측정 사유(2/3/4)를 전송하지 않고, PLC OK/NG 비트와 같은 판정을 사용한다.
-void __fastcall TTotalForm::WriteResultCode()
-{
-	for(int i = 0; i < MAXCHANNEL; i++)
-	{
-        // 16셀당 1워드: 셀마다 값을 다시 읽어 이전 셀의 NG 결과가 남지 않게 한다.
-        const int resultCode = Mod_PLC->GetData(Mod_PLC->pc_Interface_Data,
-            PC_D_IROCV_MEASURE_OK_NG + i / 16, i % 16) ? 1 : 0;
-        Mod_PLC->SetResultCode(PC_D_IROCV_RESULT_CODE + i, resultCode);
-	}
-}
-
-//---------------------------------------------------------------------------
-// PLC용 NG 비트/수량과 오류창용 measNgCount 집계. measNgCount는 존재하는 IR/OCV/접촉 불량 셀만 센다.
+// 최종 판정으로 PLC NG 비트·결과 코드·수량을 한 번에 작성한다(OK=0, NG=1).
+// measNgCount는 실제 셀의 불량만 센다. PLC 결과 버퍼를 다시 읽어 판정하지 않는다.
 void __fastcall TTotalForm::BadInformation()
 {
     int plcNgCount = 0;
@@ -97,6 +84,7 @@ void __fastcall TTotalForm::BadInformation()
         const bool measurementNg = occupied && result != CELL_OK;
         const bool plcNg = !occupied || measurementNg; // 기존 정책: 빈 채널도 PLC에는 NG.
         Mod_PLC->SetData(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURE_OK_NG + i / 16, i % 16, plcNg);
+        Mod_PLC->SetResultCode(PC_D_IROCV_RESULT_CODE + i, plcNg ? 1 : 0);
         if(plcNg) ++plcNgCount;
         if(measurementNg) ++measNgCount;
         // 기존 IR/접촉 불량 누계 의미 유지(OCV 제외). 재측정 시 최종값 차이만 반영한다.
@@ -112,10 +100,11 @@ void __fastcall TTotalForm::BadInformation()
 // 현재 IR/OCV 규격 상·하한을 기존 배율로 PLC 설정 버퍼에 기록한다.
 void __fastcall TTotalForm::WriteIRMINMAX()
 {
-	int32_t irMin = static_cast<int32_t>(BaseForm->StringToDouble(irEdit1->Text, 0) * 10.0);
-	int32_t irMax = static_cast<int32_t>(BaseForm->StringToDouble(irEdit2->Text, 0) * 10.0);
-	int32_t ocvMin = static_cast<int32_t>(BaseForm->StringToDouble(ocvEdit1->Text, 0) * 10.0);
-	int32_t ocvMax = static_cast<int32_t>(BaseForm->StringToDouble(ocvEdit2->Text, 0) * 10.0);
+    // 저장/읽기에서 확정한 검사 규격 사용. PLC 전송 배율은 기존대로 유지한다.
+    int32_t irMin = static_cast<int32_t>(config.ir_min * 10.0);
+    int32_t irMax = static_cast<int32_t>(config.ir_max * 10.0);
+    int32_t ocvMin = static_cast<int32_t>(config.ocv_min * 10.0);
+    int32_t ocvMax = static_cast<int32_t>(config.ocv_max * 10.0);
 
     Mod_PLC->SetSpecValue(PC_D_IROCV_IR_MIN, irMin);
     Mod_PLC->SetSpecValue(PC_D_IROCV_IR_MAX, irMax);

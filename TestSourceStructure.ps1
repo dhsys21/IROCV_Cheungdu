@@ -101,3 +101,24 @@ foreach ($name in @('AutoInspectionSequence.cpp', 'Stage_AutoInspection.cpp',
     }
 }
 Write-Output "PASS: $eventCount DFM events resolve uniquely in their own form units; FormTotal component-before-method order, event declarations/separators and production registrations verified."
+
+# 오류창은 표시/선택 전달만 담당한다. PLC 오류 출력이 화면으로 다시 들어가지 않게 검사.
+foreach ($name in @('FormError.cpp', 'FormCellIdError.cpp', 'FormNgCountError.cpp')) {
+    $text = [IO.File]::ReadAllText((Join-Path $SourceRoot $name), $sourceEncoding)
+    if ($text -match 'Mod_PLC\s*->') { throw "Dialog must not control PLC: $name" }
+}
+$autoSource = [IO.File]::ReadAllText((Join-Path $SourceRoot 'Stage_AutoInspection.cpp'), $sourceEncoding)
+foreach ($command in @('CMD_CELL_SERIAL_TIMEOUT', 'CMD_NG_ERROR')) {
+    $block = [regex]::Match($autoSource, '(?s)case ' + $command + ':.*?break;').Value
+    if ($block -notmatch 'SetValue\(PC_D_IROCV_ERROR, 1\)') {
+        throw "Controller must assert PLC error independently of dialog visibility: $command"
+    }
+}
+$force = [regex]::Match($autoSource, '(?ms)^void __fastcall TTotalForm::ForceTrayOut\(\).*?^\}').Value
+if ($force -notmatch 'SetValue\(PC_D_IROCV_ERROR, 0\)') { throw 'ForceTrayOut must clear error in controller' }
+$plcSource = [IO.File]::ReadAllText((Join-Path $SourceRoot 'Stage_PlcData.cpp'), $sourceEncoding)
+if ($sourceText -match 'WriteResultCode\(') { throw 'Obsolete second-pass PLC result writer remains' }
+$bad = [regex]::Match($plcSource, '(?ms)^void __fastcall TTotalForm::BadInformation\(\).*?^\}').Value
+if ($bad -notmatch 'SetResultCode\(PC_D_IROCV_RESULT_CODE \+ i, plcNg \? 1 : 0\)' -or
+    $bad -match 'GetData\(') { throw 'PLC bit/code must share the same computed NG value' }
+Write-Output 'PASS: error-dialog/controller ownership and single-pass PLC results verified.'

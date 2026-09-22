@@ -9,6 +9,13 @@ const int MAXCHANNEL = CELL_ROW_COUNT * CELL_COLUMN_COUNT;
 const int LINECOUNT = CELL_COLUMN_COUNT; // 기존 화면 코드 호환용: 한 줄의 셀 개수.
 const int CELL_DATA_WORD_COUNT = (MAXCHANNEL + 15) / 16;
 
+// 규격 기본값은 기존 설정파일 읽기 값을 유지한다. 저장/읽기/입력 실패에 같은 값을 사용.
+// 정상적으로 저장된 사이트별 규격값은 변경하지 않는다.
+const int DEFAULT_IR_MIN = 10;
+const int DEFAULT_IR_MAX = 40;
+const int DEFAULT_OCV_MIN = 500;
+const int DEFAULT_OCV_MAX = 3000;
+
 // Config에 새 키가 없는 기존 설비는 닫힘 재측정 1~49개 정책을 유지한다.
 // 실제 적용값은 Config의 closedProbeRemeasureMaxNgCount(이하, 0=끔).
 const int DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT = 49;
@@ -21,9 +28,9 @@ const unsigned long RESULT_SERIAL_TIMEOUT_MS = 10000;
 // 최종 판정 코드. 수치가 우선순위가 아니며 접촉 > IR > OCV 순서로 판정한다.
 enum TCellResult { CELL_OK = 0, CELL_IR_NG = 2, CELL_OCV_NG = 3, CELL_CONTACT_NG = 4 };
 
-// 결과 마감 상태: 파일 실패는 재시도 1회 후 진행, 시리얼 오류만 작업자 선택 대기.
+// 결과 마감 상태: 파일 실패는 재시도 1회 후 진행. 상시 시리얼 오류는 로그만 기록.
 enum TResultSaveStep {
-    RESULT_IDLE, RESULT_WAIT_SERIAL, RESULT_WAIT_OPERATOR,
+    RESULT_IDLE, RESULT_WAIT_SERIAL,
     RESULT_WRITE_FILE, RESULT_WAIT_PLC_SEND, RESULT_COMPLETE, RESULT_CANCELLED, RESULT_ERROR
 };
 #endif

@@ -480,10 +480,11 @@ void __fastcall TTotalForm::Button1Click(TObject *Sender)
 
 void __fastcall TTotalForm::pReadyClick(TObject *Sender)
 {
+    // 오류창 표시 시험: 실제 검사 상태나 PLC 오류 출력은 변경하지 않는다.
+    Form_Error->Tag = this->Tag;
     Form_Error->DisplayErrorMessage("IR/OCV NG ERROR",
 										"There is too many ng cells. Please check it.",
 										"Select [Tray Out] or [Restart]");
-    Form_Error->Tag = this->Tag;
 }
 //---------------------------------------------------------------------------
 

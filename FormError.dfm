@@ -3,8 +3,8 @@ object Form_Error: TForm_Error
   Top = 0
   BorderStyle = bsNone
   Caption = 'Form_Error'
-  ClientHeight = 359
-  ClientWidth = 651
+  ClientHeight = 420
+  ClientWidth = 760
   Color = clBlack
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,40 +15,46 @@ object Form_Error: TForm_Error
   PixelsPerInch = 96
   TextHeight = 13
   object Label_Title: TLabel
-    Left = 208
-    Top = 29
-    Width = 268
-    Height = 64
+    Left = 30
+    Top = 20
+    Width = 700
+    Height = 60
+    Alignment = taCenter
+    AutoSize = False
     Caption = 'Error Title'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clRed
-    Font.Height = -53
+    Font.Height = -32
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
   end
   object Label_Msg1: TLabel
     Left = 30
-    Top = 132
-    Width = 180
-    Height = 40
+    Top = 125
+    Width = 700
+    Height = 80
+    AutoSize = False
+    WordWrap = True
     Caption = 'Error Msg1'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clYellow
-    Font.Height = -33
+    Font.Height = -22
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
   end
   object Label_Msg2: TLabel
     Left = 30
-    Top = 197
-    Width = 180
-    Height = 40
+    Top = 225
+    Width = 700
+    Height = 80
+    AutoSize = False
+    WordWrap = True
     Caption = 'Error Msg2'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clYellow
-    Font.Height = -33
+    Font.Height = -22
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
@@ -70,8 +76,8 @@ object Form_Error: TForm_Error
     OnClick = Button_OKClick
   end
   object btnTrayOut: TButton
-    Left = 194
-    Top = 273
+    Left = 210
+    Top = 350
     Width = 150
     Height = 50
     Caption = 'TRAY OUT'
@@ -85,8 +91,8 @@ object Form_Error: TForm_Error
     OnClick = btnTrayOutClick
   end
   object btnRestart: TButton
-    Left = 396
-    Top = 273
+    Left = 400
+    Top = 350
     Width = 150
     Height = 50
     Caption = 'RESTART'

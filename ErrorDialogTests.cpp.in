@@ -1,0 +1,59 @@
+// Offline tests of actual dialog event bodies. No VCL or equipment connection.
+#include <stdio.h>
+#include <stdlib.h>
+struct TObject {};
+struct Timer { bool Enabled; Timer():Enabled(true){} };
+int plcError=1, checks=0;
+struct Controller {
+    int out, restart, accept, retry;
+    Controller():out(0),restart(0),accept(0),retry(0){}
+    // Simulate a new error raised while processing an operator request.
+    void ForceTrayOut(){++out;plcError=7;}
+    void RestartAutoInspection(){++restart;plcError=7;}
+    void AcceptCellSerialData(){++accept;plcError=7;}
+    void RetryCellSerialRead(){++retry;plcError=7;}
+} controller;
+struct Base { Controller *nForm[1]; Base(){nForm[0]=&controller;} } base;
+Base *BaseForm=&base;
+struct Dialog {
+    int Tag,stage; bool visible;
+    Timer bring,off; Timer *Timer_BringToFront,*timerErrorOff;
+    Dialog():Tag(0),stage(0),visible(true),Timer_BringToFront(&bring),timerErrorOff(&off){}
+    void Close(){visible=false;}
+};
+struct TForm_Error:Dialog {
+    void __fastcall Button_OKClick(TObject*);
+    void __fastcall btnTrayOutClick(TObject*);
+    void __fastcall btnRestartClick(TObject*);
+    void __fastcall timerErrorOffTimer(TObject*);
+};
+struct TForm_NgCountError:Dialog {
+    void __fastcall btnTrayOutClick(TObject*);
+    void __fastcall btnOKClick(TObject*);
+    void __fastcall timerErrorOffTimer(TObject*);
+};
+struct TForm_CellIdError:Dialog {
+    void __fastcall btnSAVEClick(TObject*);
+    void __fastcall btnCANCELClick(TObject*);
+    void __fastcall timerErrorOffTimer(TObject*);
+};
+@@METHODS@@
+void check(bool value){if(!value){printf("FAIL: %d\n",checks);exit(1);}++checks;}
+int main(){
+    TForm_Error e;TForm_NgCountError n;TForm_CellIdError s;
+    e.timerErrorOffTimer(0);n.timerErrorOffTimer(0);s.timerErrorOffTimer(0);
+    check(plcError==1);
+    check(!e.visible&&!n.visible&&!s.visible);
+    check(!e.off.Enabled&&!n.off.Enabled&&!s.off.Enabled);
+    e.Button_OKClick(0);check(plcError==1);
+    e.btnTrayOutClick(0);check(controller.out==1&&plcError==7&&!e.visible);
+    e.btnRestartClick(0);check(controller.restart==1&&plcError==7);
+    n.btnTrayOutClick(0);check(controller.out==2&&plcError==7&&!n.visible);
+    n.btnOKClick(0);check(controller.restart==2&&plcError==7);
+    s.btnSAVEClick(0);check(controller.accept==1&&plcError==7&&!s.visible);
+    s.btnCANCELClick(0);check(controller.retry==1&&plcError==7);
+    e.timerErrorOffTimer(0);n.timerErrorOffTimer(0);s.timerErrorOffTimer(0);
+    check(plcError==7); // Delayed dialog timers must not clear the new alarm.
+    printf("PASS: %d error-dialog action/timer checks\n",checks);
+    return 0;
+}

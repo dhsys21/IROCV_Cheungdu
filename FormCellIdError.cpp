@@ -28,13 +28,13 @@ void __fastcall TForm_CellIdError::DisplayErrorMessage(int nStage)
 	if(!this->Visible)
 	{
 		Timer_BringToFront->Enabled = true;
-        Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 1);
+        // PLC 오류 출력은 검사 처리에서 담당한다. 이 함수는 화면만 표시한다.
 		SaveErrorLog(Label_Msg1->Caption, Label_Msg2->Caption, Label_Msg3->Caption);
 
 		this->Position = poMainFormCenter;
 		this->BringToFront();
 		this->Show();
-		this->Left = this->Left - BaseForm->Left;
+        // 메인 창 중앙 위치를 유지한다. 좌표를 다시 빼서 화면 밖으로 밀리지 않게 한다.
 	}
 	else this->BringToFront();
 }
@@ -46,7 +46,7 @@ void __fastcall TForm_CellIdError::Timer_BringToFrontTimer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_CellIdError::timerErrorOffTimer(TObject *Sender)
 {
-    Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 0);
+    // 이전 창의 닫기 타이머에서는 PLC 오류를 해제하지 않는다.
     Timer_BringToFront->Enabled = false;
     timerErrorOff->Enabled = false;
     this->Close();

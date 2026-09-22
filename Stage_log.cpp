@@ -63,15 +63,15 @@ void __fastcall TTotalForm::WriteSystemInfo()
 
 	//* 2022 11 07
 
-	ini->WriteFloat("MAIN", "IR1", BaseForm->StringToDouble(irEdit1->Text, 12));
-	ini->WriteFloat("MAIN", "IR2", BaseForm->StringToDouble(irEdit2->Text, 20));
-	ini->WriteFloat("MAIN", "OCV1", BaseForm->StringToDouble(ocvEdit1->Text, 1000));
-	ini->WriteFloat("MAIN", "OCV2", BaseForm->StringToDouble(ocvEdit2->Text, 3000));
-
-	config.ir_min = BaseForm->StringToDouble(irEdit1->Text, 12);
-	config.ir_max = BaseForm->StringToDouble(irEdit2->Text, 5);
-	config.ocv_min = BaseForm->StringToDouble(ocvEdit1->Text, 1000);
-	config.ocv_max = BaseForm->StringToDouble(ocvEdit2->Text, 3000);
+    // 화면 입력을 한 번만 해석한다. 파일/메모리/PLC가 같은 규격을 사용한다.
+    config.ir_min = BaseForm->StringToDouble(irEdit1->Text, DEFAULT_IR_MIN);
+    config.ir_max = BaseForm->StringToDouble(irEdit2->Text, DEFAULT_IR_MAX);
+    config.ocv_min = BaseForm->StringToDouble(ocvEdit1->Text, DEFAULT_OCV_MIN);
+    config.ocv_max = BaseForm->StringToDouble(ocvEdit2->Text, DEFAULT_OCV_MAX);
+    ini->WriteFloat("MAIN", "IR1", config.ir_min);
+    ini->WriteFloat("MAIN", "IR2", config.ir_max);
+    ini->WriteFloat("MAIN", "OCV1", config.ocv_min);
+    ini->WriteFloat("MAIN", "OCV2", config.ocv_max);
 
 	delete ini;
 }
@@ -111,16 +111,16 @@ void __fastcall TTotalForm::ReadSystemInfo()
 
     editNgAlarmCount->Text = ini->ReadString("NG_ALARM_COUNT", "COUNT", "20");
 
-	config.ir_min = ini->ReadFloat("MAIN", "IR1", 10);
-	config.ir_max = ini->ReadFloat("MAIN", "IR2", 40);
+	config.ir_min = ini->ReadFloat("MAIN", "IR1", DEFAULT_IR_MIN);
+	config.ir_max = ini->ReadFloat("MAIN", "IR2", DEFAULT_IR_MAX);
 
 	irEdit1->Text = config.ir_min;
 	irEdit2->Text = config.ir_max;
 
     pnlIRSpec->Caption = "IR : " + FormatFloat("0.0", config.ir_min)  + " ~ " + FormatFloat("0.0", config.ir_max);
 
-	config.ocv_min = ini->ReadFloat("MAIN", "OCV1", 500);
-	config.ocv_max = ini->ReadFloat("MAIN", "OCV2", 3000);
+	config.ocv_min = ini->ReadFloat("MAIN", "OCV1", DEFAULT_OCV_MIN);
+	config.ocv_max = ini->ReadFloat("MAIN", "OCV2", DEFAULT_OCV_MAX);
 
 	ocvEdit1->Text = config.ocv_min;
 	ocvEdit2->Text = config.ocv_max;

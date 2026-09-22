@@ -185,6 +185,7 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
     data.autoMode = stage.arl == nAuto;
     data.bypass = chkBypass->Checked;
     data.cycleMode = chkCycle->Checked;
+    data.cellSerialContinuousRead = cellSerialContinuousReadForTray;
     data.cellCount = tray.cell_count;
     data.ngCount = measNgCount;
     data.ngLimit = editNgAlarmCount->Text.ToIntDef(10);
@@ -260,10 +261,12 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
         case CMD_READ_CELL_DATA:
             ReadAutoCellData();
             break;
+        case CMD_PROBE_CLOSE:
         case CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL:
             Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
             WritePLCLog("AutoInspection", "PC_D_IROCV_PROB_CLOSE = 1");
-            StartAutoCellSerialRead();
+            // 미체크만 투입 시 전체 수신/개수 검사. 상시 모드는 결과 저장 때 검사한다.
+            if(command == CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL) StartAutoCellSerialRead();
             break;
         case CMD_SAVE_CELL_SERIAL:
             SaveTrayInfo(tray.trayid);
@@ -272,6 +275,8 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             break;
         case CMD_CELL_SERIAL_COUNT_ERROR:
         case CMD_CELL_SERIAL_TIMEOUT:
+            // 단계는 이미 오류 대기 상태. 창 표시 여부와 무관하게 PLC 오류를 출력한다.
+            Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
             Form_CellIdError->ChangeMessage("CELL SERIAL - BEFORE MEASUREMENT",
                 "Check CELL DATA count and complete CELL SERIAL data.",
                 "SAVE: accept data / CANCEL: read again");
@@ -325,6 +330,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             break;
         case CMD_NG_ERROR:
             // Already in STEP_WAIT_NG_ERROR before showing a modeless dialog.
+            Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
             Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
             Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 0);
             DisplayStatus(nEND);
@@ -369,9 +375,7 @@ void __fastcall TTotalForm::DisplayAutoInspectionStep()
     if(IsWaitingForResultSave())
     {
         Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
-        DisplayProcess(sBarcode, "CELL SERIAL", (resultSaveStep == RESULT_WAIT_OPERATOR)
-            ? AnsiString(" CELL SERIAL error - waiting for SAVE / CANCEL ... ")
-            : AnsiString(" Reading CELL SERIAL before result save ... "), (resultSaveStep == RESULT_WAIT_OPERATOR));
+        DisplayProcess(sBarcode, "CELL SERIAL", " Reading CELL SERIAL before result save ... ");
         return;
     }
     TAutoInspectionStep step = autoInspection.GetStep();
@@ -447,13 +451,7 @@ void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
 // 시리얼 오류창 SAVE: 현재 데이터를 저장하고 프로브 닫힘 확인 단계로 진행한다.
 void __fastcall TTotalForm::AcceptCellSerialData()
 {
-    // [CELL SERIAL 공통] 결과 저장 전 오류와 측정 시작 전 오류의 복귀 위치를 구분한다.
-    if(resultSaveStep == RESULT_WAIT_OPERATOR)
-    {
-        try { CompleteResultCellSerialRead(true); }
-        catch(const Exception &error) { StopAutoInspectionOnError(error.Message); }
-        return;
-    }
+    // 미체크 모드의 투입 후 오류만 작업자 선택으로 재개한다.
     if(autoInspection.GetStep() != STEP_WAIT_CELL_SERIAL_ERROR) return;
     try
     {
@@ -472,13 +470,7 @@ void __fastcall TTotalForm::AcceptCellSerialData()
 // 시리얼 오류창 CANCEL: 대기 횟수를 초기화하고 4,010워드를 처음부터 다시 수신한다.
 void __fastcall TTotalForm::RetryCellSerialRead()
 {
-    // [CELL SERIAL 공통] 결과 저장 전 재시도는 측정 대신 시리얼만 다시 읽는다.
-    if(resultSaveStep == RESULT_WAIT_OPERATOR)
-    {
-        Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-        StartResultCellSerialRead();
-        return;
-    }
+    // 미체크 모드의 투입 후 오류만 다시 읽는다.
     if(autoInspection.GetStep() != STEP_WAIT_CELL_SERIAL_ERROR) return;
     try
     {
@@ -547,6 +539,8 @@ void __fastcall TTotalForm::ForceTrayOut()
     {
         TAutoInspectionStep previous = autoInspection.GetStep();
         TAutoInspectionCommand command = autoInspection.ForceTrayOut();
+        // 작업자가 승인한 배출에서 오류를 해제한다. 오류창 타이머에서는 해제하지 않는다.
+        Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
         WriteAutoStepLog(previous, "Manual / operator-approved tray out (NG bypass)");
         RunAutoInspectionCommand(command, TAutoInspectionData());
         DisplayAutoInspectionStep();

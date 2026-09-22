@@ -311,6 +311,34 @@ static void ProbeRemeasureCounts()
     CHECK(exhausted.seq.RunAutoStep(exhausted.data) == CMD_NONE);
 }
 
+// Continuous mode skips only the serial check at tray arrival, not probe interlocks.
+static void ContinuousSerialAtResult()
+{
+    Fixture f;
+    f.data.cellSerialContinuousRead = true;
+    f.data.serialComplete = false;
+    f.data.serialCount = 0;
+    f.data.trayIn = true;
+    f.data.trayIdReady = true;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_IN);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_READ_TRAY_ID);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_READ_CELL_DATA);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_PROBE_CLOSE);
+    CHECK(f.seq.GetStep() == STEP_WAIT_PROBE_CLOSE);
+    for(int i=0;i<100;++i) CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    f.data.probeClosed = true;f.data.trayIn = false;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    f.data.trayIn = true;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_MEASURE_START);
+    // Measurement and result publication still must complete before tray out.
+    f.data.probeOpen = true;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    CHECK(f.seq.SetMeasureComplete());
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_OUT);
+}
+
 int main()
 {
     // The two settings are independent and are frozen after TRAY IN.
@@ -335,10 +363,11 @@ int main()
     ProbeRemeasureCounts();
     NormalCycle();
     SerialCountAndTimeout();
+    ContinuousSerialAtResult();
     NgChoices();
     BypassAndManual();
     GuardsAndRemeasure();
     DelayAndPause();
-    printf("PASS: %d checks across 8 scenario groups\n", checks);
+    printf("PASS: %d checks across 9 scenario groups\n", checks);
     return 0;
 }

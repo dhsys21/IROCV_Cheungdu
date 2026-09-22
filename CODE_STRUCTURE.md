@@ -12,7 +12,8 @@
 | `AutoInspectionSequence.h/.cpp` | 자동 단계와 다음 명령 판단 | `TAutoInspectionSequence::RunAutoStep` |
 | `Stage_AutoInspection.cpp` | 자동 타이머 처리와 PLC/UI 연결 | `ProcessAutoInspection`, `RunAutoInspectionCommand` |
 | `Stage_Measurement.cpp` | IR/OCV 수신값 처리·재측정·결과 마감 | `ProcessIr/Ocv`, `SetRemeasureList`, `FinishMeasurement` |
-| `Stage_PlcData.cpp` | PC→PLC 초기값·측정값·NG·결과 코드 작성 | `PLCInitialization`, `BadInformation`, `WriteResultCode` |
+| `Stage_PlcData.cpp` | PC→PLC 초기값·측정값·NG·결과 코드 작성 | `PLCInitialization`, `BadInformation` |
+| `CellJudgment.h` | 화면/통신 없는 공통 규격 판정 | `JudgeCellValues` |
 | `Stage_TrayData.cpp` | 트레이 데이터 초기화·시리얼 복사·임시 파일 | `InitTrayStruct`, `ReadCellSerial`, `SaveTrayInfo` |
 | `Stage_CellDisplay.cpp` | 400채널 생성·번호/측정값·색상 표시 | `InitCellDisplay`, `UpdateCellDisplay`, `InitMeasureForm` |
 | `Stage_comm.cpp` | 측정장비 소켓·송수신·프레임·응답 분기 | `ProcessEquipmentSocketRead`, `OnReceiveStage`, `SendData` |
@@ -58,7 +59,7 @@ PLC/화면을 사용하지 않는 자동 단계 판단만 `TAutoInspectionSequen
 | NG 창에서 배출/재시작 문제 | `FormError.cpp`의 버튼 → `ForceTrayOut` / `RestartAutoInspection` |
 | IR/OCV 값·보정·재측정 문제 | `ProcessIr/Ocv` → `InsertIr/OcvValue` → `SetRemeasureList` / `RemeasureExcute` |
 | 트레이 투입 후 번호/이전 값이 보임 | `CMD_TRAY_IN`의 `showStartupChannelNumbers=false` → `InitCellDisplay` → `UpdateCellDisplay`의 개별 수신 플래그 |
-| PLC 결과값/NG 비트가 이상함 | `Stage_PlcData.cpp`의 해당 작성 함수 → `Modplc.h` 주소/배율 |
+| PLC 결과값/NG 비트가 이상함 | `BadInformation`에서 비트/코드/수량 동시 작성 → `Modplc.h` 주소/배율 |
 | 연결 끊김이 Vacancy로 보임 | `RefreshStageStatusImage`와 장비 `Client... ` 이벤트 |
 | 트레이 ID/시리얼 파일 문제 | `Stage_TrayData.cpp`의 `Load/Save/DeleteTrayInfo` |
 | 설정/채널 매핑/로그 문제 | `Stage_log.cpp` |
@@ -66,6 +67,41 @@ PLC/화면을 사용하지 않는 자동 단계 판단만 `TAutoInspectionSequen
 기존 PLC 로그의 `AutoInspection` 항목에는 “이전 단계 → 다음 단계 : 이유”가 기록됩니다.
 `AutoInspection ERROR`는 예외 발생 단계와 메시지입니다.
 오류 정지는 PC 시퀀스 진행 정지이며 PLC 비상정지/이미 실행된 이동의 취소가 아닙니다.
+
+## 공통 판정 / 오류창 / 결과 작성
+
+- `CellJudgment.h::JudgeCellValues`: 접촉 > IR > OCV 우선순위를 한 곳에서 계산합니다.
+  항목별 불량은 화면 색상 표시용이며, 미수신 공란은 기존 수신 플래그로 구분합니다.
+- 불량셀 재측정은 원인에 관계없이 IR 다음 OCV를 모두 요청합니다.
+  `pendingItems`의 1/2는 응답 대기와 송신 순서 관리용입니다. 정상/빈 셀은 제외합니다.
+- `BadInformation`은 같은 `plcNg` 값으로 PLC 비트와 결과 코드를 동시에 작성합니다.
+  OK=0/NG=1, 빈 채널도 PLC에는 NG, 작업자 알람 개수는 실제 셀 불량만 집계하는 정책을 유지합니다.
+  별도 두 번째 순회인 `WriteResultCode`는 제거했습니다.
+- 오류창은 표시와 작업자 선택 전달만 담당합니다. 창 표시/닫기 타이머는 PLC를 제어하지 않습니다.
+  미체크 모드의 측정 전 시리얼/NG 오류는 `RunAutoInspectionCommand`에서 ERROR=1을 출력합니다.
+  상시 읽기 모드의 결과 시리얼 불일치/타임아웃은 로그만 남기고 저장을 진행합니다.
+  해제는 배출/재시작/시리얼 승인·재시도를 처리하는 검사 함수에서 수행합니다.
+- 규격 기본값은 `SiteConfig.h`에 모았습니다. 기존 초기 로딩 값인 IR 10~40,
+  OCV 500~3000을 사용하며, 저장된 현장 규격값은 바꾸지 않습니다.
+  입력을 한 번 해석한 `config`를 파일 저장과 PLC 규격 작성에서 함께 사용합니다.
+- 결과 마감 함수 `SaveMeasurementResult` 이름과 파일 저장/완료 지연 정책은 유지합니다.
+
+검증: `TestAutoInspection.ps1`, `TestCellSerialRead.ps1`, `TestResultFile.ps1`,
+`TestErrorDialogs.ps1`, `TestErrorDialogLayout.ps1`, `TestSourceStructure.ps1`.
+오류창 시험은 실제 이벤트 본문을 사용하며 설비에는 연결하지 않습니다.
+
+### CELL SERIAL 읽기 모드
+
+- Continuous read 미체크: TRAY IN 후 전체 시리얼을 수신/검사하고, 불일치/타임아웃은
+  오류창에서 SAVE 또는 CANCEL을 기다립니다. 결과에는 투입 시 보관한 시리얼을 사용합니다.
+- Continuous read 체크: 상시 PLC 읽기는 유지하지만 TRAY IN 시 개수 검사/수신 대기는 건너뜁니다.
+  프로브 닫힘과 트레이 존재 확인 후 측정하고, 결과 저장 직전 새 전체 시리얼을 요청합니다.
+- 결과 수신 완료본의 개수가 다르면 WARNING 로그와 함께 완료본으로 저장합니다.
+  10초 안에 전체 수신이 없으면 ID를 공란으로 저장합니다. 이전 .Tray/부분 수신값은 사용하지 않습니다.
+  이 두 경우에는 시리얼 오류창/PLC ERROR/작업자 대기를 만들지 않습니다.
+  기존 NG 판정, PLC 전송 확인과 1초 완료 지연, 수동측정 ID 없는 저장 정책은 유지합니다.
+- 오류창 3종은 760×420, 제목 32px/본문 22px 및 고정 폭 줄바꿈을 사용합니다.
+  위치/크기를 표시 함수에서 다시 덮어쓰지 않고 DFM에서 관리합니다.
 
 ## 사이트별 수정 원칙
 
@@ -141,8 +177,8 @@ Configuration 아래의 `Continuous read (PLC keeps data until TRAY OUT)`를 선
    파일 저장 재시도 1회와 이후 PLC 결과 송신/완료 대기는 기존대로 유지합니다.
 3. 완료 후 `ReadCellSerial`로 현재 트레이에 복사하고 CELL DATA 개수와 비교합니다.
 4. 정상 수신이면 `SaveMeasurementResult`에서 IR/OCV와 함께 저장한 뒤 PLC 결과 송신과 최소 1초 경과를 확인하고 COMPLETE를 출력합니다. 이전 .Tray 파일을 다시 읽어 덮어쓰지 않습니다.
-5. 시간 초과/개수 불일치는 FormCellIdError 대기로 전환합니다. 파일 저장/COMPLETE/자동 배출을 하지 않습니다.
-6. CANCEL은 시리얼만 재수신합니다. SAVE는 전체 수신 완료 데이터에 한해 개수 불일치를 운영자 승인으로 저장합니다. 미완료 데이터는 SAVE해도 저장하지 않습니다.
+5. 개수 불일치는 WARNING 로그를 남기고 완료 수신본으로 저장합니다. 오류창/작업자 대기는 없습니다.
+6. 10초 동안 전체 수신이 없으면 WARNING 로그를 남기고 CELL_ID를 공란으로 저장합니다. 이전 .Tray/부분 데이터를 사용하지 않습니다.
 7. 초기화/강제 배출/예외 정지는 지연 저장을 취소합니다. 기존 NG 판정과 수동/BYPASS 배출 정책은 유지합니다.
 
 관련 주석은 `[CELL SERIAL 공통]`으로 검색할 수 있습니다.
@@ -202,8 +238,8 @@ MSBuild.exe IROCV.cbproj /t:_ResolveIcons;BuildVersionResource;Build /p:Config=D
 
 ### 결과 마감과 화면
 - `FinishMeasurement` → 최종 시리얼(상시 모드만) → `SaveMeasurementResult` → `Timer_ResultSaveTimer`.
-- `resultSaveStep`: 대기 / 시리얼 대기 / 작업자 대기 / 파일 작성 / PLC 전송 대기 / 완료 / 취소 / 오류.
-- 참고용 CSV는 최초 시도 + 재시도 1회. 두 번 실패해도 로그 후 생산 진행. 시리얼 오류는 기존 작업자 선택 유지.
+- `resultSaveStep`: 대기 / 시리얼 대기 / 파일 작성 / PLC 전송 대기 / 완료 / 취소 / 오류.
+- 참고용 CSV는 최초 시도 + 재시도 1회. 두 번 실패해도 로그 후 생산 진행. 시리얼 작업자 선택은 미체크 모드의 투입 시 검사에만 사용합니다.
 - 파일명은 분 단위 유지. 같은 트레이 전체/선택 재측정은 파일명을 보존해 최종값으로 덮어쓴다.
 - 임시 파일을 완전히 쓴 후 교체하므로 실패할 때 이전 결과를 먼저 삭제하지 않는다.
 - 생산 트레이 수는 한 번 집계하고 재측정에 따른 최종 IR/접촉 NG 누계 차이만 보정한다.

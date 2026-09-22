@@ -31,6 +31,7 @@ enum TAutoInspectionCommand
     CMD_READ_TRAY_ID,                      // 읽은 트레이 ID 적용
     CMD_READ_CELL_DATA,                    // 셀 유무 읽기
     CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL,  // 프로브 닫기 요청 + 시리얼 수신 시작
+    CMD_PROBE_CLOSE,                       // 상시 읽기: 투입 시 시리얼 검사 없이 프로브 닫기
     CMD_SAVE_CELL_SERIAL,                 // 정상 수신한 시리얼 저장
     CMD_CELL_SERIAL_COUNT_ERROR,          // 시리얼 개수 불일치 표시
     CMD_CELL_SERIAL_TIMEOUT,              // 시리얼 수신 시간 초과 표시
@@ -64,6 +65,7 @@ struct TAutoInspectionData
     bool bypass; // BYPASS 사용 여부
     bool trayIdReady; // 트레이 ID 읽기 성공 여부
     bool cycleMode; // 전 채널을 사용하는 Cycle 시험 모드
+    bool cellSerialContinuousRead; // 이번 트레이 설정: true이면 결과 저장 때만 시리얼 검사
     bool serialComplete; // 분할 수신 전체 완료 여부(PLC 핸드셰이크 비트가 아님)
     bool probeClosed; // PLC 프로브 닫힘 확인
     bool probeOpen; // PLC 프로브 열림 확인
