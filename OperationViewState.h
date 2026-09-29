@@ -37,10 +37,10 @@ public:
         {
             case CMD_TRAY_IN: return TrayIn;
             case CMD_READ_TRAY_ID: return TrayId;
-            case CMD_READ_CELL_DATA:
+            case CMD_READ_CELL_DATA: return CellData;
             case CMD_SAVE_CELL_SERIAL:
             case CMD_CELL_SERIAL_COUNT_ERROR:
-            case CMD_CELL_SERIAL_TIMEOUT: return CellData;
+            case CMD_CELL_SERIAL_TIMEOUT: return CloseRequest;
             case CMD_PROBE_CLOSE:
             case CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL:
             case CMD_REQUEST_PROBE_REMEASURE: return CloseRequest;
@@ -81,8 +81,9 @@ public:
             case STEP_WAIT_TRAY_IN: return Ready;
             case STEP_READ_TRAY_ID: return TrayId;
             case STEP_READ_CELL_DATA:
-            case STEP_WAIT_START_DELAY:
-            case STEP_WAIT_CELL_SERIAL: return CellData;
+            case STEP_WAIT_START_DELAY: return CellData;
+            case STEP_WAIT_CELL_SERIAL:
+            case STEP_WAIT_CELL_SERIAL_ERROR: return CloseRequest;
             case STEP_WAIT_PROBE_CLOSE:
             case STEP_WAIT_REMEASURE_PROBE_CLOSE:
                 // WAIT is the request phase, not proof of PLC completion.
@@ -161,6 +162,30 @@ public:
         state[ResultTransmit] = Waiting;
     }
     void ResultSent() { state[ResultTransmit] = Done; }
+};
+
+// One representative phase for the panel AND operator log. Only authoritative
+// sequence/result/command progress advances it; signal event labels never do.
+// Backward movement is explicit: new tray, remeasure attempt, reset or cycle end.
+class TOperationTimeline
+{
+    int phase;
+    unsigned int cycle, attempt;
+public:
+    TOperationTimeline() : phase(TOperationViewState::Ready), cycle(0), attempt(0) {}
+    int Phase() const { return phase; }
+    unsigned int Cycle() const { return cycle; }
+    unsigned int Attempt() const { return attempt; }
+    void Reset() { phase = TOperationViewState::Ready; attempt = 0; }
+    void BeginTray() { ++cycle; attempt = 1; phase = TOperationViewState::TrayIn; }
+    void BeginManual() { ++cycle; attempt = 1; phase = TOperationViewState::Measure; }
+    void BeginRemeasure() { ++attempt; phase = TOperationViewState::CloseRequest; }
+    void FinishTray() { phase = TOperationViewState::Ready; attempt = 0; }
+    int Advance(int candidate)
+    {
+        if(candidate > phase && candidate < TOperationViewState::Count) phase = candidate;
+        return phase;
+    }
 };
 
 // Display clock only; unsigned 32-bit subtraction also handles GetTickCount wrap.

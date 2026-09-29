@@ -79,7 +79,7 @@ if(!$view.Contains('cycleClock.Start(GetTickCount())') -or !$view.Contains('cycl
 if(!$view.Contains('tiles[i]->Color = i == active ? clLime : clSilver;')){throw 'Active-only process colors'}
 if(!$view.Contains('pcModePanel->Color = local ? clRed : clLime;') -or !$view.Contains('valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed')){throw 'AUTO/non-AUTO colors'}
 if(!$view.Contains('currentDetail->Caption = OperatorSignalText(detail)')){throw 'Operator-friendly signal text missing'}
-foreach($token in @('AnsiString phase = TOperationViewState::TileName(processTile);',
+foreach($token in @('AnsiString phase = TOperationViewState::TileName(phaseTile);',
  'AnsiString key = "[" + phase + "] " + source + " " + message.Trim();',
  'UnicodeString line = Now().FormatString("hh:nn:ss.zzz ") + key;',
  'WriteOperationLog(line)', 'logMemo->Lines->Add(line)',
@@ -90,8 +90,12 @@ $autoSource=Read-Source 'Stage_AutoInspection.cpp'
 if(!$view.Contains('if(TOperationViewState::IsInternalStepTrace(type.c_str(), message.c_str())) return;')){
  throw 'Early internal step traces must stay out of the operator timeline'
 }
-if(!$view.Contains('Append(i < 6 ? "PLC_RX" : "PC_SET", detail, current);') -or !$view.Contains('(event: ')){
+if(!$view.Contains('Append(i < 6 ? "PLC_RX" : "PC_SET", detail, phase);') -or !$view.Contains('(event: ')){
  throw 'Late signal samples must preserve current heading and event context'
+}
+foreach($token in @('int phaseTile = SynchronizeTimeline();','int active = SynchronizeTimeline();',
+ 'return timeline.Advance(CurrentProcessTile());','timeline.BeginTray();','timeline.BeginRemeasure();','timeline.FinishTray();')){
+ if(!$view.Contains($token)){throw "Unified process timeline missing: $token"}
 }
 $commandObserver=[regex]::Match($view,'(?s)void TOperationView::Command\(.*?void TOperationView::FinishCycle').Value
 if($commandObserver.Contains('PROBE CLOSED and TRAY IN confirmed')){throw 'DOWN OK must not be logged after measurement command completes'}

@@ -78,7 +78,7 @@ int main()
     Check(!plc.IsValid(), "invalidated data is unknown");
     Check(V::ActiveTile(STEP_WAIT_TRAY_IN) == V::Ready, "ready only is active while idle");
     Check(V::ActiveTile(STEP_READ_TRAY_ID) == V::TrayId, "tray ID active");
-    Check(V::ActiveTile(STEP_WAIT_CELL_SERIAL) == V::CellData, "serial read preparation active");
+    Check(V::ActiveTile(STEP_WAIT_CELL_SERIAL) == V::CloseRequest, "serial read after close request stays DOWN REQ");
     Check(V::ActiveTile(STEP_WAIT_PROBE_CLOSE) == V::CloseRequest, "probe down wait is request, not OK");
     Check(V::ActiveTile(STEP_WAIT_REMEASURE_PROBE_CLOSE) == V::CloseRequest, "remeasure probe down wait is request");
     Check(V::ActiveTile(STEP_WAIT_MEASURE_COMPLETE) == V::Measure, "measurement active");
@@ -159,6 +159,59 @@ int main()
         "tray out request reset logs OUT OK");
     Check(view.SignalTile(10, true, true, false, true, true, V::ResultTransmit) == V::Complete,
         "COMPLETE output retains event phase");
+    // Whole-cycle representative timeline, including both serial modes and all
+    // late event phases. Only explicit boundaries may lower the phase index.
+    TOperationTimeline timeline;
+    Check(timeline.Phase() == V::Ready, "timeline starts READY");
+    timeline.BeginTray();
+    Check(timeline.Phase() == V::TrayIn && timeline.Attempt() == 1, "new tray boundary");
+    timeline.Advance(V::TrayId);timeline.Advance(V::CellData);timeline.Advance(V::CloseRequest);
+    const int serialCandidates[] = {
+        V::ActiveTile(STEP_WAIT_CELL_SERIAL), V::CommandTile(CMD_SAVE_CELL_SERIAL),
+        V::CommandTile(CMD_CELL_SERIAL_COUNT_ERROR), V::ActiveTile(STEP_WAIT_CELL_SERIAL_ERROR),
+        V::ActiveTile(STEP_WAIT_PROBE_CLOSE)};
+    for(unsigned int i = 0; i < sizeof(serialCandidates)/sizeof(serialCandidates[0]); ++i)
+        Check(timeline.Advance(serialCandidates[i]) == V::CloseRequest, "reported DOWN REQ / serial trace never returns to CELL DATA");
+    for(int phase = V::CloseConfirmed; phase < V::Count; ++phase)
+    {
+        Check(timeline.Advance(phase) == phase, "advance whole normal cycle in process order");
+        for(int late = V::Ready; late <= phase; ++late)
+            Check(timeline.Advance(late) == phase, "late snapshots cannot regress representative phase");
+        Check(timeline.Advance(-1) == phase, "error/unknown keeps failing phase");
+    }
+    timeline.FinishTray();
+    Check(timeline.Phase() == V::Ready, "explicit cycle end returns READY");
+    unsigned int cycle = timeline.Cycle();
+    timeline.BeginTray();
+    Check(timeline.Cycle() == cycle+1, "next tray gets a new cycle number");
+    timeline.Advance(V::Measure);
+    // An early PROBE OPEN event is only body text; the authoritative phase is
+    // still MEASURE, then FILE SAVE (including result-time serial), RESULT TX.
+    const int resultCandidates[] = {V::Measure,V::FileSave,V::FileSave,V::ResultTransmit,V::ResultTransmit,V::Complete,V::OpenRequest,V::OpenConfirmed};
+    int previousResult = V::Measure;
+    for(unsigned int i = 0; i < sizeof(resultCandidates)/sizeof(resultCandidates[0]); ++i)
+    {
+        int phase = timeline.Advance(resultCandidates[i]);
+        Check(phase >= previousResult, "parallel probe open and result processing are monotonic");
+        previousResult = phase;
+    }
+    timeline.BeginRemeasure();
+    Check(timeline.Phase() == V::CloseRequest && timeline.Attempt() == 2, "explicit remeasure boundary restarts attempt at DOWN REQ");
+    timeline.Advance(V::Measure);timeline.Advance(V::FileSave);
+    Check(timeline.Advance(V::Measure) == V::FileSave, "late AMF does not regress remeasure attempt");
+    timeline.Reset();
+    Check(timeline.Phase() == V::Ready && timeline.Attempt() == 0, "explicit reset boundary");
+    timeline.BeginTray();timeline.Advance(V::OutRequest);timeline.Advance(V::OutConfirmed);
+    Check(timeline.Phase() == V::OutConfirmed, "bypass/forced out skips phases without fake measurement");
+    timeline.FinishTray();timeline.BeginManual();
+    Check(timeline.Phase() == V::Measure, "manual cycle does not fabricate tray input");
+    timeline.Advance(V::FileSave);
+    Check(timeline.Advance(V::Ready) == V::FileSave, "manual idle snapshot cannot interleave READY during save");
+    timeline.Advance(V::ResultTransmit);timeline.Advance(V::Complete);
+    Check(timeline.Advance(V::Ready) == V::Complete, "manual result completion stays COMPLETE until an explicit boundary");
+    timeline.BeginManual();
+    Check(timeline.Phase() == V::Measure && timeline.Attempt() == 1, "next manual measurement explicitly restarts at MEASURE");
+    Check(timeline.Advance(V::Count) == V::Measure, "out of range candidate cannot corrupt timeline");
     TOperationCycleClock clock;
     Check(clock.Elapsed(9999) == 0, "READY never accumulates elapsed time");
     clock.Start(1000);

@@ -48,9 +48,12 @@ SAVE FILE / RESULT TX / COMPLETE / OPEN REQ / OPEN OK / OUT REQ / OUT OK
 - OUT OK는 기존 시퀀스와 동일하게 **TRAY IN = 0** 조건입니다. 별도 배출 완료 주소를 만들지 않습니다.
 - RESULT TX는 기존 `WasResultTransmitted()`로 확인합니다. PLC 내부 적용 ACK를 뜻하지 않습니다.
 - 프로브 열기는 실제 코드상 결과 파일/PLC 결과 처리가 끝나기 전에 요청될 수 있습니다.
-  따라서 완료 이력을 녹색으로 누적하지 않으며, 결과 처리 중에는 해당 단계가 표시됩니다.
+  결과 처리 중에는 SAVE FILE / RESULT TX / COMPLETE를 대표 단계로 유지하고, 열기 신호는 로그 본문에 기록합니다.
+  결과 처리 후 열림 대기 단계로 진입하면 OPEN REQ / OPEN OK를 표시합니다.
 - BYPASS는 측정 관련 단계를 건너뛰며 현재 배출 대기만 강조합니다.
 - 시리얼은 설정에 따라 측정 전 또는 저장 시점에 처리되므로 별도 고정 순서 판넬 대신 현재 작업/진행 블록 수로 표시합니다.
+  측정 전 시리얼 읽기·검증·오류 재시도는 이미 닫기 요청을 보낸 DOWN REQ 구간이며, CELL DATA로 돌아가지 않습니다.
+  저장 시점 시리얼 읽기는 SAVE FILE 구간입니다.
 - 파일 저장 실패는 경고 로그에 남기며, 성공으로 기록하지 않습니다.
 - CURRENT OPERATION은 변수 접두어 대신 TRAY IN / PROBE DOWN 등 운전용 이름과 현재값/기대값을 표시합니다.
 - Elapsed는 첫 TRAY IN 명령(또는 BYPASS 투입)부터 배출 완료까지의 총시간입니다. 단계 변경·재측정으로 다시 시작하지 않습니다.
@@ -70,8 +73,14 @@ SAVE FILE / RESULT TX / COMPLETE / OPEN REQ / OPEN OK / OUT REQ / OUT OK
 - 200ms 신호 관찰이 늦으면 현재 단계명을 유지하고 본문에 사건 단계를 덧붙입니다.
   예: `[MEASURE] PC_SET PROBE_CLOSE (D5): 1 -> 0 (event: DOWN OK)`.
   취소·통신 끊김으로 확인할 수 없는 해제를 완료로 분류하지 않습니다. 오류는 발생한 단계명과 본문의 오류 종류로 구분합니다.
-- 로그는 시간순이며 정렬로 실제 사건 순서를 바꾸지 않습니다. 재측정/초기화나 프로브 열기와 결과 저장의 실제 병행 처리는
-  단계명이 다시 나타날 수 있습니다. 정상 투입 구간의 가짜 역순과는 구분합니다.
+- PROCESS INFO와 로그 헤더는 하나의 대표 단계 관리 객체(`TOperationTimeline`)를 공유합니다.
+  한 회차에서는 확인된 진행 단계가 앞으로만 이동하며, 늦게 관찰된 신호나 병행 작업으로 뒤로 이동하지 않습니다.
+  로그는 기록 시간순으로 유지합니다. 정렬로 사건 순서를 바꾸거나 PLC 제어 순서를 변경하지 않습니다.
+- 단계 재시작은 `CYCLE BEGIN TRAY`, `BEGIN REMEASURE`, `RESET`, `END TRAY`로 명시합니다.
+  재측정은 같은 cycle의 attempt를 증가시키고 DOWN REQ부터 다시 진행합니다.
+  BYPASS/강제 배출은 실행하지 않은 측정 단계를 건너뛰며, 배출 완료 후 READY로 돌아갑니다.
+  수동 측정은 `BEGIN MANUAL MEASUREMENT`로 MEASURE부터 시작하고 결과 처리 후 COMPLETE를 유지합니다.
+  다음 수동 측정 또는 초기화 시 명시적으로 새 표시 회차를 시작합니다.
 - 기존 PLC/장비 파일 로그를 보존하면서, 운영에 필요한 이벤트만 화면에 전달합니다.
 - IR/OCV 개별 수신과 반복 폴링 원문은 기존 파일에만 남깁니다. 화면에는 주요 AMS/AMF/STP 및 단계/오류를 표시합니다.
 - 현재 대기는 상태 제목이 바뀔 때만 기록합니다. 경과 시간·진행률 갱신마다 로그를 쌓지 않습니다.
@@ -91,7 +100,7 @@ SAVE FILE / RESULT TX / COMPLETE / OPEN REQ / OPEN OK / OUT REQ / OUT OK
 | `RVMO_main.dfm/.cpp/.h` | 상단 버튼 배치, 두 연결 표시, PLC 연결 판넬 클릭 |
 | `FormTotal.dfm/.h` | 디자이너에서 편집 가능한 왼쪽 배치와 컴포넌트 선언 |
 | `Stage_OperationView.cpp`, `OperationView.h` | DFM 표시 컴포넌트 연결, 현재 작업, 화면 로그, 표시 타이머 |
-| `OperationViewState.h` | 화면용 요청/완료/생략/경고 이력. PLC/VCL 없이 테스트 가능 |
+| `OperationViewState.h` | 화면용 사건 이력, 단방향 대표 단계·회차 관리, 경과 시간. PLC/VCL 없이 테스트 가능 |
 | `FormTotal.cpp/.h` | 표시 객체 생성/소유. 새 타이머는 폼과 함께 해제 |
 | `Stage_AutoInspection.cpp` | 명령 실행 후 관찰 알림 및 초기화 알림 |
 | `Stage_Measurement.cpp` | 측정 시작과 실제 파일 저장 성공/실패 알림 |

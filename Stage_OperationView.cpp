@@ -63,7 +63,7 @@ AnsiString OperatorSignalText(AnsiString text)
 __fastcall TOperationView::TOperationView(TTotalForm *owner)
     : TComponent(owner), stageForm(owner), refreshTimer(NULL), logMemo(NULL),
       logWriteFailed(false), signalsKnown(false), plcWasValid(false), previousCloseRequest(0),
-      commandLogTile(-1), lastProcessTile(TOperationViewState::Ready)
+      commandLogTile(-1)
 {
     // Layout belongs to FormTotal.dfm. Never override designer bounds at runtime.
     // The form owns visual controls; this observer owns only its refresh timer.
@@ -173,14 +173,27 @@ TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoIns
 {
     if(!view) return;
     previous = view->commandLogTile;
+    try { view->BeginCommand(command); }
+    catch(...) {} // Observer failures never cancel production commands.
+}
+void TOperationView::BeginCommand(TAutoInspectionCommand command)
+{
+    if(command == CMD_TRAY_IN || command == CMD_BYPASS_TRAY_OUT)
+    {
+        timeline.BeginTray();
+        commandLogTile = TOperationViewState::TrayIn;
+        Append("CYCLE", "BEGIN TRAY / cycle " + IntToStr((int)timeline.Cycle()) + " / attempt 1");
+    }
     int tile = TOperationViewState::CommandTile(command);
-    if(tile >= 0) view->commandLogTile = tile;
+    if(tile >= 0) commandLogTile = tile;
+    if(command == CMD_REQUEST_PROBE_REMEASURE && timeline.Phase() >= TOperationViewState::Measure)
+        BeginRemeasureTimeline();
     // Confirmation precedes the command's measurement/AMS logs, not follows them.
     if(command == CMD_MEASURE_START || command == CMD_REMEASURE_START)
     {
-        try { view->Append("PLC_RX", "PROBE CLOSED and TRAY IN confirmed; measurement requested.",
-            TOperationViewState::CloseConfirmed); }
-        catch(...) {} // A display/log failure must not abort the production command.
+        commandLogTile = TOperationViewState::CloseConfirmed;
+        Append("PLC_RX", "PROBE CLOSED and TRAY IN confirmed; measurement requested.");
+        commandLogTile = TOperationViewState::Measure;
     }
 }
 TOperationCommandLogScope::~TOperationCommandLogScope()
@@ -193,15 +206,13 @@ void TOperationView::Append(AnsiString source, AnsiString message, int processTi
     message = StringReplace(message, "\r", " ", TReplaceFlags() << rfReplaceAll);
     message = StringReplace(message, "\n", " ", TReplaceFlags() << rfReplaceAll);
     if(message.Length() > 1200) message = message.SubString(1, 1200) + " ...";
-    // Explicit event > executing command > current process > last process on error.
-    if(processTile < 0)
-    {
-        processTile = commandLogTile >= 0 ? commandLogTile : CurrentProcessTile();
-        if(processTile >= 0) lastProcessTile = processTile;
-        else processTile = lastProcessTile;
-    }
+    // Event identity is separate from representative progress. A late/parallel
+    // event stays visible in the body but cannot move the phase heading backward.
+    int phaseTile = SynchronizeTimeline();
+    if(processTile >= 0 && processTile != phaseTile)
+        message += AnsiString(" (event: ") + TOperationViewState::TileName(processTile) + ")";
     source = StringReplace(source, " ", "_", TReplaceFlags() << rfReplaceAll);
-    AnsiString phase = TOperationViewState::TileName(processTile);
+    AnsiString phase = TOperationViewState::TileName(phaseTile);
     // Do not suppress identical text from a different inspection phase.
     AnsiString key = "[" + phase + "] " + source + " " + message.Trim();
     if(key == lastLog) return;
@@ -242,8 +253,11 @@ void TOperationView::Reset()
     elapsedLabel->Caption = "Elapsed 0.0 s";
     previousCloseRequest = 0;
     lastWaitKey = "";
-    lastProcessTile = TOperationViewState::Ready;
-    Append("PC", "Inspection reset; waiting for a new tray.", TOperationViewState::Ready);
+    timeline.Reset();
+    int previous = commandLogTile;
+    commandLogTile = TOperationViewState::Ready;
+    Append("CYCLE", "RESET / waiting for a new tray.");
+    commandLogTile = previous;
     DrawTiles();
 }
 void TOperationView::Command(TAutoInspectionCommand command)
@@ -259,6 +273,7 @@ void TOperationView::Command(TAutoInspectionCommand command)
 void TOperationView::FinishCycle()
 {
     if(!cycleClock.IsRunning()) return;
+    timeline.Advance(TOperationViewState::OutConfirmed);
     unsigned long elapsed = cycleClock.Finish(GetTickCount());
     Append("CYCLE", "TRAY IN -> TRAY OUT complete: " + FormatFloat("0.0", elapsed / 1000.0) + " s", TOperationViewState::OutConfirmed);
     elapsedLabel->Caption = "Elapsed 0.0 s";
@@ -266,13 +281,20 @@ void TOperationView::FinishCycle()
 void TOperationView::FileSaved(bool saved)
 {
     progress.FileSaved(saved);
+    timeline.Advance(TOperationViewState::FileSave);
     Append(saved ? "PC" : "WARNING", saved ? "Result file saved." : "Result file save failed after retry; existing continue policy retained.", TOperationViewState::FileSave);
     DrawTiles();
 }
 void TOperationView::MeasurementStarted()
 {
-    if(stageForm->bLocal || stageForm->stage.arl == nLocal) progress.Reset();
+    if(stageForm->bLocal || stageForm->stage.arl == nLocal)
+    {
+        progress.Reset();
+        timeline.BeginManual();
+        Append("CYCLE", "BEGIN MANUAL MEASUREMENT / cycle " + IntToStr((int)timeline.Cycle()) + " / attempt 1");
+    }
     progress.MeasurementStarted();
+    timeline.Advance(TOperationViewState::Measure);
     Append("PC", "Measurement command queued (AMS); waiting for device responses.", TOperationViewState::Measure);
     DrawTiles();
 }
@@ -290,12 +312,38 @@ int TOperationView::CurrentProcessTile()
         active = TOperationViewState::FileSave;
     else if(stageForm->resultSaveStep == RESULT_WAIT_PLC_SEND)
         active = Mod_PLC->WasResultTransmitted() ? TOperationViewState::Complete : TOperationViewState::ResultTransmit;
+    else if(stageForm->resultSaveStep == RESULT_COMPLETE &&
+        (stageForm->autoInspection.GetStep() == STEP_WAIT_MEASURE_COMPLETE ||
+         stageForm->bLocal || stageForm->stage.arl == nLocal))
+        active = TOperationViewState::Complete;
     if(stageForm->resultSaveStep == RESULT_ERROR) active = -1;
     return active;
 }
+void TOperationView::BeginRemeasureTimeline()
+{
+    timeline.BeginRemeasure();
+    progress.ResetMeasurement();
+    lastWaitKey = "";
+    Append("CYCLE", "BEGIN REMEASURE / cycle " + IntToStr((int)timeline.Cycle()) +
+        " / attempt " + IntToStr((int)timeline.Attempt()));
+}
+int TOperationView::SynchronizeTimeline()
+{
+    // Command scope wins while the sequence already points to its NEXT step.
+    if(commandLogTile >= 0) return timeline.Advance(commandLogTile);
+    TAutoInspectionStep step = stageForm->autoInspection.GetStep();
+    if(step == STEP_WAIT_REMEASURE_PROBE_CLOSE && timeline.Phase() >= TOperationViewState::Measure)
+        BeginRemeasureTimeline(); // Operator-requested remeasure, before its first log.
+    if(step == STEP_WAIT_TRAY_IN && timeline.Phase() == TOperationViewState::OutConfirmed)
+    {
+        timeline.FinishTray();
+        Append("CYCLE", "END TRAY / READY for next tray.");
+    }
+    return timeline.Advance(CurrentProcessTile());
+}
 void TOperationView::DrawTiles()
 {
-    int active = CurrentProcessTile();
+    int active = SynchronizeTimeline();
     const bool valid = Mod_PLC->plcAutoMode.IsValid() &&
         Connected(Mod_PLC->ClientSocket_PC) && Connected(Mod_PLC->ClientSocket_PLC);
     if(!Connected(stageForm->Client) || !valid ||
@@ -321,17 +369,13 @@ void TOperationView::ObserveSignals(bool valid)
         else if(text != lastSignals[i])
         {
             AnsiString name = i < 6 ? InputNames[i] : OutputNames[i - 6];
-            int current = commandLogTile >= 0 ? commandLogTile : CurrentProcessTile();
-            if(current < 0) current = lastProcessTile;
+            int current = SynchronizeTimeline();
             int phase = progress.SignalTile(i, value == 1, valid,
                 Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1,
                 Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1,
                 Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1, current);
             AnsiString detail = name + " (D" + IntToStr(address) + "): " + lastSignals[i] + " -> " + text;
-            // Samples can arrive after the sequence advanced. Keep the current
-            // process heading, and preserve the signal's event phase in the body.
-            if(phase != current) detail += AnsiString(" (event: ") + TOperationViewState::TileName(phase) + ")";
-            Append(i < 6 ? "PLC_RX" : "PC_SET", detail, current);
+            Append(i < 6 ? "PLC_RX" : "PC_SET", detail, phase);
             lastSignals[i] = text;
         }
     }
