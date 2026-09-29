@@ -1871,7 +1871,7 @@ object MeasureInfoForm: TMeasureInfoForm
         ParentFont = False
         TabOrder = 0
         Version = '2.1.1.5'
-        OnClick = btnAutoClick
+        OnClick = btnStartManualInspectionClick
         TMSStyle = 8
       end
       object btnStop: TAdvSmoothButton

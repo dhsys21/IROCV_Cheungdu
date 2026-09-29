@@ -16,8 +16,8 @@ void __fastcall TTotalForm::ProcessError(AnsiString err1, AnsiString err2,AnsiSt
 		error3->Caption = err3;
 		error4->Caption = err4;
 		ErrorTime->Caption = Now().FormatString("hh : nn : ss");
-		ErrorLog();
-		//VisibleBox(GrpError);
+		WriteErrorLog();
+		//ShowPanelGroup(GrpError);
 	}
 }
 
@@ -44,7 +44,7 @@ void __fastcall TTotalForm::DisplayProcess(int status, AnsiString Status_Step, A
 
 	if(OldPLCStatus != PLCStatus) {
 		OldPLCStatus = PLCStatus;
-		WritePLCLog(Status_Step, PLCStatus);
+		WritePlcLog(Status_Step, PLCStatus);
 		WriteCommLog(Status_Step, PLCStatus);
 	}
 }
@@ -124,7 +124,7 @@ void __fastcall TTotalForm::DisplayStatus(int status)
 	if(GrpError->Visible){
 		GrpError->BringToFront();
 	}
-	else if(stage.arl == nAuto || status >= 23)VisibleBox(GrpMain);
+	else if(stage.arl == nAuto || status >= 23)ShowPanelGroup(GrpMain);
 }
 
 void __fastcall TTotalForm::ResponseError(AnsiString param)
@@ -140,7 +140,7 @@ void __fastcall TTotalForm::ResponseError(AnsiString param)
 	}
 }
 
-void __fastcall TTotalForm::ErrorMsg(int err)
+void __fastcall TTotalForm::DisplayStageError(int err)
 {
 	AnsiString err1, err2, err3, err4;
     int nstatus = 0;
@@ -153,7 +153,7 @@ void __fastcall TTotalForm::ErrorMsg(int err)
 			 err4 = "2.Inspection Start, click";
 			 break;
 		case RESET:
-			if(GrpAlarm->Visible == true)VisibleBox(OldGrp);
+			if(GrpAlarm->Visible == true)ShowPanelGroup(OldGrp);
 			return;
 		case PROCESS_ERROR:
 			 err1 = "IMS";
@@ -214,11 +214,11 @@ void __fastcall TTotalForm::ErrorMsg(int err)
 		error3->Caption = err3;
 		error4->Caption = err4;
 		ErrorTime->Caption = Now().FormatString("hh : nn : ss");
-		ErrorLog();
+		WriteErrorLog();
 		//* 2023 06 14 설비가 멈췄을 경우 에러
         DisplayProcess(nstatus, err1, err3, true);
 		//Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 1);
-		//VisibleBox(GrpError);
+		//ShowPanelGroup(GrpError);
 	}
 }
 
@@ -228,6 +228,8 @@ void __fastcall TTotalForm::ErrorMsg(int err)
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 StatusTimerTimer. 설비 상태·알람·PLC 표시 갱신는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 {
+    // Keep PLC mode monitoring alive while the automatic inspection timer is disabled.
+    UpdateAutoInspectionMode();
 	RefreshStageStatusImage();
 	if(stage.now_status != stage.alarm_status){
 		stage.now_status = stage.alarm_status;
@@ -242,25 +244,25 @@ void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 			break;
 		case nIN:
 			if(stage.alarm_cnt > 100){
-				ErrorMsg(nRedEnd);
+				DisplayStageError(nRedEnd);
 				stage.alarm_cnt = 0;
 			}
 			break;
 		case nREADY:
 			if(stage.alarm_cnt > 100){
-				ErrorMsg(nReadyError);
+				DisplayStageError(nReadyError);
 				stage.alarm_cnt = 0;
 			}
 			break;
 		case nRUN:
 			if(stage.alarm_cnt > 120){
-				ErrorMsg(nRunningError);
+				DisplayStageError(nRunningError);
 				stage.alarm_cnt = 0;
 			}
 			break;
 		case nEND:
 			if(stage.alarm_cnt > 100){
-				ErrorMsg(nBlueEnd);
+				DisplayStageError(nBlueEnd);
 				stage.alarm_cnt = 0;
 			}
 			break;
@@ -271,7 +273,7 @@ void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 			break;
 		case nFinish:
             if(stage.alarm_cnt > 100){
-				ErrorMsg(nFinishError);
+				DisplayStageError(nFinishError);
 				stage.alarm_cnt = 0;
 			}
 			break;
@@ -286,19 +288,22 @@ void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 			break;
 	}
 
-    if(Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1) ShowPLCSignal(pnlTrayIn, true);
-    else ShowPLCSignal(pnlTrayIn, false);
+    if(Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1) DisplayPlcSignal(pnlTrayIn, true);
+    else DisplayPlcSignal(pnlTrayIn, false);
 
-    if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1) ShowPLCSignal(pnlProbeOpen, true);
-    else ShowPLCSignal(pnlProbeOpen, false);
+    if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1) DisplayPlcSignal(pnlProbeOpen, true);
+    else DisplayPlcSignal(pnlProbeOpen, false);
 
-    if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1) ShowPLCSignal(pnlProbeClose, true);
-    else ShowPLCSignal(pnlProbeClose, false);
+    if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1) DisplayPlcSignal(pnlProbeClose, true);
+    else DisplayPlcSignal(pnlProbeClose, false);
+    // 수동 대기 중에도 실행된다. 자동 표시와 경합하지 않도록 자동 타이머가 꺼진 경우만 갱신.
+    if(!Timer_AutoInspection->Enabled && (bLocal || stage.arl == nLocal))
+        CheckManualInspectionError();
 }
 
 //---------------------------------------------------------------------------
 // 메인/재측정/오류 그룹을 전환하고 오류 화면 표시 개수를 갱신한다.
-void __fastcall TTotalForm::VisibleBox(TGroupBox *grp)
+void __fastcall TTotalForm::ShowPanelGroup(TGroupBox *grp)
 {
 	if(grp->Visible == false){
 
@@ -337,7 +342,7 @@ void __fastcall TTotalForm::VisibleBox(TGroupBox *grp)
 
 //---------------------------------------------------------------------------
 // PLC 입력 신호 ON/OFF를 표시등 색상으로 반영한다.
-void __fastcall TTotalForm::ShowPLCSignal(TAdvSmoothPanel *advPanel, bool bOn)
+void __fastcall TTotalForm::DisplayPlcSignal(TAdvSmoothPanel *advPanel, bool bOn)
 {
     if(bOn)
 	{
@@ -371,4 +376,70 @@ void __fastcall TTotalForm::CheckPassword()
 		//MessageBox(Handle, L"Are you sure you’re spelling your password correctly?", L"ERROR", MB_OK|MB_ICONERROR);
         MessageBox(Handle, msg.c_str(), L"ERROR", MB_OK|MB_ICONERROR);
 	}
+}
+
+//===========================================================================
+// 자동/수동 오류 검사: 호출 시점과 반환값의 사용 방식은 각 운전 모드에서 유지한다.
+//===========================================================================
+// 자동 진행을 막는 통신/PLC/운전 모드 오류를 확인한다. true이면 현재 단계를 유지하고 대기한다.
+bool __fastcall TTotalForm::CheckAutoInspectionError()
+{
+    DisplayError("");
+    if(!Client->Active || !Client->Socket->Connected)
+    {
+        RefreshStageStatusImage();
+        DisplayError("IR/OCV Connection Fail.");
+        return true;
+    }
+
+    AnsiString error;
+    if(!Mod_PLC->ClientSocket_PC->Active || !Mod_PLC->ClientSocket_PC->Socket->Connected ||
+       !Mod_PLC->ClientSocket_PLC->Active || !Mod_PLC->ClientSocket_PLC->Socket->Connected)
+        error = "PLC - PC Connection Fail.";
+    else if(Mod_PLC->GetPlcValue(PLC_D_IROCV_ERROR))
+        error = "PLC - Error!!";
+    else if(bLocal && Mod_PLC->GetValue(PC_D_IROCV_STAGE_AUTO_READY) == 0)
+        error = "IR/OCV is not in AutoMode";
+
+    if(error.IsEmpty())
+    {
+        OldErrorCheckStatus = "";
+        return false;
+    }
+    DisplayError(error, true);
+    if(OldErrorCheckStatus != error)
+    {
+        OldErrorCheckStatus = error;
+        WritePlcLog("CheckAutoInspectionError", error);
+    }
+    return true;
+}
+//---------------------------------------------------------------------------
+// 수동에서는 자동검사 타이머가 멈추므로 상태 타이머에서 오류 표시만 갱신한다.
+// 반환값은 표시 여부이며 수동 측정/PLC 출력을 정지시키는 인터록으로 사용하지 않는다.
+bool __fastcall TTotalForm::CheckManualInspectionError()
+{
+    // 저장 실패/예외 정지의 원인 메시지를 수동 안내로 덮어쓰지 않는다.
+    if(resultSaveStep == RESULT_ERROR || autoInspection.GetStep() == STEP_ERROR_STOP)
+        return true;
+
+    AnsiString error;
+    if(!Client->Active || !Client->Socket || !Client->Socket->Connected)
+        error = "IR/OCV Connection Fail.";
+    else if(!Mod_PLC->ClientSocket_PC->Active || !Mod_PLC->ClientSocket_PC->Socket ||
+            !Mod_PLC->ClientSocket_PC->Socket->Connected ||
+            !Mod_PLC->ClientSocket_PLC->Active || !Mod_PLC->ClientSocket_PLC->Socket ||
+            !Mod_PLC->ClientSocket_PLC->Socket->Connected)
+        error = "PLC - PC Connection Fail.";
+    else if(Mod_PLC->GetPlcValue(PLC_D_IROCV_ERROR) != 0)
+        error = "PLC - Error!!";
+    else if(bLocal || stage.arl == nLocal)
+    {
+        if(Mod_PLC->GetValue(PC_D_IROCV_STAGE_AUTO_READY) == 0)
+            error = "IR/OCV is not in AutoMode";
+    }
+
+    // 연결 실패 → PLC 오류 → 수동 안내 순으로 표시해 중요한 오류가 가려지지 않는다.
+    DisplayError(error, !error.IsEmpty());
+    return !error.IsEmpty();
 }

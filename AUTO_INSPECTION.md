@@ -1,5 +1,18 @@
 # IROCV 자동측정 시퀀스 구조
 
+## PLC 자동/수동 연동
+
+- PLC 모드값은 0=수동, 1=자동이다. 값의 의미는 SiteConfig.h의 PLC_AUTO_MODE_VALUE에 명시한다.
+- 프로그램 시작 시 자동 타이머는 OFF이다. PC 자동모드이고 PLC 두 소켓이 연결되며 정상 일반 블록에서 PLC 자동값을 수신해야 ON이 된다.
+- UpdateAutoInspectionMode를 상태 타이머와 자동 검사 진입부에서 호출한다. 자동 타이머가 꺼져 있어도 PLC 자동 복귀를 감지한다.
+- PLC 수동 전환 시 자동 타이머 OFF, STEP_WAIT_TRAY_IN 초기화, 이전 결과 저장/COMPLETE 대기 취소, 공정 PLC 출력 초기화를 한 번 수행한다. 기존 표시 데이터는 보존하고, 새 TRAY IN에서 새 검사 데이터를 초기화한다.
+- PLC 자동 복귀 시 PC도 자동이어야 타이머를 켠다. 이전 중간 단계로 돌아가지 않는다.
+- 짧은 수동→자동 전환도 놓치지 않도록 정상 PLC 수신부에 초기화 버전을 기록한다. 연결 해제/오류 후에는 이전 AUTO 값을 재사용하지 않고 정상 수신을 기다린다.
+- PC 수동/IR·OCV 로컬 테스트의 독립 측정·저장은 이 자동 사이클 초기화 대상으로 취급하지 않는다.
+- 저장 대기 중이던 이전 사이클은 취소되므로 미완료 결과를 뒤늦게 새 사이클의 완료로 게시하지 않는다. 이미 기록한 파일/누계는 삭제하거나 되돌리지 않는다.
+- 이 처리는 자동 시퀀스 초기화이지 장비 물리 정지 또는 PLC 비상정지 기능은 아니다.
+- 검증: TestPlcAutoMode.ps1 및 기존 시퀀스/시리얼/결과 저장/수동 연결 회귀검사를 실행한다.
+
 기준: `dd69ce9` (`2026 09 18 001`). IROCV 전용 변경이며 PRECHARGER와 독립적으로 관리합니다.
 
 전체 파일 구성, 증상별 수정 위치, 미사용 코드 정리 내역은 [CODE_STRUCTURE.md](CODE_STRUCTURE.md)를 먼저 참고하세요.
@@ -87,12 +100,12 @@ DisplayAutoInspectionStep();
 | `STEP_WAIT_TRAY_OUT` | TRAY IN 해제 후 배출 출력 정리 | FINISH / 0 |
 | `STEP_ERROR_STOP` | 타이머/연결된 조작 함수의 예외 발생 시 진행 중지 | 신규 |
 
-기존 MEASURE / 1은 진입하는 코드가 없어 연결되지 않은 `ViewRemeasureList`와 함께 제거했습니다. 실제 생산에서 사용하던 `ResponseAutoTestFinish` → `SetRemeasureList` → `RemeasureExcute` 경로는 유지합니다.
+기존 MEASURE / 1은 진입하는 코드가 없어 연결되지 않은 `ViewRemeasureList`와 함께 제거했습니다. 실제 생산에서 사용하던 `ProcessMeasurementCompleteResponse` → `SetRemeasureList` → `ExecuteRemeasure` 경로는 유지합니다.
 
 ## 유지한 생산 규칙
 
-- `measNgCount`는 **존재하는 셀 중 IR/OCV/접촉 불량**만 집계합니다. PLC 전송용 `ngCount`와 통합하지 않습니다. `BadInformation`의 집계식은 변경하지 않았습니다.
-- 자동 배출은 `measNgCount > 설정값` 또는 존재하는 셀 전부 NG일 때 대기합니다. 설정값과 같은 개수는 허용하며, 셀이 0개인 상황을 전량 NG로 오판하지 않습니다.
+- `measurementNgCount`는 **존재하는 셀 중 IR/OCV/접촉 불량**만 집계합니다. PLC 전송용 `ngCount`와 통합하지 않습니다. `UpdatePlcResults`의 집계식은 변경하지 않았습니다.
+- 자동 배출은 `measurementNgCount > 설정값` 또는 존재하는 셀 전부 NG일 때 대기합니다. 설정값과 같은 개수는 허용하며, 셀이 0개인 상황을 전량 NG로 오판하지 않습니다.
 - NG 대기 진입 시 TRAY OUT을 내보내지 않고 `nFinish`도 표시하지 않습니다. Tray Out 버튼은 NG 재검사 없이 배출, Restart는 TRAY IN부터 다시 시작합니다.
 - 수동 배출과 BYPASS는 NG 조건을 적용하지 않습니다. 수동 배출 버튼별 기존 PROBE OPEN/COMPLETE 출력은 유지합니다.
 - CELL SERIAL START/COMPLETE 핸드셰이크는 사용하지 않습니다. 기존 Modplc의 820워드 × 4 + 730워드 수신 완료를 확인한 뒤 개수를 비교합니다.
@@ -106,7 +119,7 @@ DisplayAutoInspectionStep();
 ## 함께 보완한 부분
 
 1. 상태 전환을 한 곳에서 결정하고, 명령을 실행하기 전에 새 상태를 설정하여 AMS 중복 시작과 상태 덮어쓰기를 방지합니다.
-2. PROBE OPEN이 먼저 올라와도 결과 처리 함수가 끝나기 전에는 자동 배출하지 않습니다. `SaveMeasurementResult` 마지막의 `SetAutoMeasureComplete()`가 완료 지점입니다. 상시 모드는 최종 시리얼 수신을 기다린 후 이 함수를 실행합니다.
+2. PROBE OPEN이 먼저 올라와도 결과 처리 함수가 끝나기 전에는 자동 배출하지 않습니다. `WriteMeasurementResults` 마지막의 `SetAutoMeasurementComplete()`가 완료 지점입니다. 상시 모드는 최종 시리얼 수신을 기다린 후 이 함수를 실행합니다.
 3. 전체 재측정의 CELL DATA 읽기도 자동측정과 같은 비트맵 함수를 사용합니다. 기존 TRAY ID를 유지합니다.
 4. `AnsiString`을 포함하는 TRAY 구조체를 `memset`하지 않습니다. 문자열은 대입으로, 숫자·배열은 명시적으로 초기화하여 구형 BCC32의 임시 객체 초기화에 의존하지 않습니다.
 5. 같은 측정의 중복 AMF는 처리하지 않고, 개별 재측정 종료 후 재측정 모드를 해제합니다.
@@ -150,7 +163,7 @@ DisplayAutoInspectionStep();
 7. 장비/PLC 연결 끊김 후 No Answer 표시 및 기존 상태 재개, PLC 오류 중 명령 재발행 여부.
 8. 설정/파일 예외 시 자동 진행 중지와 운영자 초기화 절차.
 
-`SetAutoMeasureComplete`는 기존 결과 처리 함수의 반환을 확인하는 경계입니다. PLC가 실제로 데이터를 수신했다는 ACK나 디스크 저장 성공까지 새로 검증하는 것은 아닙니다. 기존 통신 재전송·프레임 해석·파일 I/O의 오류 검증은 별도 범위입니다. 운영 버전 교체 전 이 점과 현장 안전 인터록을 확인해야 합니다.
+`SetAutoMeasurementComplete`는 기존 결과 처리 함수의 반환을 확인하는 경계입니다. PLC가 실제로 데이터를 수신했다는 ACK나 디스크 저장 성공까지 새로 검증하는 것은 아닙니다. 기존 통신 재전송·프레임 해석·파일 I/O의 오류 검증은 별도 범위입니다. 운영 버전 교체 전 이 점과 현장 안전 인터록을 확인해야 합니다.
 
 ## 유지보수 정리 (2026-09-21)
 
@@ -173,7 +186,7 @@ DisplayAutoInspectionStep();
 - 판정 우선순위는 접촉(4) > IR(2) > OCV(3). 이전 불량·화면 색상을 판정 근거로 사용하지 않는다.
 
 ### 결과 마감과 화면
-- `FinishMeasurement` → 최종 시리얼(상시 모드만) → `SaveMeasurementResult` → `Timer_ResultSaveTimer`.
+- `FinishMeasurement` → 최종 시리얼(상시 모드만) → `WriteMeasurementResults` → `Timer_ResultSaveTimer`.
 - `resultSaveStep`: 대기 / 시리얼 대기 / 작업자 대기 / 파일 작성 / PLC 전송 대기 / 완료 / 취소 / 오류.
 - 참고용 CSV는 최초 시도 + 재시도 1회. 두 번 실패해도 로그 후 생산 진행. 시리얼 오류는 기존 작업자 선택 유지.
 - 파일명은 분 단위 유지. 같은 트레이 전체/선택 재측정은 파일명을 보존해 최종값으로 덮어쓴다.

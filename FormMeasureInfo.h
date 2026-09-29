@@ -32,7 +32,7 @@ using namespace std;
 typedef struct{
 	int *cell;
     int *measure_result;
-	float *orginal_value;
+	float *original_value;
 	float *after_value;
 	float *ocv_value;
     int arl;
@@ -126,7 +126,7 @@ __published:	// IDE-managed Components
 	void __fastcall btnIrClick(TObject *Sender);
 	void __fastcall btnOcvClick(TObject *Sender);
 	void __fastcall btnInitClick(TObject *Sender);
-	void __fastcall btnAutoClick(TObject *Sender);
+	void __fastcall btnStartManualInspectionClick(TObject *Sender);
 	void __fastcall btnStopClick(TObject *Sender);
 	void __fastcall btnProbeClick(TObject *Sender);
 	void __fastcall PanelDblClickk(TObject *Sender);
@@ -145,8 +145,8 @@ __published:	// IDE-managed Components
 	void __fastcall FormShow(TObject *Sender);
 
 private:	// User declarations
-	void __fastcall MakePanel(AnsiString type);
-	void __fastcall MakeUIPanel(AnsiString type);
+	void __fastcall MakePanel();
+	void __fastcall MakeUIPanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);
 	void __fastcall SetUIOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);
 //	void __fastcall MakePanel();
@@ -164,11 +164,11 @@ public:		// User declarations
 	int nStep;
 	int msaCount;
     AnsiString msaFN, msaReportFN;
-	void __fastcall InitStruct();
+	void __fastcall InitializeDisplayData();
     void __fastcall DisplayIrValue(int index, TColor clr, AnsiString caption, bool measured = true);
 	void __fastcall DisplayIrValue(int index, AnsiString caption);
     void __fastcall DisplayOcvValue(int index, TColor clr, AnsiString caption, bool measured = true);
-    void __fastcall initChart(int ir_min, int ir_max, int ocv_min, int ocv_max);
+    void __fastcall InitializeChart(int ir_min, int ir_max, int ocv_min, int ocv_max);
 	__fastcall TMeasureInfoForm(TComponent* Owner);
 };
 //---------------------------------------------------------------------------

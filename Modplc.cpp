@@ -64,36 +64,45 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::Connect(AnsiString ip, int port1, int port2)
 {
-	try
-	{
-		bClose = false;
-
-		ClientSocket_PLC->Address = ip;
-		ClientSocket_PLC->Port = port1;
-		ClientSocket_PLC->Open();
-
-		ClientSocket_PC->Address = ip;
-		ClientSocket_PC->Port = port2;
-		ClientSocket_PC->Open();
-	}
-	catch(...)
-	{
-		ShowMessage("PLC -> PC : 통신 설정 실패.");
-	}
+    // 사용 중인 소켓의 주소/포트는 변경할 수 없다. 주소 변경 시 두 경로를 먼저 닫는다.
+    const bool changed = ClientSocket_PLC->Address != ip || ClientSocket_PLC->Port != port1 ||
+        ClientSocket_PC->Address != ip || ClientSocket_PC->Port != port2;
+    if(changed) Disconnect();
+    bClose = false;
+    if(!ClientSocket_PLC->Active)
+    {
+        ClientSocket_PLC->Host = "";
+        ClientSocket_PLC->Address = ip;
+        ClientSocket_PLC->Port = port1;
+        Timer_PLC_AutoConnectTimer(this);
+    }
+    if(!ClientSocket_PC->Active)
+    {
+        ClientSocket_PC->Host = "";
+        ClientSocket_PC->Address = ip;
+        ClientSocket_PC->Port = port2;
+        Timer_PC_AutoConnectTimer(this);
+    }
 }
 //---------------------------------------------------------------------------
-void __fastcall TMod_PLC::DisConnect()
+void __fastcall TMod_PLC::Disconnect()
 {
-	bClose = true;
-	Timer_PLC_WriteMsg->Enabled = false;
-	Timer_PC_WriteMsg->Enabled = false;
-	ClientSocket_PLC->Close();
-	ClientSocket_PC->Close();
+    plcAutoMode.Invalidate();
+    // bClose는 두 소켓의 Disconnect 이벤트 이후에도 유지한다. Connect에서만 해제한다.
+    bClose = true;
+    Timer_PLC_AutoConnect->Enabled = false;
+    Timer_PC_AutoConnect->Enabled = false;
+    Timer_PLC_WriteMsg->Enabled = false;
+    Timer_PC_WriteMsg->Enabled = false;
+    ClientSocket_PLC->Close();
+    ClientSocket_PC->Close();
+    ResetCellSerialRead();
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TMod_PLC::PLC_Initialization()
+void __fastcall TMod_PLC::InitializePlcCommunication()
 {
+    plcAutoMode.Invalidate();
 	plc_Read = "";
 	plc_ReadCount = 0;
 	plc_ReadFlag = true;
@@ -188,7 +197,7 @@ int __fastcall TMod_PLC::GetCellSerialReadWords(int index)
     return remaining;
 }
 //---------------------------------------------------------------------------
-void __fastcall TMod_PLC::PC_Initialization()
+void __fastcall TMod_PLC::InitializePcCommunication()
 {
     resultSentParts = 0; // 재접속 후 이전 전송 표식을 사용하지 않는다.
 	pc_Read = "";
@@ -204,23 +213,25 @@ void __fastcall TMod_PLC::PC_Initialization()
 void __fastcall TMod_PLC::ClientSocket_PCConnect(TObject *Sender, TCustomWinSocket *Socket)
 
 {
-    PC_Initialization();
+    InitializePcCommunication();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TMod_PLC::ClientSocket_PCDisconnect(TObject *Sender, TCustomWinSocket *Socket)
-
 {
-    if(bClose) bClose = false;
-	else Timer_PC_AutoConnect->Enabled = true;
+    plcAutoMode.Invalidate();
+    Timer_PC_WriteMsg->Enabled = false;
+    Timer_PC_AutoConnect->Enabled = !bClose;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TMod_PLC::ClientSocket_PCError(TObject *Sender, TCustomWinSocket *Socket,
           TErrorEvent ErrorEvent, int &ErrorCode)
 {
+    plcAutoMode.Invalidate();
     ErrorCode = 0;
 	Socket->Close();
+    Timer_PC_AutoConnect->Enabled = !bClose;
 }
 //---------------------------------------------------------------------------
 
@@ -331,8 +342,16 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::Timer_PC_AutoConnectTimer(TObject *Sender)
 {
-    ClientSocket_PC->Active = true;
-	Timer_PC_AutoConnect->Enabled = false;
+    Timer_PC_AutoConnect->Enabled = false;
+    if(bClose || ClientSocket_PC->Active) return;
+    try
+    {
+        ClientSocket_PC->Active = true;
+    }
+    catch(...)
+    {
+        Timer_PC_AutoConnect->Enabled = !bClose;
+    }
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -362,25 +381,27 @@ void __fastcall TMod_PLC::PC_DataChange(int subCommand, int address, int devCode
 void __fastcall TMod_PLC::ClientSocket_PLCConnect(TObject *Sender, TCustomWinSocket *Socket)
 
 {
-    PLC_Initialization();
+    InitializePlcCommunication();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TMod_PLC::ClientSocket_PLCDisconnect(TObject *Sender, TCustomWinSocket *Socket)
-
 {
+    plcAutoMode.Invalidate();
+    Timer_PLC_WriteMsg->Enabled = false;
     ResetCellSerialRead();
-    if(bClose) bClose = false;
-	else Timer_PLC_AutoConnect->Enabled = true;
+    Timer_PLC_AutoConnect->Enabled = !bClose;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TMod_PLC::ClientSocket_PLCError(TObject *Sender, TCustomWinSocket *Socket,
           TErrorEvent ErrorEvent, int &ErrorCode)
 {
+    plcAutoMode.Invalidate();
     ErrorCode = 0;
 	ResetCellSerialRead();
 	Socket->Close();
+    Timer_PLC_AutoConnect->Enabled = !bClose;
 }
 //---------------------------------------------------------------------------
 
@@ -414,6 +435,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
                     ? GetCellSerialReadWords(CellSerialIndex) : PLC_D_INTERFACE_LEN;
                 if(length < 22 + expectedWords * 4)
                 {
+                    plcAutoMode.Invalidate();
                     // 잘못된 길이는 완료로 게시하지 않고 일반 데이터부터 재동기화한다.
                     ResetCellSerialRead();
                     StartCellSerialRead();
@@ -424,15 +446,16 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
             	switch(currentReadTask)
                 {
                     case nSTANDARD:
-                        PLC_Recv_Interface();
+                        ReadPlcInterfaceData();
+                        plcAutoMode.Observe(GetPlcValue(PLC_D_IROCV_AUTO_MANUAL) == PLC_AUTO_MODE_VALUE);
                         PrepareCellSerialRead();
                         break;
                     case nCELLSERIAL:
-                        PLC_Recv_Interface_CellSerial(CellSerialIndex, GetCellSerialReadWords(CellSerialIndex));
+                        ReadPlcCellSerialChunk(CellSerialIndex, GetCellSerialReadWords(CellSerialIndex));
                         CompleteCellSerialChunk();
                         break;
                 }
-//				if(plc_index == PLC_INDEX_INTERFACE) PLC_Recv_Interface();
+//				if(plc_index == PLC_INDEX_INTERFACE) ReadPlcInterfaceData();
 //				else plc_index = PLC_INDEX_INTERFACE;
 			}
 			else break;
@@ -440,6 +463,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
 		else
         {
             // [CELL SERIAL 공통] PLC 오류 응답의 이전 완료값을 최종 결과에 사용하지 않는다.
+            plcAutoMode.Invalidate();
             ResetCellSerialRead();
             StartCellSerialRead();
         }
@@ -494,8 +518,16 @@ void __fastcall TMod_PLC::Timer_PLC_WriteMsgTimer(TObject *Sender)
 
 void __fastcall TMod_PLC::Timer_PLC_AutoConnectTimer(TObject *Sender)
 {
-    ClientSocket_PLC->Active = true;
-	Timer_PLC_AutoConnect->Enabled = false;
+    Timer_PLC_AutoConnect->Enabled = false;
+    if(bClose || ClientSocket_PLC->Active) return;
+    try
+    {
+        ClientSocket_PLC->Active = true;
+    }
+    catch(...)
+    {
+        Timer_PLC_AutoConnect->Enabled = !bClose;
+    }
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -516,7 +548,7 @@ void __fastcall TMod_PLC::PLC_DataChange(int subCommand, int address, int devCod
 	plc_Data.DevLen[1] = devLen / 256;
 }
 //---------------------------------------------------------------------------
-void __fastcall TMod_PLC::PLC_Recv_Interface()
+void __fastcall TMod_PLC::ReadPlcInterfaceData()
 {
 	int num = 0;
 	plc_Interface = plc_Read.SubString(23, PLC_D_INTERFACE_LEN);
@@ -529,7 +561,7 @@ void __fastcall TMod_PLC::PLC_Recv_Interface()
 	}
 }
 //---------------------------------------------------------------------------
-void __fastcall TMod_PLC::PLC_Recv_Interface_CellSerial(int index, int wordsToRead)
+void __fastcall TMod_PLC::ReadPlcCellSerialChunk(int index, int wordsToRead)
 {
     int num = 0;
 
@@ -728,4 +760,12 @@ bool __fastcall TMod_PLC::IsResultConnectionReady()
     return ClientSocket_PC->Active && ClientSocket_PC->Socket->Connected &&
            ClientSocket_PLC->Active && ClientSocket_PLC->Socket->Connected &&
            GetPlcValue(PLC_D_IROCV_ERROR) == 0;
+}
+
+// The PC AUTO READY output is not the PLC mode input. Require fresh reception after reconnect.
+bool __fastcall TMod_PLC::IsPlcAutoMode()
+{
+    return plcAutoMode.IsAutomatic() &&
+        ClientSocket_PC->Active && ClientSocket_PC->Socket && ClientSocket_PC->Socket->Connected &&
+        ClientSocket_PLC->Active && ClientSocket_PLC->Socket && ClientSocket_PLC->Socket->Connected;
 }

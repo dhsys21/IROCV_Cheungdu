@@ -2,6 +2,7 @@
 
 #ifndef ModPLCH
 #define ModPLCH
+#include "PlcAutoMode.h"
 //---------------------------------------------------------------------------
 #include <Classes.hpp>
 #include <Controls.hpp>
@@ -196,10 +197,10 @@ private:	// User declarations
 //---------------------------------------------------------------------------
 //	PLC
 //---------------------------------------------------------------------------
-	void __fastcall PLC_Initialization();
+	void __fastcall InitializePlcCommunication();
 	void __fastcall PLC_DataChange(int subCommand, int address, int devCode, int devLen);
-	void __fastcall PLC_Recv_Interface();
-    void __fastcall PLC_Recv_Interface_CellSerial(int index, int wordsToRead);
+	void __fastcall ReadPlcInterfaceData();
+    void __fastcall ReadPlcCellSerialChunk(int index, int wordsToRead);
     int __fastcall GetCellSerialReadWords(int index);
     void __fastcall ResetCellSerialRead();
     // [CELL SERIAL 공통] 일반 데이터 응답 후 요청/상시 모드에 따라 다음 읽기를 예약한다.
@@ -222,7 +223,7 @@ private:	// User declarations
 //---------------------------------------------------------------------------
 //	PC
 //---------------------------------------------------------------------------
-	void __fastcall PC_Initialization();
+	void __fastcall InitializePcCommunication();
 	void __fastcall PC_DataChange(int subCommand, int address, int devCode, int devLen);
 
 	PC_DATA pc_Data;
@@ -240,7 +241,7 @@ public:		// User declarations
 	__fastcall TMod_PLC(TComponent* Owner);
 
 	void __fastcall Connect(AnsiString ip, int port1, int port2);
-	void __fastcall DisConnect();
+	void __fastcall Disconnect();
 
 	void __fastcall SetData(unsigned char (*data)[2], int column, int num, bool flag);
 	void __fastcall SetDouble(unsigned char (*data)[2], int column, double value);
@@ -280,6 +281,8 @@ public:		// User declarations
     void __fastcall BeginResultTransmission();
     bool __fastcall WasResultTransmitted();
     bool __fastcall IsResultConnectionReady();
+    bool __fastcall IsPlcAutoMode();
+    TPlcAutoModeState plcAutoMode;
 private:
     unsigned int resultSentParts;
 public:

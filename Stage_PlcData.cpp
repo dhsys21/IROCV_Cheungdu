@@ -11,7 +11,7 @@
 
 //---------------------------------------------------------------------------
 // PC→PLC 검사 출력과 결과 버퍼 초기화. 기존 주소·초기값·출력 순서를 유지한다.
-void __fastcall TTotalForm::PLCInitialization()
+void __fastcall TTotalForm::InitializePlcData()
 {
     Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
 	Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 0);
@@ -33,9 +33,9 @@ void __fastcall TTotalForm::PLCInitialization()
 	}
 
     WriteIROCVValue(0);
-	WriteIRMINMAX();
+	WritePlcSpecifications();
 
-	WritePLCLog("PLCInitialization", "IROCV TRAY OUT, IROCV PROBE OPEN, IROCV PROBE CLOSE = 0");
+	WritePlcLog("PLCInitialization", "IROCV TRAY OUT, IROCV PROBE OPEN, IROCV PROBE CLOSE = 0");
 	OldPLCStatus = "";
 }
 
@@ -71,12 +71,12 @@ void __fastcall TTotalForm::WriteIROCVValue(int initValue)
 
 //---------------------------------------------------------------------------
 // 최종 판정으로 PLC NG 비트·결과 코드·수량을 한 번에 작성한다(OK=0, NG=1).
-// measNgCount는 실제 셀의 불량만 센다. PLC 결과 버퍼를 다시 읽어 판정하지 않는다.
-void __fastcall TTotalForm::BadInformation()
+// measurementNgCount는 실제 셀의 불량만 센다. PLC 결과 버퍼를 다시 읽어 판정하지 않는다.
+void __fastcall TTotalForm::UpdatePlcResults()
 {
     int plcNgCount = 0;
     int finalIrNg = 0;
-    measNgCount = 0;
+    measurementNgCount = 0;
     for(int i = 0; i < MAXCHANNEL; ++i)
     {
         const bool occupied = tray.cell[i] == 1;
@@ -86,7 +86,7 @@ void __fastcall TTotalForm::BadInformation()
         Mod_PLC->SetData(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURE_OK_NG + i / 16, i % 16, plcNg);
         Mod_PLC->SetResultCode(PC_D_IROCV_RESULT_CODE + i, plcNg ? 1 : 0);
         if(plcNg) ++plcNgCount;
-        if(measurementNg) ++measNgCount;
+        if(measurementNg) ++measurementNgCount;
         // 기존 IR/접촉 불량 누계 의미 유지(OCV 제외). 재측정 시 최종값 차이만 반영한다.
         if(occupied && (result == CELL_IR_NG || result == CELL_CONTACT_NG)) ++finalIrNg;
     }
@@ -98,7 +98,7 @@ void __fastcall TTotalForm::BadInformation()
 
 //---------------------------------------------------------------------------
 // 현재 IR/OCV 규격 상·하한을 기존 배율로 PLC 설정 버퍼에 기록한다.
-void __fastcall TTotalForm::WriteIRMINMAX()
+void __fastcall TTotalForm::WritePlcSpecifications()
 {
     // 저장/읽기에서 확정한 검사 규격 사용. PLC 전송 배율은 기존대로 유지한다.
     int32_t irMin = static_cast<int32_t>(config.ir_min * 10.0);

@@ -1,0 +1,126 @@
+// Offline PLC-mode interlock test. Production gate/reset/getter methods are inserted by the runner.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <queue>
+#include <string>
+#include "PlcAutoMode.h"
+#include "AutoInspectionSequence.h"
+#include "SiteConfig.h"
+struct TObject {};
+const int nAuto=0,nLocal=2;
+struct Timer {bool Enabled;Timer():Enabled(false){}};
+struct Socket {bool Connected;Socket():Connected(true){}};
+struct Client {bool Active;struct Socket socket,*Socket;Client():Active(true),Socket(&socket){}};
+struct TMod_PLC {
+    TPlcAutoModeState plcAutoMode;
+    Client pc,plc;Client *ClientSocket_PC,*ClientSocket_PLC;
+    int complete,probeClose,probeOpen,trayOut;
+    TMod_PLC():ClientSocket_PC(&pc),ClientSocket_PLC(&plc),complete(0),probeClose(0),probeOpen(0),trayOut(0){}
+    bool __fastcall IsPlcAutoMode();
+} plc,*Mod_PLC=&plc;
+struct Sequence {int step;Sequence():step(STEP_WAIT_TRAY_IN){}int GetStep(){return step;}};
+struct TTotalForm {
+    Timer automatic,finish;
+    Timer *Timer_AutoInspection,*Timer_FinishCharging;
+    struct {int arl;}stage;
+    struct {bool ams,amf,channel_charging,end_charging;}tray;
+    struct {int tx_mode,time_out;}send;
+    struct {bool re_excute;int waitingChannel,cnt;}retest;
+    std::queue<std::string>q_cmd,q_param;
+    std::string autoInspectionTrayId,message;
+    Sequence autoInspection;
+    bool bLocal,autoInspectionBlockedByPlc;
+    unsigned long lastPlcAutoResetVersion;
+    int resultSaveStep,resets,clears,cancels,logs,nFinishStep,nResponseCount;
+    TTotalForm():Timer_AutoInspection(&automatic),Timer_FinishCharging(&finish),
+        bLocal(false),autoInspectionBlockedByPlc(true),lastPlcAutoResetVersion(0),
+        resultSaveStep(RESULT_IDLE),resets(0),clears(0),cancels(0),logs(0),nFinishStep(4),nResponseCount(5) {
+        stage.arl=nAuto;memset(&tray,0,sizeof(tray));memset(&send,0,sizeof(send));memset(&retest,0,sizeof(retest));
+    }
+    void CancelResultSave(){++cancels;resultSaveStep=RESULT_CANCELLED;plc.complete=0;}
+    void ResetAutoInspection(){++resets;autoInspection.step=STEP_WAIT_TRAY_IN;}
+    void InitializePlcData(){++clears;plc.complete=plc.probeOpen=plc.probeClose=plc.trayOut=0;}
+    void WritePlcLog(const char*,const char*){++logs;}
+    void DisplayError(const char*s,bool=false){message=s;}
+    void __fastcall UpdateAutoInspectionMode();
+    bool __fastcall IsAutoInspectionBlocked();
+    void __fastcall ResetAutoInspectionForPlcMode();
+};
+@@METHODS@@
+int checks=0;
+#define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
+void Online(){plc=TMod_PLC();plc.ClientSocket_PC=&plc.pc;plc.ClientSocket_PLC=&plc.plc;}
+int main(){
+    CHECK(PLC_AUTO_MODE_VALUE==1);
+    Online();TTotalForm initial;
+    initial.UpdateAutoInspectionMode();
+    CHECK(!initial.automatic.Enabled);CHECK(initial.IsAutoInspectionBlocked());CHECK(initial.resets==0);
+    plc.plcAutoMode.Observe(false);initial.UpdateAutoInspectionMode();
+    CHECK(initial.resets==1);CHECK(initial.resultSaveStep==RESULT_CANCELLED);
+    for(int tick=0;tick<20;++tick){plc.plcAutoMode.Observe(false);initial.UpdateAutoInspectionMode();}
+    CHECK(initial.resets==1);
+    plc.plcAutoMode.Observe(true);initial.UpdateAutoInspectionMode();
+    CHECK(initial.automatic.Enabled);CHECK(initial.autoInspection.step==STEP_WAIT_TRAY_IN);
+    CHECK(initial.resultSaveStep==RESULT_CANCELLED); // no late COMPLETE until a new cycle
+    CHECK(!initial.IsAutoInspectionBlocked());
+
+    // Manual transition from every automatic step, including serial/probe/NG/error waits.
+    for(int step=STEP_WAIT_TRAY_IN;step<=STEP_ERROR_STOP;++step){
+        Online();plc.plcAutoMode.Observe(true);TTotalForm f;f.UpdateAutoInspectionMode();
+        f.autoInspection.step=step;f.resultSaveStep=RESULT_WAIT_PLC_SEND;
+        f.tray.ams=true;f.tray.amf=true;f.finish.Enabled=true;
+        f.q_cmd.push("AMS");f.q_param.push("");f.send.tx_mode=3;
+        plc.complete=plc.probeClose=plc.probeOpen=plc.trayOut=1;
+        plc.plcAutoMode.Observe(false);
+        CHECK(f.IsAutoInspectionBlocked());
+        CHECK(!f.automatic.Enabled);CHECK(f.autoInspection.step==STEP_WAIT_TRAY_IN);
+        CHECK(f.resets==1 && f.cancels==1 && f.clears==1);
+        CHECK(!f.tray.ams && !f.tray.amf);CHECK(f.resultSaveStep==RESULT_CANCELLED);
+        CHECK(plc.complete==0 && plc.probeClose==0 && plc.probeOpen==0 && plc.trayOut==0);
+#ifdef TEST_IROCV
+        CHECK(f.q_cmd.empty() && f.q_param.empty());CHECK(f.send.tx_mode==0);CHECK(f.retest.waitingChannel==-1);
+#else
+        CHECK(!f.finish.Enabled);CHECK(f.nFinishStep==0 && f.nResponseCount==0);
+#endif
+        for(int tick=0;tick<10;++tick)f.UpdateAutoInspectionMode();
+        CHECK(f.resets==1);
+        plc.plcAutoMode.Observe(true);f.UpdateAutoInspectionMode();
+        CHECK(f.automatic.Enabled);CHECK(f.autoInspection.step==STEP_WAIT_TRAY_IN);CHECK(f.resets==1);
+    }
+
+    // Do not lose a short MANUAL -> AUTO transition between status-timer ticks.
+    Online();plc.plcAutoMode.Observe(true);TTotalForm rapid;rapid.UpdateAutoInspectionMode();
+    rapid.autoInspection.step=STEP_WAIT_CELL_SERIAL;
+    plc.plcAutoMode.Observe(false);plc.plcAutoMode.Observe(true);rapid.UpdateAutoInspectionMode();
+    CHECK(rapid.resets==1 && rapid.automatic.Enabled);CHECK(rapid.autoInspection.step==STEP_WAIT_TRAY_IN);
+
+    // A socket reconnect alone must never re-use an old AUTO snapshot.
+    plc.plcAutoMode.Invalidate();rapid.UpdateAutoInspectionMode();
+    CHECK(!rapid.automatic.Enabled && rapid.resets==2);
+    rapid.UpdateAutoInspectionMode();CHECK(rapid.resets==2);
+    plc.plcAutoMode.Observe(true);rapid.UpdateAutoInspectionMode();CHECK(rapid.automatic.Enabled);
+    plc.plc.Active=false;rapid.UpdateAutoInspectionMode();CHECK(!rapid.automatic.Enabled && rapid.resets==3);
+    plc.plcAutoMode.Invalidate();plc.plc.Active=true;rapid.UpdateAutoInspectionMode();CHECK(!rapid.automatic.Enabled);
+    plc.plcAutoMode.Observe(true);rapid.UpdateAutoInspectionMode();CHECK(rapid.automatic.Enabled);
+    plc.pc.Socket=0;CHECK(!plc.IsPlcAutoMode());plc.pc.Socket=&plc.pc.socket;
+    plc.plc.Socket=0;CHECK(!plc.IsPlcAutoMode());plc.plc.Socket=&plc.plc.socket;
+
+    // PLC transitions must not repeatedly cancel a PC manual/local measurement.
+    Online();TTotalForm manual;manual.stage.arl=nLocal;manual.resultSaveStep=RESULT_WAIT_SERIAL;
+    manual.UpdateAutoInspectionMode();plc.plcAutoMode.Observe(false);manual.UpdateAutoInspectionMode();
+    CHECK(!manual.automatic.Enabled && manual.resets==0 && manual.resultSaveStep==RESULT_WAIT_SERIAL);
+    CHECK(!manual.IsAutoInspectionBlocked());
+    plc.plcAutoMode.Observe(true);manual.UpdateAutoInspectionMode();CHECK(!manual.automatic.Enabled);
+#ifdef TEST_IROCV
+    manual.stage.arl=nAuto;manual.bLocal=true;plc.plcAutoMode.Observe(false);manual.UpdateAutoInspectionMode();
+    CHECK(!manual.IsAutoInspectionBlocked() && manual.resets==0);
+#endif
+    // Entering PC AUTO while PLC is still manual uses the same interlock.
+    manual.stage.arl=nAuto;manual.bLocal=false;manual.autoInspectionBlockedByPlc=false;
+    plc.plcAutoMode.Observe(false);manual.UpdateAutoInspectionMode();
+    CHECK(!manual.automatic.Enabled && manual.resets==1 && manual.resultSaveStep==RESULT_CANCELLED);
+    printf("PASS: %d PLC manual/reset/auto-resume checks\n",checks);
+    return 0;
+}
+

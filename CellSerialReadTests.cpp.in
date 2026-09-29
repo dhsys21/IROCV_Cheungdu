@@ -6,6 +6,9 @@
 #include <string.h>
 #include <stdexcept>
 #include "SiteConfig.h"
+#include "PlcAutoMode.h"
+const int PLC_D_IROCV_AUTO_MANUAL=1;
+#include "ChannelLayout.h"
 #include "CellJudgment.h"
 typedef unsigned long DWORD;
 struct TObject {};
@@ -41,6 +44,8 @@ struct TCustomWinSocket {
 };
 class TMod_PLC {
 public:
+    TPlcAutoModeState plcAutoMode;
+    int GetPlcValue(int){return PLC_AUTO_MODE_VALUE;}
     int currentReadTask,CellSerialIndex,plc_ReadCount,standardReads,pc[20],resultCodes[MAXCHANNEL];
     unsigned char pc_Interface_Data[70][2];
     bool connected, transmitted;
@@ -66,9 +71,9 @@ public:
     bool __fastcall IsCellSerialReadComplete();
     bool __fastcall IsCellSerialReadActive();
     int __fastcall GetCellSerialReadWords(int index);
-    void __fastcall PLC_Recv_Interface_CellSerial(int index,int wordsToRead);
+    void __fastcall ReadPlcCellSerialChunk(int index,int wordsToRead);
     void __fastcall ClientSocket_PLCRead(TObject *Sender,TCustomWinSocket *Socket);
-    void PLC_Recv_Interface(){++standardReads;}
+    void ReadPlcInterfaceData(){++standardReads;}
     void SetValue(int address,int value){pc[address]=value;}
 };
 @@PLC_METHODS@@
@@ -95,13 +100,14 @@ struct ErrorForm {
 ErrorForm *Form_CellIdError=&errorForm;
 class TTotalForm {
 public:
+    bool IsAutoInspectionBlocked(){return false;} // Mode interlock has its own production-method tests.
     struct { int arl; } stage;
     struct TestSequence {
         struct Setting { int closedProbeRemeasureMaxNgCount; } setting;
         const Setting &GetSetting() const { return setting; }
     } autoInspection;
     int Tag,filesSaved,trayFilesSaved,testSerialCount,reads,stops,serialWarnings;
-    int fileAttempts,failFileAttempts,completeNotifications,measNgCount,acc_totaltray,acc_finalng;
+    int fileAttempts,failFileAttempts,completeNotifications,measurementNgCount,acc_totaltray,acc_finalng;
     int acc_totaluse[MAXCHANNEL],acc_remeasure[MAXCHANNEL],chReverseMap[MAXCHANNEL+1];
     bool cellSerialContinuousReadForTray,trayResultCounted,bLocal,fileContainedSerial;
     int trayFileLoads;
@@ -127,7 +133,7 @@ public:
         autoInspection.setting.closedProbeRemeasureMaxNgCount=49;
         clLine=1;clMeasureFail=2;clBadIr=3;clIrCheck=4;clOcvCheck=5;clBothCheck=6;clCellError=7;clNoCell=8;
         pocv=&ocvLegend;pocv->Color=9;
-        fileAttempts=failFileAttempts=completeNotifications=measNgCount=acc_totaltray=acc_finalng=countedFinalIrNg=0;
+        fileAttempts=failFileAttempts=completeNotifications=measurementNgCount=acc_totaltray=acc_finalng=countedFinalIrNg=0;
         trayResultCounted=false;tray.first=true;tray.rem_mode=0;
         config.cell_serial_continuous_read=false;tray.cell_count=MAXCHANNEL;
         config.ir_min=10;config.ir_max=20;config.ocv_min=1000;config.ocv_max=3000;
@@ -144,16 +150,16 @@ public:
     void __fastcall ProcessResultSave(TObject *Sender);
     void __fastcall CancelResultSave();
     void __fastcall FinishMeasurement();
-    void __fastcall SaveMeasurementResult(bool saveWithoutCellSerial=false);
+    void __fastcall WriteMeasurementResults(bool saveWithoutCellSerial=false);
     void __fastcall SetRemeasureListAfter();
     void __fastcall SetRemeasureList();
     int __fastcall JudgeCellResult(int index);
     void __fastcall PrepareRemeasureItems();
-    void __fastcall RemeasureExcute();
-    void __fastcall BadInformation();
+    void __fastcall ExecuteRemeasure();
+    void __fastcall UpdatePlcResults();
     void __fastcall UpdateCellDisplay(int index);
     void MakeData(int,AnsiString command,AnsiString param=""){lastCommand=command;}
-    void WritePLCLog(AnsiString type,AnsiString){if(type.s=="CELL SERIAL WARNING")++serialWarnings;}
+    void WritePlcLog(AnsiString type,AnsiString){if(type.s=="CELL SERIAL WARNING")++serialWarnings;}
     void DisplayStatus(int){}
     int ReadCellSerial(){
         ++reads;
@@ -169,7 +175,7 @@ public:
         for(int i=0;i<MAXCHANNEL;++i)if(!tray.cell_serial[i].IsEmpty())fileContainedSerial=true;
         if(failFileAttempts>0){--failFileAttempts;return false;}++filesSaved;return true;
     }
-    void SetAutoMeasureComplete(){++completeNotifications;}
+    void SetAutoMeasurementComplete(){++completeNotifications;}
     void StopAutoInspectionOnError(AnsiString){++stops;CancelResultSave();resultSaveStep=RESULT_ERROR;}
 };
 @@FORM_METHODS@@
@@ -340,26 +346,26 @@ int main(){
     judge.tray.ocv_value[0]=2000;check(judge.JudgeCellResult(0)==CELL_OK);
     judge.tray.after_value[0]=25;judge.tray.ocv_value[0]=0;
     judge.tray.cell[1]=0;judge.tray.after_value[1]=999;
-    judge.SetRemeasureListAfter();judge.BadInformation();
-    check(judge.measNgCount==1&&plc.pc[PC_D_IROCV_NG_COUNT]==2);
+    judge.SetRemeasureListAfter();judge.UpdatePlcResults();
+    check(judge.measurementNgCount==1&&plc.pc[PC_D_IROCV_NG_COUNT]==2);
     check(plc.resultCodes[0]==1&&plc.resultCodes[1]==1&&plc.resultCodes[2]==0);
     check(judge.acc_totaltray==1&&judge.acc_finalng==1);
     // Repeated publication must not double-count, and overwrites stale PLC codes/bits.
     plc.resultCodes[2]=1;
     plc.SetData(plc.pc_Interface_Data,PC_D_IROCV_MEASURE_OK_NG,2,true);
-    judge.BadInformation();
+    judge.UpdatePlcResults();
     check(judge.acc_totaltray==1&&judge.acc_finalng==1);
     for(int i=0;i<MAXCHANNEL;++i)
         check(plc.resultCodes[i] == (plc.GetData(plc.pc_Interface_Data,
             PC_D_IROCV_MEASURE_OK_NG+i/16,i%16) ? 1 : 0));
     check(plc.resultCodes[2]==0);
     judge.PrepareRemeasureItems();check(judge.retest.pendingItems[0]==3);
-    judge.RemeasureExcute();check(judge.lastCommand.s=="IR*"&&judge.retest.cell[0]==CELL_IR_NG);
-    judge.RemeasureExcute();check(judge.retest.waitingItem==1); // Still waiting: no OCV yet.
+    judge.ExecuteRemeasure();check(judge.lastCommand.s=="IR*"&&judge.retest.cell[0]==CELL_IR_NG);
+    judge.ExecuteRemeasure();check(judge.retest.waitingItem==1); // Still waiting: no OCV yet.
     judge.tray.after_value[0]=15;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
-    judge.RemeasureExcute();check(judge.lastCommand.s=="OCV"&&judge.retest.waitingItem==2);
+    judge.ExecuteRemeasure();check(judge.lastCommand.s=="OCV"&&judge.retest.waitingItem==2);
     judge.tray.ocv_value[0]=2000;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
-    judge.RemeasureExcute();check(judge.retest.cell[0]==CELL_OK&&judge.acc_totaltray==1&&judge.acc_finalng==0);
+    judge.ExecuteRemeasure();check(judge.retest.cell[0]==CELL_OK&&judge.acc_totaltray==1&&judge.acc_finalng==0);
     // Any NG cause selects both IR and OCV; OK and empty cells are excluded.
     TTotalForm both;
     both.tray.after_value[0]=25; // IR-only NG.
@@ -372,10 +378,10 @@ int main(){
     check(both.retest.pendingItems[4]==0);
     both.tray.rem_mode=1;
     for(int i=0;i<3;++i) {
-        both.RemeasureExcute();
+        both.ExecuteRemeasure();
         check(both.retest.waitingChannel==i && both.lastCommand.s=="IR*");
         both.retest.waitingChannel=-1;both.retest.waitingItem=0;
-        both.RemeasureExcute();
+        both.ExecuteRemeasure();
         check(both.retest.waitingChannel==i && both.lastCommand.s=="OCV");
         both.retest.waitingChannel=-1;both.retest.waitingItem=0;
     }

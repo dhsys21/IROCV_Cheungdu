@@ -11,7 +11,7 @@
 
 //---------------------------------------------------------------------------
 // 수동 측정 초기화: 내부 값은 0으로 지우고 화면은 수신 전까지 공란으로 표시한다.
-void __fastcall TTotalForm::OnInit()
+void __fastcall TTotalForm::ResetMeasurementData()
 {
     CancelResultSave(); // [CELL SERIAL 공통] 운영자 초기화 이후 지연 저장 방지.
     resultSaveStep = RESULT_IDLE;
@@ -20,19 +20,20 @@ void __fastcall TTotalForm::OnInit()
     {
         tray.ocv_value[i] = 0;
         tray.after_value[i] = 0;
-        tray.orginal_value[i] = 0;
+        tray.original_value[i] = 0;
     }
-    InitCellDisplay();
+    InitializeCellDisplay();
 }
 
 //---------------------------------------------------------------------------
 // 전체 측정 시작: 표시·수신 플래그를 초기화하고 AMS 명령을 예약한다.
-void __fastcall TTotalForm::CmdAutoTest()
+void __fastcall TTotalForm::CmdStartMeasurement()
 {
+    if(IsAutoInspectionBlocked()) return;
     if(IsWaitingForResultSave()) return;
     resultSaveStep = RESULT_IDLE; // 새 측정에만 마감 중복 방지를 해제한다.
     showStartupChannelNumbers = false;
-    InitCellDisplay();
+    InitializeCellDisplay();
     tray.ams = false;
     tray.amf = false;
     MakeData(3, "AMS");
@@ -40,8 +41,9 @@ void __fastcall TTotalForm::CmdAutoTest()
 
 //---------------------------------------------------------------------------
 // AMF 수신 후 처리: 운전 모드에 따라 결과 마감 또는 기존 자동 개별 재측정을 수행한다.
-void __fastcall TTotalForm::ResponseAutoTestFinish()
+void __fastcall TTotalForm::ProcessMeasurementCompleteResponse()
 {
+    if(IsAutoInspectionBlocked()) return;
     if(resultSaveStep != RESULT_IDLE || tray.rem_mode == 1) return; // 중복 AMF로 재측정을 다시 시작하지 않는다.
 	if(bLocal == true){
 		FinishMeasurement();
@@ -110,7 +112,7 @@ void __fastcall TTotalForm::ProcessIr(AnsiString param)
         retest.waitingChannel = -1;
         retest.waitingItem = 0;
         send.tx_mode = 200;
-        RemeasureExcute();
+        ExecuteRemeasure();
     }
 
 }
@@ -131,8 +133,8 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 
 	if(cell)   // 셀이 있을때
 	{
-        tray.orginal_value[index] = value;
-		tray.after_value[index] = tray.orginal_value[index] + BaseForm->DefaultOffset[this->Tag];
+        tray.original_value[index] = value;
+		tray.after_value[index] = tray.original_value[index] + BaseForm->DefaultOffset[this->Tag];
 		tray.after_value[index] = tray.after_value[index] + stage.ir_offset[index];    //개별보정
 
 		if(tray.measure_result[index] == GO)
@@ -142,7 +144,7 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 		}
 		else
 		{
-			tray.orginal_value[index] = 999;
+			tray.original_value[index] = 999;
 			tray.after_value[index] = 999;
 			UpdateCellDisplay(index);
 		}
@@ -155,7 +157,7 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 			UpdateCellDisplay(index);
 		}
 
-		tray.orginal_value[index] = 0;
+		tray.original_value[index] = 0;
 		tray.after_value[index] = 0;
 	}
 }
@@ -216,7 +218,7 @@ void __fastcall TTotalForm::ProcessOcv(AnsiString param)
         retest.waitingChannel = -1;
         retest.waitingItem = 0;
         send.tx_mode = 200;
-        RemeasureExcute();
+        ExecuteRemeasure();
     }
 }
 
@@ -247,7 +249,7 @@ void __fastcall TTotalForm::SetRemeasureList()
         // 2번 재개폐 횟수가 0이어도 이 재측정은 독립적으로 실행한다.
         PrepareRemeasureItems();
         tray.rem_mode = 1;
-        RemeasureExcute();
+        ExecuteRemeasure();
     }
     else FinishMeasurement();
 }
@@ -280,7 +282,7 @@ void __fastcall TTotalForm::SetRemeasureListAfter()
         }
         UpdateCellDisplay(i); // 최종 표시도 측정값/수신 상태에서 다시 만든다.
     }
-    measNgCount = retest.cnt_error;
+    measurementNgCount = retest.cnt_error;
     tray.first = false;
 }
 
@@ -301,8 +303,9 @@ void __fastcall TTotalForm::PrepareRemeasureItems()
 
 //---------------------------------------------------------------------------
 // 재측정 목록의 다음 IR/OCV를 요청한다. 더 없으면 최종 판정과 결과 마감을 수행한다.
-void __fastcall TTotalForm::RemeasureExcute()
+void __fastcall TTotalForm::ExecuteRemeasure()
 {
+    if(IsAutoInspectionBlocked()) return;
     if(retest.waitingChannel >= 0) return; // 요청한 채널/항목 응답 전 중복 명령 금지.
     for(int i = retest.re_index; i < MAXCHANNEL; ++i)
     {
@@ -329,12 +332,13 @@ void __fastcall TTotalForm::RemeasureExcute()
 // 결과 마감: STP/프로브 열림 요청 → NG·결과 코드·값·파일 작성 → COMPLETE → 자동 단계 완료 통지.
 void __fastcall TTotalForm::FinishMeasurement()
 {
+    if(IsAutoInspectionBlocked()) return;
     // 같은 AMF/정지 통지가 반복되어도 저장/집계를 다시 실행하지 않는다.
     if(resultSaveStep != RESULT_IDLE) return;
     SetRemeasureListAfter();
     MakeData(1, "STP");
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
-    WritePLCLog("FinishMeasurement", "IROCV PROBE OPEN = 1");
+    WritePlcLog("FinishMeasurement", "IROCV PROBE OPEN = 1");
     // 수동측정은 CELL SERIAL 없이 저장한다. 수동 화면(bLocal) 및 설비 Local 모드를 포함.
     // 자동측정의 시리얼 오류를 감추지 않도록 검사 시작/완료 경로 자체를 여기서 분리한다.
     const bool saveWithoutCellSerial = bLocal || stage.arl == nLocal;
@@ -343,16 +347,16 @@ void __fastcall TTotalForm::FinishMeasurement()
     else
     {
         resultSaveStep = RESULT_WRITE_FILE;
-        SaveMeasurementResult(saveWithoutCellSerial);
+        WriteMeasurementResults(saveWithoutCellSerial);
     }
 }
 
 //---------------------------------------------------------------------------
 // 자동=모드별 시리얼 확인 후 저장. 수동/상시 수신 타임아웃=ID 없이 저장. PLC 완료 처리는 공통.
-void __fastcall TTotalForm::SaveMeasurementResult(bool saveWithoutCellSerial)
+void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
 {
     if(resultSaveStep != RESULT_WRITE_FILE) return;
-    BadInformation();
+    UpdatePlcResults();
     ReadCellInfo();
     WriteIROCVValue();
     if(saveWithoutCellSerial)
@@ -364,7 +368,7 @@ void __fastcall TTotalForm::SaveMeasurementResult(bool saveWithoutCellSerial)
         ReadCellSerial();
     // 참고용 CSV: 최초 1회 + 재시도 1회. 재시도에서 판정/생산 누계를 다시 처리하지 않는다.
     if(!WriteResultFile() && !WriteResultFile())
-        WritePLCLog("RESULT FILE WARNING", "Save failed twice; continue production: " + resultFileName);
+        WritePlcLog("RESULT FILE WARNING", "Save failed twice; continue production: " + resultFileName);
     // 새 결과 전송을 확인할 PC 내부 표식. PLC 신호/프로그램은 추가하지 않는다.
     Mod_PLC->BeginResultTransmission();
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
@@ -380,14 +384,14 @@ void __fastcall TTotalForm::StartFullRemeasure()
 {
     if(!PrepareAutoRemeasure()) return;
     // 같은 트레이: 시리얼, 파일명, 생산 누계와 재개폐 횟수는 지우지 않는다.
-    OnInit();
+    ResetMeasurementData();
     memset(&retest, 0, sizeof(retest));
     retest.waitingChannel = -1;
     retest.re_excute = false;
     tray.rem_mode = 0;
     Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
-    WritePLCLog("StartFullRemeasure", "IROCV PROBE CLOSE = 1 (all cells)");
-    VisibleBox(GrpMain);
+    WritePlcLog("StartFullRemeasure", "IROCV PROBE CLOSE = 1 (all cells)");
+    ShowPanelGroup(GrpMain);
 }
 
 //---------------------------------------------------------------------------
@@ -399,8 +403,8 @@ void __fastcall TTotalForm::StartSelectedRemeasure()
     tray.rem_mode = 1;
     retest.re_excute = true;
     Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
-    WritePLCLog("StartSelectedRemeasure", "IROCV PROBE CLOSE = 1 (NG cells)");
-    VisibleBox(GrpMain);
+    WritePlcLog("StartSelectedRemeasure", "IROCV PROBE CLOSE = 1 (NG cells)");
+    ShowPanelGroup(GrpMain);
 }
 
 //===========================================================================
@@ -417,7 +421,7 @@ void __fastcall TTotalForm::StartResultCellSerialRead()
     Mod_PLC->StartCellSerialRead();
     Timer_ResultSave->Enabled = true;
     Panel_State->Caption = " Reading CELL SERIAL before result save ... ";
-    WritePLCLog("CELL SERIAL", "Request fresh complete serial data for result save");
+    WritePlcLog("CELL SERIAL", "Request fresh complete serial data for result save");
 }
 
 //---------------------------------------------------------------------------
@@ -437,15 +441,15 @@ void __fastcall TTotalForm::CompleteResultCellSerialRead()
         int cellCount = 0;
         for(int i = 0; i < MAXCHANNEL; ++i)
             if(tray.cell[i] == 1) ++cellCount;
-        WritePLCLog(serialCount == cellCount ? "CELL SERIAL" : "CELL SERIAL WARNING",
+        WritePlcLog(serialCount == cellCount ? "CELL SERIAL" : "CELL SERIAL WARNING",
             "Final serial count " + IntToStr(serialCount) + " / Cell count " + IntToStr(cellCount)
             + (serialCount == cellCount ? " (OK)" : " (mismatch; save completed data)"));
     }
     else
-        WritePLCLog("CELL SERIAL WARNING", "Final read timeout (10 seconds); save with empty CELL IDs");
+        WritePlcLog("CELL SERIAL WARNING", "Final read timeout (10 seconds); save with empty CELL IDs");
     // 상시 모드는 .Tray 캐시를 저장/복원하지 않는다. 다른 원인의 PLC 오류도 해제하지 않는다.
     resultSaveStep = RESULT_WRITE_FILE;
-    SaveMeasurementResult(!complete);
+    WriteMeasurementResults(!complete);
 }
 
 //---------------------------------------------------------------------------
@@ -454,6 +458,7 @@ void __fastcall TTotalForm::CompleteResultCellSerialRead()
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 Timer_ResultSaveTimer. 시리얼 수신·결과 저장·PLC 완료 대기는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
 {
+    if(IsAutoInspectionBlocked()) return;
     Timer_ResultSave->Enabled = false;
     try
     {
@@ -474,8 +479,8 @@ void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
             {
                 resultSaveStep = RESULT_COMPLETE; // 중복 타이머/AMF보다 먼저 완료 상태 확정.
                 Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
-                WritePLCLog("FinishMeasurement", "PLC results sent; COMPLETE = 1");
-                SetAutoMeasureComplete();
+                WritePlcLog("FinishMeasurement", "PLC results sent; COMPLETE = 1");
+                SetAutoMeasurementComplete();
             }
         }
     }

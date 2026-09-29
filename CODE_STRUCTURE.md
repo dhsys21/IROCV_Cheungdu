@@ -12,13 +12,13 @@
 | `AutoInspectionSequence.h/.cpp` | 자동 단계와 다음 명령 판단 | `TAutoInspectionSequence::RunAutoStep` |
 | `Stage_AutoInspection.cpp` | 자동 타이머 처리와 PLC/UI 연결 | `ProcessAutoInspection`, `RunAutoInspectionCommand` |
 | `Stage_Measurement.cpp` | IR/OCV 수신값 처리·재측정·결과 마감 | `ProcessIr/Ocv`, `SetRemeasureList`, `FinishMeasurement` |
-| `Stage_PlcData.cpp` | PC→PLC 초기값·측정값·NG·결과 코드 작성 | `PLCInitialization`, `BadInformation` |
+| `Stage_PlcData.cpp` | PC→PLC 초기값·측정값·NG·결과 코드 작성 | `InitializePlcData`, `UpdatePlcResults` |
 | `CellJudgment.h` | 화면/통신 없는 공통 규격 판정 | `JudgeCellValues` |
-| `Stage_TrayData.cpp` | 트레이 데이터 초기화·시리얼 복사·임시 파일 | `InitTrayStruct`, `ReadCellSerial`, `SaveTrayInfo` |
-| `Stage_CellDisplay.cpp` | 400채널 생성·번호/측정값·색상 표시 | `InitCellDisplay`, `UpdateCellDisplay`, `InitMeasureForm` |
-| `Stage_comm.cpp` | 측정장비 소켓·송수신·프레임·응답 분기 | `ProcessEquipmentSocketRead`, `OnReceiveStage`, `SendData` |
+| `Stage_TrayData.cpp` | 트레이 데이터 초기화·시리얼 복사·임시 파일 | `InitializeTrayData`, `ReadCellSerial`, `SaveTrayInfo` |
+| `Stage_CellDisplay.cpp` | 400채널 생성·번호/측정값·색상 표시 | `InitializeCellDisplay`, `UpdateCellDisplay`, `InitializeMeasureForm` |
+| `Stage_comm.cpp` | 측정장비 소켓·송수신·프레임·응답 분기 | `ProcessEquipmentSocketRead`, `ProcessEquipmentMessage`, `SendData` |
 | `Stage_Form.cpp` | 상태/오류/연결 이미지·PLC 표시등·화면 전환 | `DisplayStatus`, `RefreshStageStatusImage`, `DisplayError` |
-| `Stage_log.cpp` | 설정·채널 매핑·결과 파일·로그 | `ReadSystemInfo`, `ReadchannelMapping`, `WriteResultFile` |
+| `Stage_log.cpp` | 설정·채널 매핑·결과 파일·로그 | `ReadSystemInfo`, `ReadChannelMapping`, `WriteResultFile` |
 | `Modplc.h/.cpp` | PLC 주소와 실제 PLC 통신 | 주소 상수, `StartCellSerialRead` |
 | `FormPLCInterface.cpp/.dfm` | PLC 데이터 모니터 및 테스트 패널 | `chkShowAllClick`, `GetDisplayChannelStep`, `Timer_UpdateTimer` |
 
@@ -41,8 +41,8 @@ PLC/화면을 사용하지 않는 자동 단계 판단만 `TAutoInspectionSequen
 1. `FormTotal.cpp::Timer_AutoInspectionTimer` → `Stage_AutoInspection.cpp::ProcessAutoInspection`: 진행 가능한지 확인하고 이번 명령을 구합니다.
 2. `RunAutoStep`: 현재 `STEP_...`의 진행 조건을 확인하고 다음 단계/명령을 결정합니다.
 3. `RunAutoInspectionCommand`: 반환된 `CMD_...`에 해당하는 PLC 출력이나 측정 명령을 **한 번** 실행합니다.
-4. `OnReceiveStage`: 장비의 AMS/AMF/IR/OCV 응답을 해당 처리 함수에 전달합니다.
-5. `FinishMeasurement`: 기존 순서로 결과를 마감한 뒤 `SetAutoMeasureComplete`로 완료를 알립니다.
+4. `ProcessEquipmentMessage`: 장비의 AMS/AMF/IR/OCV 응답을 해당 처리 함수에 전달합니다.
+5. `FinishMeasurement`: 기존 순서로 결과를 마감한 뒤 `SetAutoMeasurementComplete`로 완료를 알립니다.
 6. `RunAutoStep`: 프로브 열림 확인 후 설정 횟수가 남고 NG가 있으면 재개폐 재측정, 아니면 배출/NG 오류 선택 대기로 진행합니다.
 
 `SetStep`은 “진행 단계 변경 + 해당 단계 대기 횟수 초기화”입니다.
@@ -55,11 +55,11 @@ PLC/화면을 사용하지 않는 자동 단계 판단만 `TAutoInspectionSequen
 |---|---|
 | 자동측정이 시작되지 않음 | `CheckAutoInspectionError` → 마지막 단계 로그 → `RunAutoStep`의 해당 STEP 조건 |
 | 시리얼 개수 불일치/타임아웃 | `STEP_WAIT_CELL_SERIAL` → `ReadCellSerial` → `Modplc::StartCellSerialRead` 및 수신 완료 처리 |
-| NG 오류창이 안 뜨거나 정상 배출됨 | `BadInformation`의 `measNgCount` → `IsNgCountError` → `CMD_NG_ERROR`; 수동/BYPASS는 의도적으로 NG를 무시 |
+| NG 오류창이 안 뜨거나 정상 배출됨 | `UpdatePlcResults`의 `measurementNgCount` → `IsNgCountError` → `CMD_NG_ERROR`; 수동/BYPASS는 의도적으로 NG를 무시 |
 | NG 창에서 배출/재시작 문제 | `FormError.cpp`의 버튼 → `ForceTrayOut` / `RestartAutoInspection` |
-| IR/OCV 값·보정·재측정 문제 | `ProcessIr/Ocv` → `InsertIr/OcvValue` → `SetRemeasureList` / `RemeasureExcute` |
-| 트레이 투입 후 번호/이전 값이 보임 | `CMD_TRAY_IN`의 `showStartupChannelNumbers=false` → `InitCellDisplay` → `UpdateCellDisplay`의 개별 수신 플래그 |
-| PLC 결과값/NG 비트가 이상함 | `BadInformation`에서 비트/코드/수량 동시 작성 → `Modplc.h` 주소/배율 |
+| IR/OCV 값·보정·재측정 문제 | `ProcessIr/Ocv` → `InsertIr/OcvValue` → `SetRemeasureList` / `ExecuteRemeasure` |
+| 트레이 투입 후 번호/이전 값이 보임 | `CMD_TRAY_IN`의 `showStartupChannelNumbers=false` → `InitializeCellDisplay` → `UpdateCellDisplay`의 개별 수신 플래그 |
+| PLC 결과값/NG 비트가 이상함 | `UpdatePlcResults`에서 비트/코드/수량 동시 작성 → `Modplc.h` 주소/배율 |
 | 연결 끊김이 Vacancy로 보임 | `RefreshStageStatusImage`와 장비 `Client... ` 이벤트 |
 | 트레이 ID/시리얼 파일 문제 | `Stage_TrayData.cpp`의 `Load/Save/DeleteTrayInfo` |
 | 설정/채널 매핑/로그 문제 | `Stage_log.cpp` |
@@ -74,7 +74,7 @@ PLC/화면을 사용하지 않는 자동 단계 판단만 `TAutoInspectionSequen
   항목별 불량은 화면 색상 표시용이며, 미수신 공란은 기존 수신 플래그로 구분합니다.
 - 불량셀 재측정은 원인에 관계없이 IR 다음 OCV를 모두 요청합니다.
   `pendingItems`의 1/2는 응답 대기와 송신 순서 관리용입니다. 정상/빈 셀은 제외합니다.
-- `BadInformation`은 같은 `plcNg` 값으로 PLC 비트와 결과 코드를 동시에 작성합니다.
+- `UpdatePlcResults`은 같은 `plcNg` 값으로 PLC 비트와 결과 코드를 동시에 작성합니다.
   OK=0/NG=1, 빈 채널도 PLC에는 NG, 작업자 알람 개수는 실제 셀 불량만 집계하는 정책을 유지합니다.
   별도 두 번째 순회인 `WriteResultCode`는 제거했습니다.
 - 오류창은 표시와 작업자 선택 전달만 담당합니다. 창 표시/닫기 타이머는 PLC를 제어하지 않습니다.
@@ -84,7 +84,7 @@ PLC/화면을 사용하지 않는 자동 단계 판단만 `TAutoInspectionSequen
 - 규격 기본값은 `SiteConfig.h`에 모았습니다. 기존 초기 로딩 값인 IR 10~40,
   OCV 500~3000을 사용하며, 저장된 현장 규격값은 바꾸지 않습니다.
   입력을 한 번 해석한 `config`를 파일 저장과 PLC 규격 작성에서 함께 사용합니다.
-- 결과 마감 함수 `SaveMeasurementResult` 이름과 파일 저장/완료 지연 정책은 유지합니다.
+- 결과 마감 함수 `WriteMeasurementResults` 이름과 파일 저장/완료 지연 정책은 유지합니다.
 
 검증: `TestAutoInspection.ps1`, `TestCellSerialRead.ps1`, `TestResultFile.ps1`,
 `TestErrorDialogs.ps1`, `TestErrorDialogLayout.ps1`, `TestSourceStructure.ps1`.
@@ -144,10 +144,10 @@ DFM 연결이 있는 빈/시험용 이벤트는 보존했습니다. 저장소에
 ## PLC 결과 규격과 작성 순서
 
 운영자 확인 규격은 **OK=0, NG=1**입니다. 내부 재측정 사유 코드와 PLC 결과 코드는 다릅니다.
-`FinishMeasurement`은 `BadInformation()`으로 최종 OK/NG 비트를 만든 다음 `WriteResultCode()`를 호출합니다.
+`FinishMeasurement`은 `UpdatePlcResults()`으로 최종 OK/NG 비트를 만든 다음 `WriteResultCode()`를 호출합니다.
 `WriteResultCode()`는 해당 비트를 셀마다 읽어 400개 결과 코드에도 같은 0/1을 기록합니다.
 기존 4/5/6 출력과 정상 셀의 미초기화 문제를 제거했고, NG 다음 OK 셀에도 반드시 0을 씁니다.
-기존 빈 셀의 NG 비트 처리 및 PLC용 `ngCount`/오류창용 `measNgCount` 집계 기준은 변경하지 않았습니다.
+기존 빈 셀의 NG 비트 처리 및 PLC용 `ngCount`/오류창용 `measurementNgCount` 집계 기준은 변경하지 않았습니다.
 
 ## 검증 방법
 
@@ -173,10 +173,10 @@ Configuration 아래의 `Continuous read (PLC keeps data until TRAY OUT)`를 선
 1. `FinishMeasurement`에서 기존 STP/프로브 열림을 요청하고 `StartResultCellSerialRead`로 새 수신을 시작합니다.
 2. 자동측정만 `Timer_ResultSaveTimer`에서 최종 시리얼 수신을 기다립니다. 일반적인 추가 대기는 PLC 응답 속도에 따라 약 2초이며 제한은 10초입니다.
    수동측정(bLocal 또는 stage.arl == nLocal)은 시리얼 수신/개수 검사/타임아웃 오류창 없이 저장합니다.
-   `SaveMeasurementResult(true)`는 이전 .Tray/PLC 시리얼 복원을 생략하고 CSV CELL_ID를 공란으로 만듭니다.
+   `WriteMeasurementResults(true)`는 이전 .Tray/PLC 시리얼 복원을 생략하고 CSV CELL_ID를 공란으로 만듭니다.
    파일 저장 재시도 1회와 이후 PLC 결과 송신/완료 대기는 기존대로 유지합니다.
 3. 완료 후 `ReadCellSerial`로 현재 트레이에 복사하고 CELL DATA 개수와 비교합니다.
-4. 정상 수신이면 `SaveMeasurementResult`에서 IR/OCV와 함께 저장한 뒤 PLC 결과 송신과 최소 1초 경과를 확인하고 COMPLETE를 출력합니다. 이전 .Tray 파일을 다시 읽어 덮어쓰지 않습니다.
+4. 정상 수신이면 `WriteMeasurementResults`에서 IR/OCV와 함께 저장한 뒤 PLC 결과 송신과 최소 1초 경과를 확인하고 COMPLETE를 출력합니다. 이전 .Tray 파일을 다시 읽어 덮어쓰지 않습니다.
 5. 개수 불일치는 WARNING 로그를 남기고 완료 수신본으로 저장합니다. 오류창/작업자 대기는 없습니다.
 6. 10초 동안 전체 수신이 없으면 WARNING 로그를 남기고 CELL_ID를 공란으로 저장합니다. 이전 .Tray/부분 데이터를 사용하지 않습니다.
 7. 초기화/강제 배출/예외 정지는 지연 저장을 취소합니다. 기존 NG 판정과 수동/BYPASS 배출 정책은 유지합니다.
@@ -237,7 +237,7 @@ MSBuild.exe IROCV.cbproj /t:_ResolveIcons;BuildVersionResource;Build /p:Config=D
 - 판정 우선순위는 접촉(4) > IR(2) > OCV(3). 이전 불량·화면 색상을 판정 근거로 사용하지 않는다.
 
 ### 결과 마감과 화면
-- `FinishMeasurement` → 최종 시리얼(상시 모드만) → `SaveMeasurementResult` → `Timer_ResultSaveTimer`.
+- `FinishMeasurement` → 최종 시리얼(상시 모드만) → `WriteMeasurementResults` → `Timer_ResultSaveTimer`.
 - `resultSaveStep`: 대기 / 시리얼 대기 / 파일 작성 / PLC 전송 대기 / 완료 / 취소 / 오류.
 - 참고용 CSV는 최초 시도 + 재시도 1회. 두 번 실패해도 로그 후 생산 진행. 시리얼 작업자 선택은 미체크 모드의 투입 시 검사에만 사용합니다.
 - 파일명은 분 단위 유지. 같은 트레이 전체/선택 재측정은 파일명을 보존해 최종값으로 덮어쓴다.
@@ -255,3 +255,20 @@ MSBuild.exe IROCV.cbproj /t:_ResolveIcons;BuildVersionResource;Build /p:Config=D
 `TestCellSerialRead.ps1`: 실제 메서드 추출로 시리얼·판정 우선순위·화면·재측정 요청·중복 집계·저장 재시도·완료 지연 검증.
 `TestResultFile.ps1`: 실제 임시 파일로 CSV 생성 실패/부분 쓰기/덮어쓰기/파일 잠금을 검사한다.
 검사는 생산 실행 파일을 실행하거나 PLC/측정장비에 접속하지 않는다.
+
+## 채널 화면 배치
+
+시작 모서리와 번호 진행 방향은 `SiteConfig.h`의 `CHANNEL_START_CORNER`, `CHANNEL_FILL_DIRECTION`에서 선택한다. 8가지 조합과 적용 화면은 [CHANNEL_LAYOUT.md](CHANNEL_LAYOUT.md)를 참고한다. 모든 채널 화면은 `ChannelLayout.h`의 좌표 계산을 사용하며 PLC/배열의 채널 번호는 유지한다.
+
+## 자동/수동 오류 검사와 접속 설정
+
+- `Stage_Form.cpp::CheckAutoInspectionError`: 자동 진행을 막는 통신/설정/PLC/모드 오류를 확인한다. `ProcessAutoInspection`에서 호출하며 true이면 해당 주기 진행을 보류한다.
+- `Stage_Form.cpp::CheckManualInspectionError`: 자동검사 타이머가 꺼진 수동 모드에서 상태 타이머가 호출한다. 설비 연결 → PLC 두 경로 연결 → PLC 오류 → 수동 안내 순으로 표시하며 수동 시퀀스/PLC 출력을 변경하지 않는다. 결과 저장 실패·예외 정지 메시지는 유지한다.
+- `Stage_comm.cpp::ValidateConnectionSettings / ApplyConnectionSettings`: 설정 저장 및 연결 버튼의 공통 경로. IP/포트를 확인하고, 변경한 접속은 닫은 뒤 새 주소로 즉시 비동기 연결한다. 검사·결과 저장 중 접속 대상 변경은 차단하며, 동일 주소로의 복구는 허용한다.
+- `Stage_log.cpp::ReadSystemInfo`: 파일에서 UI/설정을 읽는 역할만 수행하며 활성 소켓의 주소를 변경하지 않는다.
+- `ModPLC.cpp::Connect / Disconnect`: PLC 두 경로의 독립 연결·재시도 및 명시적 연결 해제 유지. 한쪽 연결 실패가 다른 쪽 연결 시도를 막지 않는다.
+- `TestConnectionSettings.ps1`: 실제 함수 추출 + 가짜 소켓/UI로 수동 표시, IP/포트 변경, 단일 경로 장애, 재시도, 명시적 연결 해제 및 실행 중 대상 변경 차단을 검사한다. 실제 설비에 접속하지 않는다.
+
+## 이름 규칙 및 이전 이름 찾기
+
+현재 함수·변수 이름의 규칙과 이전→현재 대응표는 [NAMING_CONVENTIONS.md](NAMING_CONVENTIONS.md)를 참고한다. `TestNamingConventions.ps1`로 등록 소스의 이전 이름 잔존 여부를 검사한다.

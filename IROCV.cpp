@@ -4,17 +4,17 @@
 #pragma hdrstop
 #include <tchar.h>
 //---------------------------------------------------------------------------
-USEFORM("Modplc.cpp", Mod_PLC); /* TDataModule: File Type */
 USEFORM("RVMO_main.cpp", BaseForm);
-USEFORM("FormTotal.cpp", TotalForm);
+USEFORM("Modplc.cpp", Mod_PLC); /* TDataModule: File Type */
 USEFORM("FormCellIdError.cpp", Form_CellIdError);
 USEFORM("FormError.cpp", Form_Error);
-USEFORM("FormCalibration.cpp", CaliForm);
 USEFORM("FormLanguage.cpp", Form_Language);
+USEFORM("FormCalibration.cpp", CaliForm);
+USEFORM("FormMeasureInfo.cpp", MeasureInfoForm);
+USEFORM("FormTotal.cpp", TotalForm);
+USEFORM("FormNgCountError.cpp", Form_NgCountError);
 USEFORM("FormPLCInterface.cpp", Form_PLCInterface);
 USEFORM("FormRemeasure.cpp", RemeasureForm);
-USEFORM("FormMeasureInfo.cpp", MeasureInfoForm);
-USEFORM("FormNgCountError.cpp", Form_NgCountError);
 //---------------------------------------------------------------------------
 int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {

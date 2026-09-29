@@ -18,12 +18,12 @@ $plcMethods = Read-TestMethods 'Modplc.cpp' 'TMod_PLC' @(
     'ResetCellSerialRead','StartCellSerialRead','SetCellSerialContinuousRead',
     'BeginCellSerialRead','PrepareCellSerialRead','CompleteCellSerialChunk',
     'IsCellSerialReadComplete','IsCellSerialReadActive','GetCellSerialReadWords',
-    'PLC_Recv_Interface_CellSerial','ClientSocket_PLCRead')
+    'ReadPlcCellSerialChunk','ClientSocket_PLCRead')
 $formMethods = Read-TestMethods 'Stage_TrayData.cpp' 'TTotalForm' @(
     'ApplyCellSerialReadMode')
 $formMethods += "`r`n" + (Read-TestMethods 'FormTotal.cpp' 'TTotalForm' @('Timer_ResultSaveTimer'))
-$formMethods += "`r`n" + (Read-TestMethods 'Stage_Measurement.cpp' 'TTotalForm' @('StartResultCellSerialRead','CompleteResultCellSerialRead','ProcessResultSave','CancelResultSave','FinishMeasurement','SaveMeasurementResult','JudgeCellResult','SetRemeasureList','SetRemeasureListAfter','PrepareRemeasureItems','RemeasureExcute'))
-$formMethods += "`r`n" + (Read-TestMethods 'Stage_PlcData.cpp' 'TTotalForm' @('BadInformation'))
+$formMethods += "`r`n" + (Read-TestMethods 'Stage_Measurement.cpp' 'TTotalForm' @('StartResultCellSerialRead','CompleteResultCellSerialRead','ProcessResultSave','CancelResultSave','FinishMeasurement','WriteMeasurementResults','JudgeCellResult','SetRemeasureList','SetRemeasureListAfter','PrepareRemeasureItems','ExecuteRemeasure'))
+$formMethods += "`r`n" + (Read-TestMethods 'Stage_PlcData.cpp' 'TTotalForm' @('UpdatePlcResults'))
 $formMethods += "`r`n" + (Read-TestMethods 'Stage_CellDisplay.cpp' 'TTotalForm' @('UpdateCellDisplay'))
 $template = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'CellSerialReadTests.cpp.in'),[Text.Encoding]::UTF8)
 $testSource = $template.Replace('@@PLC_METHODS@@',$plcMethods).Replace('@@FORM_METHODS@@',$formMethods)

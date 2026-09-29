@@ -34,7 +34,7 @@ void __fastcall TTotalForm::WriteSystemInfo()
     ini->DeleteKey("MAIN", "IR_RANGE");
     ini->DeleteKey("MAIN", "OCV_RANGE");
     // [CELL SERIAL 공통] 미체크=TRAY IN 보관(기존), 체크=상시 수신/결과 직전 재확인.
-    // 실제 적용은 ReadSystemInfo 및 다음 InitTrayStruct에서 한다. 현재 트레이 모드는 유지한다.
+    // 실제 적용은 ReadSystemInfo 및 다음 InitializeTrayData에서 한다. 현재 트레이 모드는 유지한다.
     ini->WriteBool("CELL_SERIAL", "CONTINUOUS_READ", chkCellSerialContinuousRead->Checked);
 
 	ini->WriteString("IROCV_PLC", "IP", editPLCIPAddress->Text);
@@ -138,8 +138,7 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	editIROCVIPAddress->Text = ini->ReadString("IROCV", "IP", "192.168.250.202");
 	editIROCVPort->Text = ini->ReadString("IROCV", "PORT", "45000");
 
-	Client->Host = editIROCVIPAddress->Text;
-    Client->Port = editIROCVPort->Text.ToIntDef(45000);
+    // IP/Port는 표시/메모리만 읽고, 저장/연결 버튼에서 실제 소켓에 적용한다.
 
 	editModelName->Text = ini->ReadString("CELLINFO", "MODELNAME", "20PQ");
     editPwd->Text = ini->ReadString("PASSWORD", "PWD", "Eveml@123");
@@ -215,7 +214,7 @@ void __fastcall TTotalForm::ReadRemeasureInfo()
 		}
 	}
 
-    RemeasureAlarm(nRemeasureAlarmCount);
+    UpdateRemeasureAlarm(nRemeasureAlarmCount);
 
 	retest_info = "";
 	acc_init = 	 ini->ReadString(title, "ACCMULATE_DAY", Now().FormatString("yyyy. m. d. hh:nn"));
@@ -242,7 +241,7 @@ void __fastcall TTotalForm::WriteRemeasureInfo()	// Tray가 Vacancy 상태일때 기록
 		if(acc_remeasure[index] >= config.remeasure_alarm_cnt)
 			nRemeasureAlarmCount++;
 	}
-	RemeasureAlarm(nRemeasureAlarmCount);
+	UpdateRemeasureAlarm(nRemeasureAlarmCount);
 
     ini->WriteInteger(title, "REMEASURE_ALARM_COUNT", editRemeasureAlarmCount->Text.ToIntDef(3));
 	ini->WriteString(title, "ACCMULATE", retest_info);
@@ -257,7 +256,7 @@ void __fastcall TTotalForm::WriteRemeasureInfo()	// Tray가 Vacancy 상태일때 기록
 	delete ini;
 }
 
-void __fastcall TTotalForm::RemeasureAlarm(int remeasure_alarm_count)
+void __fastcall TTotalForm::UpdateRemeasureAlarm(int remeasure_alarm_count)
 {
 	if(remeasure_alarm_count > 0) {
 		Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data,  PC_D_IROCV_NG_ALARM, 1);
@@ -295,7 +294,7 @@ void __fastcall TTotalForm::WriteCommLog(AnsiString Type, AnsiString Msg)
 	FileClose(file_handle);
 }
 
-void __fastcall TTotalForm::WritePLCLog(AnsiString Type, AnsiString Msg)
+void __fastcall TTotalForm::WritePlcLog(AnsiString Type, AnsiString Msg)
 {
 	AnsiString str, dir;
 	int file_handle;
@@ -393,7 +392,7 @@ bool __fastcall TTotalForm::WriteResultFile()
     }
 }
 
-void __fastcall TTotalForm::ErrorLog()
+void __fastcall TTotalForm::WriteErrorLog()
 {
 	AnsiString str, dir;
 	int file_handle;
@@ -417,7 +416,7 @@ void __fastcall TTotalForm::ErrorLog()
 	FileClose(file_handle);
 }
 
-void __fastcall TTotalForm::ReadCaliboffset()                         //20171202 개별보정을 위해 추가
+void __fastcall TTotalForm::ReadCalibrationOffsets()                         //20171202 개별보정을 위해 추가
 {
 	TIniFile *ini;
 	ini = new TIniFile((AnsiString)BIN_PATH + "Caliboffset_" + IntToStr(this->Tag) + ".cali");
@@ -431,7 +430,7 @@ void __fastcall TTotalForm::ReadCaliboffset()                         //20171202
 
 //---------------------------------------------------------------------------
 // mapping.csv에서 장비↔화면 채널 매핑을 읽고, 파일이 없으면 기본 매핑을 만든다.
-void __fastcall TTotalForm::ReadchannelMapping()
+void __fastcall TTotalForm::ReadChannelMapping()
 {
 	AnsiString str, FileName;
 	int file_handle;

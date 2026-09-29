@@ -6676,6 +6676,7 @@ object TotalForm: TTotalForm
     Top = 152
   end
   object Timer_AutoInspection: TTimer
+    Enabled = False
     Interval = 200
     OnTimer = Timer_AutoInspectionTimer
     Left = 772

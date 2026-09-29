@@ -164,7 +164,7 @@ typedef struct{
 	AnsiString cell_serial[MAXCHANNEL];
 	int cell_count;
 	int rem_mode;
-	float orginal_value[MAXCHANNEL];
+	float original_value[MAXCHANNEL];
 	float after_value[MAXCHANNEL];
 	float ocv_value[MAXCHANNEL];
 	float Cali_value[MAXCHANNEL];

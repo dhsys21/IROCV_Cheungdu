@@ -32,11 +32,15 @@ void TAutoInspectionSequence::Initialize(const TAutoInspectionSetting &setting)
 }
 
 // 현재 단계의 조건을 검사하여 실행할 명령 하나를 반환한다. PLC/UI를 직접 조작하지 않는다.
+// PRECHARGER와 공통: 투입/ID/셀 → 모드별 시리얼 → 프로브 → 측정/결과 → 배출.
+// IR/OCV 고유: 시작 지연, 닫힘 상태 재측정 및 재개폐 재측정. 충전 장비의 설정 확인 단계는 없다.
+// waitCount는 유효 타이머 호출 횟수이며 설정 N이면 N+1번째 대기 호출에 제한을 넘는다.
 TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectionData &data)
 {
     switch(currentStep)
     {
         case STEP_WAIT_TRAY_IN:
+            // 1. 투입 대기. BYPASS는 측정을 생략하고, 정상 투입은 트레이별 재측정 횟수를 초기화한다.
             if(!data.trayIn) return CMD_NONE;
             if(data.bypass)
             {
@@ -49,15 +53,18 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             return CMD_TRAY_IN;
 
         case STEP_READ_TRAY_ID:
+            // 2. 일반 PLC 블록에서 유효한 ID가 준비되어야 화면/트레이에 적용한다.
             if(!data.trayIdReady) return CMD_NONE;
             SetStep(STEP_READ_CELL_DATA);
             return CMD_READ_TRAY_ID;
 
         case STEP_READ_CELL_DATA:
+            // 3. 셀 유무 읽기를 명령하고, 다음 유효 주기에 셀 개수와 시작 지연을 판단한다.
             SetStep(STEP_WAIT_START_DELAY);
             return CMD_READ_CELL_DATA;
 
         case STEP_WAIT_START_DELAY:
+            // 4. Cycle 시험 외에는 존재 셀이 있어야 한다. 설정된 시작 지연 후 시리얼 모드를 분기한다.
             if(waitCount < UINT_MAX) ++waitCount;
             if(data.cellCount <= 0 && !data.cycleMode) return CMD_NONE;
             if(waitCount <= sequenceSetting.startDelayCount) return CMD_NONE;
@@ -71,7 +78,8 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             return CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL;
 
         case STEP_WAIT_CELL_SERIAL:
-            // Complete on the boundary wins over timeout; never compare a chunk.
+            // 5. 전체 시리얼 완료본만 셀 개수와 비교한다. 시간 경계에서는 완료를 먼저 확인한다.
+            //    불일치/시간 초과는 오류 대기로 진입하며 작업자 SAVE/CANCEL 전까지 진행하지 않는다.
             if(data.serialComplete)
             {
                 if(data.serialCount == data.cellCount)
@@ -89,25 +97,28 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
 
         case STEP_WAIT_PROBE_CLOSE:
         case STEP_WAIT_REMEASURE_PROBE_CLOSE:
+            // 6. 트레이가 유지되고 프로브가 닫혀야 시작한다. 자동 재개폐 횟수는 실제 시작 때만 증가한다.
             if(!data.probeClosed || !data.trayIn) return CMD_NONE;
             {
                 const bool remeasure = currentStep == STEP_WAIT_REMEASURE_PROBE_CLOSE;
                 if(remeasure && automaticProbeRemeasure) ++probeRemeasureDoneCount;
                 automaticProbeRemeasure = false;
-                SetStep(STEP_WAIT_MEASURE_COMPLETE); // Set before sending; duplicate ticks cannot start twice.
+                SetStep(STEP_WAIT_MEASURE_COMPLETE); // 명령 실행보다 먼저 대기로 전환하여 중복 시작 방지.
                 return remeasure ? CMD_REMEASURE_START : CMD_MEASURE_START;
             }
 
         case STEP_WAIT_PROBE_OPEN:
+            // 7. 결과 저장/PLC 송신 완료 이후 진입한다. Auto + 열림 확인 후 재측정 또는 배출을 판단한다.
             if(!data.autoMode || !data.probeOpen) return CMD_NONE;
             return AutomaticTrayOut(data.ngCount, data.cellCount, data.ngLimit);
 
         case STEP_WAIT_TRAY_OUT:
+            // 8. TRAY IN 해제를 확인해야 배출 출력을 정리하고 다음 트레이를 받을 수 있다.
             if(data.trayIn) return CMD_NONE;
             SetStep(STEP_WAIT_TRAY_IN);
             return CMD_TRAY_OUT_COMPLETE;
 
-        // These are explicit waits, not undefined numeric steps (e.g. 99).
+        // 아래 단계는 타이머만으로 해제되지 않는다. 작업자 선택/결과 마감 완료가 다음 단계를 통지한다.
         case STEP_WAIT_CELL_SERIAL_ERROR:
         case STEP_WAIT_MEASURE_COMPLETE:
         case STEP_WAIT_NG_ERROR:

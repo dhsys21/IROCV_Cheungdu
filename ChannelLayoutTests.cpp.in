@@ -1,0 +1,155 @@
+// Actual panel builders are inserted by TestChannelLayout.ps1; no VCL/equipment I/O.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include "ChannelLayout.h"
+struct AnsiString {
+    std::string s;
+    AnsiString(const char *v=""):s(v){}
+    AnsiString(int v){char b[32];sprintf(b,"%d",v);s=b;}
+};
+AnsiString operator+(const AnsiString&a,const AnsiString&b){AnsiString r;r.s=a.s+b.s;return r;}
+AnsiString IntToStr(int v){return AnsiString(v);}
+const int bvNone=0,bkNone=0,clWhite=1,clSkyBlue=2;
+struct FontInfo {int Color,Size;};
+struct TPanel {
+    int Left,Top,Width,Height,Tag,Color,BevelInner,BevelKind,BevelOuter,ControlCount;
+    bool ParentBackground,ShowHint,Visible,AutoSize;
+    AnsiString Caption,Hint;
+    TPanel *Parent,*Controls[1];
+    FontInfo font,*Font;
+    __property int ClientWidth={read=Width};
+    __property int ClientHeight={read=Height};
+    TPanel(void*):Left(0),Top(0),Width(960),Height(846),ControlCount(0),Visible(true),Font(&font){}
+    void SetBounds(int x,int y,int w,int h){Left=x;Top=y;Width=w;Height=h;}
+};
+struct TEdit: TPanel {TEdit(void *owner):TPanel(owner){}};
+class TTotalForm {
+public:
+    TPanel base,color; TPanel *pBase,*pnormal1,*panel[MAXCHANNEL];
+    TTotalForm():base(this),color(this),pBase(&base),pnormal1(&color){base.Width=451;base.Height=323;}
+    void __fastcall MakePanel();
+};
+class TMeasureInfoForm {
+public:
+    TPanel base,color,legend1,legend2;TPanel *Panel2,*pnormal2,*clir,*clocv;
+    TPanel *pvolt[MAXCHANNEL],*pcurr[MAXCHANNEL],*pir[MAXCHANNEL],*pocv[MAXCHANNEL];
+    TPanel *pUIx[CELL_COLUMN_COUNT],*pUIy[CELL_ROW_COUNT];
+    TMeasureInfoForm():base(this),color(this),legend1(this),legend2(this),Panel2(&base),pnormal2(&color),clir(&legend1),clocv(&legend2){}
+    void __fastcall MakePanel();
+    void __fastcall MakeUIPanel();
+    void SetOption(TPanel*p,int x,int y,int w,int h,int i){p->Parent=Panel2;p->SetBounds(x,y,w,h);p->Tag=i;}
+    void SetUIOption(TPanel*p,int x,int y,int w,int h,int i){SetOption(p,x,y,w,h,i);}
+};
+class TRemeasureForm {
+public:
+    TPanel base,color,corner;TPanel *Panel2,*pcolor1,*Panel1,*pch[MAXCHANNEL],*pre[MAXCHANNEL];
+    TPanel *pUIx[CELL_COLUMN_COUNT],*pUIy[CELL_ROW_COUNT];
+    TRemeasureForm():base(this),color(this),corner(this),Panel2(&base),pcolor1(&color),Panel1(&corner){}
+    void __fastcall MakePanel();
+    void __fastcall MakeUIPanel();
+    void SetOption(TPanel*p,int x,int y,int w,int h,int i){p->Parent=Panel2;p->SetBounds(x,y,w,h);p->Tag=i;}
+    void SetUIOption(TPanel*p,int x,int y,int w,int h,int i){SetOption(p,x,y,w,h,i);}
+};
+#ifdef TEST_IROCV
+class TCaliForm {
+public:
+    TPanel base,button,color;TPanel *pBase,*btnInit,*pnormal2;
+    int ClientHeight;
+    TPanel *pch[MAXCHANNEL],*poffset[MAXCHANNEL],*pmeasure[MAXCHANNEL];
+    TEdit *pstandard[MAXCHANNEL];
+    TCaliForm():base(this),button(this),color(this),pBase(&base),btnInit(&button),pnormal2(&color),ClientHeight(874){base.Left=9;base.Top=30;button.Left=1319;}
+    void __fastcall MakePanel();
+    void SetOption(TPanel*p,int x,int y,int w,int h,int i){p->Parent=pBase;p->SetBounds(x,y,w,h);p->Tag=i;}
+};
+#endif
+@@METHODS@@
+int checks=0;
+#define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
+void MathematicalCases(){
+    // All 8 layouts, rectangular grids, one row/column and odd dimensions.
+    const int sizes[][2]={{20,20},{16,16},{3,5},{5,3},{1,7},{7,1},{1,1}};
+    for(int k=0;k<7;++k) for(int corner=0;corner<4;++corner) for(int dir=0;dir<2;++dir){
+        int rows=sizes[k][0],cols=sizes[k][1];bool seen[400]={false};
+        for(int i=0;i<rows*cols;++i){
+            ChannelLayout::Position p=ChannelLayout::ForIndex(i,rows,cols,(TChannelStartCorner)corner,(TChannelFillDirection)dir);
+            CHECK(p.row>=0 && p.row<rows && p.column>=0 && p.column<cols);
+            CHECK(!seen[p.row*cols+p.column]);seen[p.row*cols+p.column]=true;
+            int stepRow=dir==CHANNEL_HORIZONTAL?i/cols:i%rows;
+            int stepCol=dir==CHANNEL_HORIZONTAL?i%cols:i/rows;
+            // Independent corner-to-screen expectations.
+            int r=(corner==0||corner==2)?rows-1-stepRow:stepRow;
+            int c=(corner==0||corner==1)?cols-1-stepCol:stepCol;
+            CHECK(p.row==r && p.column==c);
+            CHECK(ChannelLayout::RowNumber(i,rows,cols,(TChannelFillDirection)dir)==stepRow+1);
+            CHECK(ChannelLayout::ColumnNumber(i,rows,cols,(TChannelFillDirection)dir)==stepCol+1);
+            for(int axes=0;axes<2;++axes){
+                ChannelLayout::Rect b=ChannelLayout::GridCell(r,c,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);
+                CHECK(b.width>0 && b.height>0 && b.left>=2 && b.top>=2);
+                CHECK(b.left+b.width<=449 && b.top+b.height<=321);
+                if(c+1<cols){ChannelLayout::Rect n=ChannelLayout::GridCell(r,c+1,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);CHECK(b.left+b.width<n.left);}
+                if(r+1<rows){ChannelLayout::Rect n=ChannelLayout::GridCell(r+1,c,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);CHECK(b.top+b.height<n.top);}
+                if(axes){
+                    ChannelLayout::Rect x=ChannelLayout::ColumnTitle(stepCol,451,323,rows,cols,(TChannelStartCorner)corner);
+                    ChannelLayout::Rect y=ChannelLayout::RowTitle(stepRow,451,323,rows,cols,(TChannelStartCorner)corner);
+                    ChannelLayout::Rect legend=ChannelLayout::AxisCorner(451,323,rows,cols,(TChannelStartCorner)corner);
+                    CHECK(x.left==b.left && x.width==b.width && y.top==b.top && y.height==b.height);
+                    CHECK(x.height>0 && y.width>0 && x.top>=2 && x.top+x.height<=321);
+                    CHECK(y.left>=2 && y.left+y.width<=449);
+                    // Independent side checks: right origins 0/1, bottom origins 0/2.
+                    if(corner==0||corner==1) CHECK(y.left>b.left+b.width);
+                    else CHECK(y.left+y.width<b.left);
+                    if(corner==0||corner==2) CHECK(x.top>b.top+b.height);
+                    else CHECK(x.top+x.height<b.top);
+                    CHECK(legend.left==y.left && legend.top==x.top);
+                    CHECK(legend.width==y.width && legend.height==x.height);
+                }
+            }
+        }
+    }
+}
+void Inside(TPanel*p,ChannelLayout::Rect r,int index){
+    CHECK(p->Tag==index);CHECK(p->Width>0 && p->Height>0);
+    CHECK(p->Left>=r.left && p->Top>=r.top);
+    CHECK(p->Left+p->Width<=r.left+r.width && p->Top+p->Height<=r.top+r.height);
+}
+void ProductionPanels(){
+    TTotalForm overview;overview.MakePanel();
+    TMeasureInfoForm measure;measure.MakeUIPanel();measure.MakePanel();
+    TRemeasureForm re;re.MakeUIPanel();re.MakePanel();
+#ifdef TEST_IROCV
+    TCaliForm cal;cal.MakePanel();
+#endif
+    for(int i=0;i<MAXCHANNEL;++i){
+        Inside(overview.panel[i],ChannelLayout::ForChannel(i,451,323,false),i);
+        ChannelLayout::Rect r=ChannelLayout::ForChannel(i,960,846,true);
+#ifdef TEST_IROCV
+        TPanel *upper=measure.pir[i],*lower=measure.pocv[i];
+#else
+        TPanel *upper=measure.pvolt[i],*lower=measure.pcurr[i];
+#endif
+        Inside(upper,r,i);Inside(lower,r,i);CHECK(upper->Top+upper->Height<lower->Top);
+        Inside(re.pch[i],r,i);Inside(re.pre[i],r,i);CHECK(re.pch[i]->Top+re.pch[i]->Height<re.pre[i]->Top);
+        const int column=ChannelLayout::ColumnNumber(i)-1,row=ChannelLayout::RowNumber(i)-1;
+        CHECK(measure.pUIx[column]->Left==upper->Left && measure.pUIx[column]->Width==upper->Width);
+        CHECK(measure.pUIy[row]->Top==upper->Top && measure.pUIy[row]->Height==r.height);
+        CHECK(measure.pUIx[column]->Caption.s==IntToStr(column+1).s);
+        CHECK(measure.pUIy[row]->Caption.s==IntToStr(row+1).s);
+        CHECK(re.pUIx[column]->Left==re.pch[i]->Left && re.pUIy[row]->Top==re.pch[i]->Top);
+        CHECK(re.pUIx[column]->Caption.s==IntToStr(column+1).s && re.pUIy[row]->Caption.s==IntToStr(row+1).s);
+        ChannelLayout::Rect x=ChannelLayout::ColumnTitle(column,960,846);
+        ChannelLayout::Rect y=ChannelLayout::RowTitle(row,960,846);
+        Inside(measure.pUIx[column],x,column);Inside(measure.pUIy[row],y,row);
+        Inside(re.pUIx[column],x,column);Inside(re.pUIy[row],y,row);
+        CHECK(measure.clir->Left==measure.pUIy[row]->Left && measure.clir->Top==measure.pUIx[column]->Top);
+        CHECK(measure.clocv->Top>measure.clir->Top+measure.clir->Height);
+        CHECK(re.Panel1->Left==re.pUIy[row]->Left && re.Panel1->Top==re.pUIx[column]->Top);
+#ifdef TEST_IROCV
+        ChannelLayout::Rect cr=ChannelLayout::ForChannel(i,cal.pBase->ClientWidth,cal.pBase->ClientHeight,false);
+        Inside(cal.pch[i],cr,i);Inside(cal.pstandard[i],cr,i);Inside(cal.poffset[i],cr,i);Inside(cal.pmeasure[i],cr,i);
+        CHECK(cal.pch[i]->Left+cal.pch[i]->Width<cal.pstandard[i]->Left);
+        CHECK(cal.pch[i]->Top+cal.pch[i]->Height<cal.poffset[i]->Top);
+#endif
+    }
+}
+int main(){MathematicalCases();ProductionPanels();printf("PASS: corner=%d direction=%d, %d checks\n",(int)CHANNEL_START_CORNER,(int)CHANNEL_FILL_DIRECTION,checks);}

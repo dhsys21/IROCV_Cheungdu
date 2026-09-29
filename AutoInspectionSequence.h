@@ -6,6 +6,8 @@
 // 자동측정 단계 정의. PLC 통신과 화면 처리는 Stage_AutoInspection.cpp에 있다.
 // RunAutoStep: 현재 단계를 확인하고 이번에 실행할 명령 한 개를 결정한다.
 // SetStep: 다음 단계로 변경하고 해당 단계의 대기 횟수를 0으로 초기화한다.
+// PRECHARGER와 같은 STEP/CMD 계약을 유지하되, IR/OCV의 시작 지연·재측정 규칙은 이 파일에 둔다.
+// 측정 완료 신호 자체가 아니라 결과 저장/PLC 송신 마감 이후에 SetMeasureComplete를 호출한다.
 enum TAutoInspectionStep
 {
     STEP_WAIT_TRAY_IN,                 // 트레이 도착 대기

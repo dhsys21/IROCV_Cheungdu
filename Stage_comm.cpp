@@ -45,23 +45,23 @@ void __fastcall TTotalForm::CmdOCVCell(AnsiString pos)
 	MakeData(2, "OCV", pos);
 }
 
-void __fastcall TTotalForm::CmdSpeedSet(int mode)
+void __fastcall TTotalForm::CmdSetSpeed(int mode)
 {
     MakeData(1, "IRT", mode);
 }
 
-void __fastcall TTotalForm::CmdManualMod(bool Set)
+void __fastcall TTotalForm::CmdSetManualMode(bool Set)
 {
     //* 속도 변경 IRT0->slow IRT1->medium IRT2->fast
-    if(rbSpeedSlow->Checked) CmdSpeedSet(0);
-    else if(rbSpeedMed->Checked) CmdSpeedSet(1);
-    else if(rbSpeedFast->Checked) CmdSpeedSet(2);
+    if(rbSpeedSlow->Checked) CmdSetSpeed(0);
+    else if(rbSpeedMed->Checked) CmdSetSpeed(1);
+    else if(rbSpeedFast->Checked) CmdSetSpeed(2);
 
-    PLCInitialization();
+    InitializePlcData();
 	if(Set){ //* Manual
         Mod_PLC->SetValue(PC_D_IROCV_STAGE_AUTO_READY, 0);
 		SendData("MAN", "O");
-		this->InitTrayStruct();
+		this->InitializeTrayData();
 
 		DisplayStatus(nManual);
         ResetAutoInspection();
@@ -71,12 +71,13 @@ void __fastcall TTotalForm::CmdManualMod(bool Set)
 	else{    //* Auto
         Mod_PLC->SetValue(PC_D_IROCV_STAGE_AUTO_READY, 1);
 		SendData("MAN", "X");
-		this->InitTrayStruct();
+		this->InitializeTrayData();
 
         DisplayStatus(nVacancy);
         ResetAutoInspection();
-		if(Timer_AutoInspection->Enabled == false)
-			Timer_AutoInspection->Enabled = true;
+        // Selecting PC AUTO must not bypass the PLC mode interlock.
+        autoInspectionBlockedByPlc = false;
+        UpdateAutoInspectionMode();
 
         if(MeasureInfoForm->msaTimer->Enabled == true)
             MeasureInfoForm->msaTimer->Enabled = false;
@@ -113,7 +114,7 @@ int __fastcall TTotalForm::SensorState(AnsiString cmd)
 	return -3;
 }
 
-int __fastcall TTotalForm::DataCheck(AnsiString msg, AnsiString &param)
+int __fastcall TTotalForm::ParseEquipmentMessage(AnsiString msg, AnsiString &param)
 {
 	// 1. stx, etx 확인
 	// 2. CMD + PARAM 분리
@@ -238,7 +239,7 @@ void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
 
 
 	if(stage.arl == nLocal){
-		this->CmdManualMod(true);
+		this->CmdSetManualMode(true);
 	}
 	OldSenCmd = "NONE";
 	SendTimer->Enabled = true;
@@ -267,6 +268,7 @@ void __fastcall TTotalForm::ProcessEquipmentSocketError(TObject *Sender,
 	pConInfo->Caption = str;
 	ErrorCode = 0;
 	Socket->Close();
+    ReContactTimer->Enabled = config.recontact;
 	RefreshStageStatusImage();
 }
 
@@ -278,7 +280,7 @@ void __fastcall TTotalForm::ProcessEquipmentDisconnected(TObject *Sender,
 {
 	pConInfo->Font->Color = clRed;
 	pConInfo->Caption = "Connection failed.";
-	ReContactTimer->Enabled = true;
+	ReContactTimer->Enabled = config.recontact;
 	sock = NULL;
 	RefreshStageStatusImage();
 }
@@ -288,13 +290,22 @@ void __fastcall TTotalForm::ProcessEquipmentDisconnected(TObject *Sender,
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 ReContactTimerTimer. 측정장비 재접속는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessEquipmentReconnect(TObject *Sender)
 {
-		ReContactTimer->Enabled = false;
-		if(config.recontact == true)
-			Client->Active = true;
+    ReContactTimer->Enabled = false;
+    if(!config.recontact || Client->Active) return;
+    try
+    {
+        Client->Active = true; // 비동기 연결: 완료 판정은 OnConnect/Socket->Connected로 한다.
+    }
+    catch(...)
+    {
+        pConInfo->Caption = "Connection failed.";
+        pConInfo->Font->Color = clRed;
+        ReContactTimer->Enabled = config.recontact;
+    }
 }
 
 //---------------------------------------------------------------------------
-// 장비 소켓에서 받은 문자열을 수신 큐에 넣는다. 명령별 처리는 OnReceiveStage에서 한다.
+// 장비 소켓에서 받은 문자열을 수신 큐에 넣는다. 명령별 처리는 ProcessEquipmentMessage에서 한다.
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientRead. 측정장비 수신 프레임 분리는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessEquipmentSocketRead(TObject *Sender,
 	  TCustomWinSocket *Socket)
@@ -345,6 +356,8 @@ void __fastcall TTotalForm::ProcessEquipmentReceiveQueue(TObject *Sender)
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 SendTimerTimer. 측정장비 송신 큐 처리는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 {
+    // Cancelled automatic commands must not be sent after PLC manual/reset.
+    if(IsAutoInspectionBlocked()) return;
 	if(q_cmd.empty() == false){
 		SendTimer->Interval = 700;
 		SendData(q_cmd.front().data(), q_param.front().data());
@@ -391,7 +404,7 @@ void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 
 //---------------------------------------------------------------------------
 // 장비 응답 분기: AMS/AMF/IR/OCV/센서 상태 등을 해당 처리 함수로 전달한다.
-void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
+void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 {
 	AnsiString *msg, param;
 	int cmd = 0;
@@ -399,7 +412,7 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 	int nvalue = 0;
 
 //	if((stage.err == NO_ANSWER) && (GrpError->Visible)){
-//		this->VisibleBox(OldGrp);
+//		this->ShowPanelGroup(OldGrp);
 //	}
 
 	try{
@@ -408,7 +421,14 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 			return;
 		}
 		WriteCommLog("RX", *msg);
-		cmd = DataCheck(*msg, param); 	// cmd , check sum 확인
+		cmd = ParseEquipmentMessage(*msg, param); 	// cmd , check sum 확인
+
+        const bool blocked = IsAutoInspectionBlocked();
+        // Ignore delayed measurement replies outside an active automatic measurement.
+        if(stage.arl == nAuto && !bLocal &&
+           (blocked || autoInspection.GetStep() != STEP_WAIT_MEASURE_COMPLETE) &&
+           (cmd == AMS || cmd == AMF || cmd == IR || cmd == OCV))
+            return;
 
 		send.time_out = 0;
 
@@ -442,7 +462,7 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 
 				if(nvalue < 2)ProcessError("MEASUREMENT", "ERROR","Measurement error", "");
 				else{
-					CmdAutoTest();
+					CmdStartMeasurement();
 				}
 				break;
 			case BCR:
@@ -459,7 +479,7 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 					else{
 						send.tx_mode = 0;
 						send.re_send = 0;
-						ErrorMsg(BARCODE_ERROR);
+						DisplayStageError(BARCODE_ERROR);
 					}
 				}
 				break;
@@ -469,8 +489,8 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 				break;
 			case RST:
 				send.tx_mode = 0;
-				ErrorMsg(RESET);
-                Initialization(); // 2017 09 04 herald
+				DisplayStageError(RESET);
+                InitializeInspection(); // 2017 09 04 herald
 				//SendData("STA");
 				break;        // 모든 에러 해제
 			case SIZ:
@@ -490,7 +510,7 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 				tray.ams = false;
 				tray.amf = true;
 
-				ResponseAutoTestFinish();
+				ProcessMeasurementCompleteResponse();
 				break;
 			case IR:        // IR 셀 검사
 				if(pb->Position < pb->Max)pb->Position += 1;
@@ -513,10 +533,10 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 			case REM: send.tx_mode = 0; break;
 			case EMS: send.tx_mode = 0; break;
 			case SEN:        // 센서정보
-				SensorInputProcess(param);
+				ProcessSensorInput(param);
 				break;
 			case sOUT:
-				SensorOutputProcess(param);
+				ProcessSensorOutput(param);
 				break;
 			case ERR:        // 검사장치 에러 발생
 				ResponseError(param);
@@ -526,12 +546,12 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 			case CLR:
 				SendData("CLR");
 				OldSenCmd = "NONE";
-				VisibleBox(OldGrp);
+				ShowPanelGroup(OldGrp);
 				break;       // 에러 해제 통보
 			case REC: send.tx_mode = 0; break;
 			case LRM:
 				send.tx_mode = 0;
-				StageLocalRemeasure();
+				ProcessOpBoxRemeasureRequest();
 				break;
 			default:
 				this->WriteCommLog("ERR", "Undefined Command");
@@ -545,13 +565,13 @@ void __fastcall TTotalForm::OnReceiveStage(TMessage& Msg)
 
 //---------------------------------------------------------------------------
 // 장비의 로컬 재측정 요청을 처리하고 기존 불량 개수에 따라 재측정 모드를 정한다.
-void __fastcall TTotalForm::StageLocalRemeasure(bool frm)
+void __fastcall TTotalForm::ProcessOpBoxRemeasureRequest(bool frm)
 {
 	// OP 박스 재측정 요청시
 	SendData("LRM");
 
 	if(GrpRemeasure->Visible == true){
-		VisibleBox(GrpMain);
+		ShowPanelGroup(GrpMain);
 
         // OP 박스 요청의 전체/선택 기준. Config의 닫힘 유지 재측정 제한과는 별개.
 		if(retest.cnt_error > PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD){
@@ -572,14 +592,14 @@ void __fastcall TTotalForm::ModChange()
 		stage.arl = stage.arl_reserve;
 		switch(stage.arl){
 			case nAuto:
-				this->CmdManualMod(false);
-				VisibleBox(GrpMain);
+				this->CmdSetManualMode(false);
+				ShowPanelGroup(GrpMain);
 				break;
 			case nRemote:
-				this->CmdManualMod(false);
+				this->CmdSetManualMode(false);
 				break;
 			case nLocal:
-				this->CmdManualMod(true);
+				this->CmdSetManualMode(true);
 				stage.alarm_status = nManual;
 				break;
 		}
@@ -588,7 +608,7 @@ void __fastcall TTotalForm::ModChange()
 
 //---------------------------------------------------------------------------
 // 센서 입력 응답을 저장하고 장비 상태 변경을 감지한다.
-void __fastcall TTotalForm::SensorInputProcess(AnsiString param)
+void __fastcall TTotalForm::ProcessSensorInput(AnsiString param)
 {
 	AnsiString cmd;
 	cmd = param.SubString(1,3);
@@ -622,7 +642,7 @@ void __fastcall TTotalForm::SensorInputProcess(AnsiString param)
 
 //---------------------------------------------------------------------------
 // 장비 센서 출력 응답을 센서 출력 버퍼에 저장한다.
-void __fastcall TTotalForm::SensorOutputProcess(AnsiString param)
+void __fastcall TTotalForm::ProcessSensorOutput(AnsiString param)
 {
 	unsigned char *ptrOutput;
 
@@ -645,24 +665,24 @@ void __fastcall TTotalForm::EquipStatus(int cmd)
 	{
 		case HOM:
 //			DisplayStatus(nVacancy);
-//			VisibleBox(GrpMain);
+//			ShowPanelGroup(GrpMain);
 			break;
 
 		case MAN:
 //			if(GrpLocal->Visible == false){
 //				stage.arl = nLocal;
-//				VisibleBox(GrpLocal);
+//				ShowPanelGroup(GrpLocal);
 //			}
 //			DisplayStatus(nManual);
-//			InitMeasureForm();
+//			InitializeMeasureForm();
 			break;
 		case EMS:
 			//DisplayStatus(nEmergency);
-			VisibleBox(GrpMain);
+			ShowPanelGroup(GrpMain);
 			break;
 		case LOC:
 			//DisplayStatus(nOpbox);
-			VisibleBox(GrpMain);
+			ShowPanelGroup(GrpMain);
 			break;
 		case EMP:
 			//DisplayStatus(nVacancy);
@@ -704,7 +724,7 @@ void __fastcall TTotalForm::InitEquipStatus(int cmd)
 		case MAN:
 			stage.alarm_status = nManual;
 			stage.arl = nLocal;
-			VisibleBox(GrpLocal);
+			ShowPanelGroup(GrpLocal);
 			DisplayStatus(nManual);
 			break;
 		case BZY:
@@ -714,4 +734,75 @@ void __fastcall TTotalForm::InitEquipStatus(int cmd)
 			EquipStatus(cmd);
 			break;
 	}
+}
+
+//---------------------------------------------------------------------------
+// 저장/연결 버튼 공통 검증. 잘못된 주소/포트는 저장 전에 알리고 기존 연결을 유지한다.
+bool __fastcall TTotalForm::ValidateConnectionSettings(bool equipment, bool plc)
+{
+    const AnsiString host = editIROCVIPAddress->Text.Trim();
+    const int port = editIROCVPort->Text.ToIntDef(0);
+    const AnsiString plcHost = editPLCIPAddress->Text.Trim();
+    const int pcPort = editPLCPortPC->Text.ToIntDef(0);
+    const int plcPort = editPLCPortPLC->Text.ToIntDef(0);
+    if((equipment && (host.IsEmpty() || port < 1 || port > 65535)) ||
+       (plc && (plcHost.IsEmpty() || pcPort < 1 || pcPort > 65535 ||
+                plcPort < 1 || plcPort > 65535)))
+    {
+        ShowMessage("Check the connection IP address and port (1-65535).");
+        return false;
+    }
+    const bool changed =
+        (equipment && (Client->Host != host || Client->Port != port)) ||
+        (plc && (Mod_PLC->ClientSocket_PC->Address != plcHost ||
+                 Mod_PLC->ClientSocket_PLC->Address != plcHost ||
+                 Mod_PLC->ClientSocket_PC->Port != pcPort ||
+                 Mod_PLC->ClientSocket_PLC->Port != plcPort));
+    // 검사/결과 마감 도중 다른 장비로 바꾸지 않는다. 동일 주소의 끊긴 연결 복구는 허용한다.
+    if(changed && ((tray.ams && !tray.amf) ||
+        resultSaveStep == RESULT_WAIT_SERIAL || resultSaveStep == RESULT_WRITE_FILE ||
+        resultSaveStep == RESULT_WAIT_PLC_SEND ||
+        (autoInspection.GetStep() != STEP_WAIT_TRAY_IN &&
+         autoInspection.GetStep() != STEP_ERROR_STOP)))
+    {
+        ShowMessage("Stop the inspection and finish result saving before changing connection settings.");
+        return false;
+    }
+    return true;
+}
+//---------------------------------------------------------------------------
+// 소켓 설정은 ReadSystemInfo가 아니라 명시적인 저장/연결 시점에서만 적용한다.
+// 주소가 같고 연결 중이면 그대로 유지하며, 바뀐 주소는 Close → 설정 → 비동기 Open 순서다.
+void __fastcall TTotalForm::ApplyConnectionSettings(bool equipment, bool plc)
+{
+    if(!ValidateConnectionSettings(equipment, plc)) return;
+    if(equipment)
+    {
+        const AnsiString host = editIROCVIPAddress->Text.Trim();
+        const int port = editIROCVPort->Text.ToIntDef(0);
+        config.recontact = true;
+        if(Client->Host != host || Client->Port != port)
+        {
+            ReContactTimer->Enabled = false;
+            Client->Active = false;
+            Client->Address = "";
+            Client->Host = host;
+            Client->Port = port;
+            // 이전 접속의 부분 응답/대기 명령을 새 장비에서 이어서 처리하지 않는다.
+            while(!rxq.empty()) rxq.pop();
+            remainMsg = "";
+            while(!q_cmd.empty()) q_cmd.pop();
+            while(!q_param.empty()) q_param.pop();
+            send.tx_mode = 0;
+        }
+        ProcessEquipmentReconnect(this);
+    }
+    if(plc)
+    {
+        PLC_IPADDRESS = editPLCIPAddress->Text.Trim();
+        PLC_PCPORT = editPLCPortPC->Text.ToIntDef(0);
+        PLC_PLCPORT = editPLCPortPLC->Text.ToIntDef(0);
+        Timer_PLCConnect->Enabled = false;
+        Mod_PLC->Connect(PLC_IPADDRESS, PLC_PLCPORT, PLC_PCPORT);
+    }
 }

@@ -1,0 +1,153 @@
+#include <stdio.h>
+#include "PlcAutoMode.h"
+#include <stdlib.h>
+#include <string>
+#include <queue>
+#include <vector>
+struct AnsiString {
+    std::string s;
+    AnsiString(const char*v=""):s(v){}
+    bool IsEmpty()const{return s.empty();}
+    AnsiString Trim()const{AnsiString a=*this;size_t b=a.s.find_first_not_of(" \t\r\n"),e=a.s.find_last_not_of(" \t\r\n");if(b==std::string::npos)a.s="";else a.s=a.s.substr(b,e-b+1);return a;}
+    int ToIntDef(int d)const{char*end;long n=strtol(s.c_str(),&end,10);return end==s.c_str()||*end?d:(int)n;}
+};
+bool operator!=(const AnsiString&a,const AnsiString&b){return a.s!=b.s;}
+bool operator==(const AnsiString&a,const AnsiString&b){return a.s==b.s;}
+struct TObject {};
+struct Timer{bool Enabled;Timer():Enabled(false){}};
+const int clRed=1,nLocal=1,nAuto=2,STEP_WAIT_TRAY_IN=0,STEP_ERROR_STOP=99,STEP_BUSY=3;
+const int RESULT_IDLE=0,RESULT_WAIT_SERIAL=1,RESULT_WRITE_FILE=2,RESULT_WAIT_PLC_SEND=3,RESULT_ERROR=4;
+const int PLC_D_PRE_ERROR=1,PLC_D_IROCV_ERROR=1,PC_D_PRE_STAGE_AUTO_READY=2,PC_D_IROCV_STAGE_AUTO_READY=2;
+struct TCustomWinSocket {bool Connected;TCustomWinSocket():Connected(false){}};
+struct SocketClient {
+    bool active,failOpen;int opens,closes,port;
+    AnsiString host,address;TCustomWinSocket socket,*Socket;
+    SocketClient():active(false),failOpen(false),opens(0),closes(0),port(0),Socket(&socket){}
+    bool GetActive()const{return active;}
+    void SetActive(bool b){if(b){++opens;if(failOpen)throw 1;}else if(active)++closes;active=b;if(!b)socket.Connected=false;}
+    AnsiString GetHost()const{return host;} void SetHost(AnsiString s){if(active)throw 2;host=s;}
+    AnsiString GetAddress()const{return address;} void SetAddress(AnsiString s){if(active)throw 2;address=s;}
+    int GetPort()const{return port;}void SetPort(int p){if(active)throw 2;port=p;}
+    __property bool Active={read=GetActive,write=SetActive};
+    __property AnsiString Host={read=GetHost,write=SetHost};
+    __property AnsiString Address={read=GetAddress,write=SetAddress};
+    __property int Port={read=GetPort,write=SetPort};
+    void Close(){Active=false;}
+    void Online(){active=true;socket.Connected=true;}
+};
+struct Edit {AnsiString Text;};
+struct Font{int Color;};
+struct Panel{AnsiString Caption;struct Font font,*Font;Panel():Font(&font){}};
+int warnings=0;
+void ShowMessage(const char*){++warnings;}
+class TMod_PLC:public TObject {
+public:
+    TPlcAutoModeState plcAutoMode;
+    SocketClient pc,plc;SocketClient *ClientSocket_PC,*ClientSocket_PLC;
+    Timer pcRetry,plcRetry,pcWrite,plcWrite;
+    Timer *Timer_PC_AutoConnect,*Timer_PLC_AutoConnect,*Timer_PC_WriteMsg,*Timer_PLC_WriteMsg;
+    bool bClose;int resets,error,ready;
+    TMod_PLC():ClientSocket_PC(&pc),ClientSocket_PLC(&plc),Timer_PC_AutoConnect(&pcRetry),Timer_PLC_AutoConnect(&plcRetry),
+        Timer_PC_WriteMsg(&pcWrite),Timer_PLC_WriteMsg(&plcWrite),bClose(false),resets(0),error(0),ready(0){}
+    void ResetCellSerialRead(){++resets;}
+    int GetPlcValue(int){return error;}int GetValue(int){return ready;}
+    void __fastcall Connect(AnsiString,int,int);void __fastcall Disconnect();
+    void __fastcall ClientSocket_PCDisconnect(TObject*,TCustomWinSocket*);
+    void __fastcall ClientSocket_PLCDisconnect(TObject*,TCustomWinSocket*);
+    void __fastcall Timer_PC_AutoConnectTimer(TObject*);void __fastcall Timer_PLC_AutoConnectTimer(TObject*);
+} plcModule,*Mod_PLC=&plcModule;
+struct Sequence{int step;Sequence():step(STEP_WAIT_TRAY_IN){}int GetStep(){return step;}};
+class TTotalForm:public TObject{
+public:
+    SocketClient client;SocketClient*Client;
+    Timer retry,plcTimer;Timer*ReContactTimer,*Timer_PLCConnect;
+    Panel panel;Panel*pConInfo;
+    struct {bool recontact;}config;
+    struct {bool ams,amf;}tray;
+    struct {int arl;}stage;
+    bool bLocal,red;int resultSaveStep;AnsiString displayed;
+    Sequence autoInspection;
+    Edit eqHost,eqPort,plcHost,pcPort,plcPort;
+    Edit *editPRECHARGERIPAddress,*editPRECHARGERPort,*editIROCVIPAddress,*editIROCVPort;
+    Edit *editPLCIPAddress,*editPLCPortPC,*editPLCPortPLC;
+    AnsiString PLC_IPADDRESS,remainMsg;int PLC_PCPORT,PLC_PLCPORT,rxCount;
+    std::queue<std::string>rxq,q_cmd,q_param;std::vector<unsigned char>dataBuffer;
+    struct {int tx_mode;}send;
+    TTotalForm():Client(&client),ReContactTimer(&retry),Timer_PLCConnect(&plcTimer),pConInfo(&panel),
+        bLocal(true),red(false),resultSaveStep(RESULT_IDLE),editPRECHARGERIPAddress(&eqHost),editPRECHARGERPort(&eqPort),
+        editIROCVIPAddress(&eqHost),editIROCVPort(&eqPort),editPLCIPAddress(&plcHost),editPLCPortPC(&pcPort),editPLCPortPLC(&plcPort) {
+        config.recontact=true;tray.ams=false;tray.amf=false;stage.arl=nLocal;
+        eqHost.Text="192.0.2.1";eqPort.Text="45000";plcHost.Text="192.0.2.2";pcPort.Text="5007";plcPort.Text="5008";
+    }
+    void DisplayError(AnsiString s,bool b=false){displayed=s;red=b;}
+    bool __fastcall CheckManualInspectionError();
+    bool __fastcall ValidateConnectionSettings(bool,bool);
+    void __fastcall ApplyConnectionSettings(bool,bool);
+    void __fastcall ProcessEquipmentReconnect(TObject*);
+    void __fastcall btnConnectIROCVClick(TObject*);void __fastcall btnConnectPRECHARGERClick(TObject*);
+    void __fastcall btnDisConnectIROCVClick(TObject*);void __fastcall btnDisconnPRECHARGERClick(TObject*);
+    void __fastcall btnConnectPLCClick(TObject*);void __fastcall Timer_PLCConnectTimer(TObject*);
+};
+@@METHODS@@
+int checks=0;
+#define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
+void ManualTests(){
+    TTotalForm f;
+    // Active=true means opening, not established.
+    f.Client->Active=true;CHECK(f.CheckManualInspectionError());CHECK(f.red && f.displayed.s.find("Connection Fail")!=std::string::npos);
+    f.Client->Online();Mod_PLC->pc.Online();Mod_PLC->plc.Online();
+    Mod_PLC->pc.Close();CHECK(f.CheckManualInspectionError());CHECK(f.displayed=="PLC - PC Connection Fail.");
+    Mod_PLC->pc.Online();Mod_PLC->plc.Close();CHECK(f.CheckManualInspectionError());CHECK(f.displayed=="PLC - PC Connection Fail.");
+    Mod_PLC->plc.Online();Mod_PLC->error=1;CHECK(f.CheckManualInspectionError());CHECK(f.displayed=="PLC - Error!!");
+    Mod_PLC->error=0;CHECK(f.CheckManualInspectionError());CHECK(f.red && f.displayed.s.find("not in AutoMode")!=std::string::npos);
+    Mod_PLC->ready=1;CHECK(!f.CheckManualInspectionError());CHECK(!f.red && f.displayed.IsEmpty());
+    f.resultSaveStep=RESULT_ERROR;f.displayed="Keep result save error";CHECK(f.CheckManualInspectionError());CHECK(f.displayed=="Keep result save error");
+    f.resultSaveStep=RESULT_IDLE;f.autoInspection.step=STEP_ERROR_STOP;CHECK(f.CheckManualInspectionError());CHECK(f.displayed=="Keep result save error");
+    Mod_PLC->Disconnect();
+}
+void SettingsTests(){
+    TTotalForm f;
+    f.ApplyConnectionSettings(true,true);
+    CHECK(f.Client->Host=="192.0.2.1" && f.Client->Port==45000 && f.client.opens==1);
+    CHECK(Mod_PLC->plc.Address=="192.0.2.2" && Mod_PLC->plc.Port==5008 && Mod_PLC->pc.Port==5007);
+    f.Client->Online();Mod_PLC->pc.Online();Mod_PLC->plc.Online();
+    int c=f.client.closes,p=Mod_PLC->pc.closes,l=Mod_PLC->plc.closes;
+    f.ApplyConnectionSettings(true,true);CHECK(f.client.closes==c && Mod_PLC->pc.closes==p && Mod_PLC->plc.closes==l);
+    f.eqHost.Text="192.0.2.3";f.eqPort.Text="46000";f.rxq.push("old");f.q_cmd.push("old");f.q_param.push("old");f.dataBuffer.push_back(1);
+    f.ApplyConnectionSettings(true,true);
+    CHECK(f.Client->Host=="192.0.2.3" && f.Client->Port==46000 && f.client.closes==c+1);
+    CHECK(f.rxq.empty());CHECK(Mod_PLC->pc.closes==p && Mod_PLC->plc.closes==l);
+    f.Client->Online();f.plcHost.Text="192.0.2.4";f.pcPort.Text="6007";f.plcPort.Text="6008";
+    f.ApplyConnectionSettings(true,true);
+    CHECK(Mod_PLC->pc.Address=="192.0.2.4" && Mod_PLC->plc.Port==6008 && Mod_PLC->pc.Port==6007);
+    CHECK(Mod_PLC->pc.closes==p+1 && Mod_PLC->plc.closes==l+1);
+    CHECK(f.client.closes==c+1); // PLC-only edit does not drop equipment.
+    Mod_PLC->pc.Online();Mod_PLC->plc.Online();Mod_PLC->pc.Close();
+    int opens=Mod_PLC->pc.opens;f.ApplyConnectionSettings(false,true);CHECK(Mod_PLC->pc.opens==opens+1 && Mod_PLC->plc.closes==l+1);
+    f.eqPort.Text="bad";CHECK(!f.ValidateConnectionSettings(true,true));f.ApplyConnectionSettings(true,false);CHECK(f.Client->Port==46000);
+    f.eqPort.Text="65536";CHECK(!f.ValidateConnectionSettings(true,false));f.eqPort.Text="0";CHECK(!f.ValidateConnectionSettings(true,false));
+    f.eqPort.Text="46000";f.eqHost.Text=" ";CHECK(!f.ValidateConnectionSettings(true,false));f.eqHost.Text="192.0.2.3";
+    f.pcPort.Text="-1";CHECK(!f.ValidateConnectionSettings(false,true));f.pcPort.Text="6007";
+    f.tray.ams=true;f.eqHost.Text="192.0.2.8";CHECK(!f.ValidateConnectionSettings(true,false));f.ApplyConnectionSettings(true,false);CHECK(f.Client->Host=="192.0.2.3");
+    f.eqHost.Text="192.0.2.3";CHECK(f.ValidateConnectionSettings(true,false)); // Same-address recovery allowed.
+    f.tray.ams=false;f.resultSaveStep=RESULT_WAIT_PLC_SEND;f.eqHost.Text="192.0.2.9";CHECK(!f.ValidateConnectionSettings(true,false));
+    f.resultSaveStep=RESULT_IDLE;f.autoInspection.step=STEP_BUSY;CHECK(!f.ValidateConnectionSettings(true,false));f.autoInspection.step=STEP_WAIT_TRAY_IN;
+#ifdef TEST_IROCV
+    f.btnConnectIROCVClick(&f);CHECK(f.Client->Host=="192.0.2.9");f.btnDisConnectIROCVClick(&f);
+#else
+    f.btnConnectPRECHARGERClick(&f);CHECK(f.Client->Host=="192.0.2.9");f.btnDisconnPRECHARGERClick(&f);
+#endif
+    CHECK(!f.config.recontact && !f.Client->Active && !f.retry.Enabled);
+    opens=f.client.opens;f.ProcessEquipmentReconnect(&f);CHECK(f.client.opens==opens);
+    f.config.recontact=true;f.client.failOpen=true;f.ProcessEquipmentReconnect(&f);CHECK(f.retry.Enabled && !f.Client->Active);
+    f.client.failOpen=false;f.ProcessEquipmentReconnect(&f);CHECK(f.Client->Active && !f.retry.Enabled);
+    Mod_PLC->pcRetry.Enabled=true;Mod_PLC->plcRetry.Enabled=true;Mod_PLC->Disconnect();
+    Mod_PLC->ClientSocket_PCDisconnect(0,&Mod_PLC->pc.socket);Mod_PLC->ClientSocket_PLCDisconnect(0,&Mod_PLC->plc.socket);
+    CHECK(Mod_PLC->bClose && !Mod_PLC->pcRetry.Enabled && !Mod_PLC->plcRetry.Enabled);
+    opens=Mod_PLC->pc.opens;Mod_PLC->Timer_PC_AutoConnectTimer(0);CHECK(Mod_PLC->pc.opens==opens);
+    Mod_PLC->plc.failOpen=true;f.ApplyConnectionSettings(false,true);
+    CHECK(Mod_PLC->plcRetry.Enabled && Mod_PLC->pc.Active); // First path failure must not skip second path.
+    Mod_PLC->plc.failOpen=false;Mod_PLC->Timer_PLC_AutoConnectTimer(0);CHECK(Mod_PLC->plc.Active);
+    Mod_PLC->Disconnect();
+}
+int main(){ManualTests();SettingsTests();printf("PASS: %d manual-error/connection checks\n",checks);return 0;}

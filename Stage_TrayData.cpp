@@ -10,7 +10,7 @@
 
 //---------------------------------------------------------------------------
 // 새 트레이 검사 데이터 초기화: 문자열/숫자/배열과 수신 표시를 지운다. 투입 이후 화면은 공란이다.
-void __fastcall TTotalForm::InitTrayStruct()
+void __fastcall TTotalForm::InitializeTrayData()
 {
     // [CELL SERIAL 공통] 이전 결과 저장 대기를 취소하고 이번 트레이의 수신 방식을 확정한다.
     CancelResultSave();
@@ -39,7 +39,7 @@ void __fastcall TTotalForm::InitTrayStruct()
         tray.cell_serial[i] = "";
         tray.precharger[i] = "";
         tray.precharge_volt[i] = "";
-        tray.orginal_value[i] = 0;
+        tray.original_value[i] = 0;
         tray.after_value[i] = 0;
         tray.ocv_value[i] = 0;
         tray.Cali_value[i] = 0;
@@ -47,8 +47,8 @@ void __fastcall TTotalForm::InitTrayStruct()
     }
     memset(&retest, 0, sizeof(retest)); // REMEASURE는 숫자/bool 배열만 포함한다.
     retest.waitingChannel = -1;
-    measNgCount = 0;
-    InitCellDisplay();
+    measurementNgCount = 0;
+    InitializeCellDisplay();
 	this->WriteRemeasureInfo();
 
 	pWork->Visible = false;
@@ -76,7 +76,7 @@ void __fastcall TTotalForm::ApplyCellSerialReadMode()
 {
     cellSerialContinuousReadForTray = config.cell_serial_continuous_read;
     Mod_PLC->SetCellSerialContinuousRead(cellSerialContinuousReadForTray);
-    WritePLCLog("CELL SERIAL MODE", cellSerialContinuousReadForTray
+    WritePlcLog("CELL SERIAL MODE", cellSerialContinuousReadForTray
         ? "Continuous read / refresh before result save" : "TRAY IN capture / use saved serial");
 }
 

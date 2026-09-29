@@ -7,11 +7,12 @@
 #include "FormTotal.h"
 #include "CellJudgment.h"
 #include "RVMO_main.h"
+#include "ChannelLayout.h"
 
 
 //---------------------------------------------------------------------------
 // 모든 채널의 수신 표시를 해제한다. 시작 안내는 번호, 트레이 투입/측정 이후 초기화는 공란이다.
-void __fastcall TTotalForm::InitCellDisplay()
+void __fastcall TTotalForm::InitializeCellDisplay()
 {
 	for(int i=0; i<MAXCHANNEL; ++i){
         irValueReceived[i] = false;
@@ -23,25 +24,25 @@ void __fastcall TTotalForm::InitCellDisplay()
             if(showStartupChannelNumbers)
             {
                 irCaption = IntToStr(i + 1);
-                ocvCaption = IntToStr(i / LINECOUNT + 1) + "-" + IntToStr(i % LINECOUNT + 1);
+                ocvCaption = IntToStr(ChannelLayout::RowNumber(i)) + "-" + IntToStr(ChannelLayout::ColumnNumber(i));
             }
             MeasureInfoForm->DisplayIrValue(i, clLine, irCaption, false);
             MeasureInfoForm->DisplayOcvValue(i, clLine, ocvCaption, false);
 		}
 	}
 
-    MeasureInfoForm->initChart(10, 40, 1600, 4000);
+    MeasureInfoForm->InitializeChart(10, 40, 1600, 4000);
 }
 
 //---------------------------------------------------------------------------
 // 현재 트레이를 측정정보 창에 연결한다. 창을 다시 열어도 수신값/미수신 공란/시작 안내 상태를 유지한다.
-void __fastcall TTotalForm::InitMeasureForm()
+void __fastcall TTotalForm::InitializeMeasureForm()
 {
 
-	MeasureInfoForm->InitStruct();
+	MeasureInfoForm->InitializeDisplayData();
 	MeasureInfoForm->stage = this->Tag;
 	MeasureInfoForm->display.cell = tray.cell;	// cell 정보
-	MeasureInfoForm->display.orginal_value = tray.orginal_value;	// 보정전 값 - ir
+	MeasureInfoForm->display.original_value = tray.original_value;	// 보정전 값 - ir
 	MeasureInfoForm->display.after_value = tray.after_value;		// 보정후 값 - ir
 	MeasureInfoForm->display.ocv_value = tray.ocv_value;			// ocv
 	MeasureInfoForm->display.measure_result = tray.measure_result;	// ir 결과
@@ -57,200 +58,30 @@ void __fastcall TTotalForm::InitMeasureForm()
 }
 
 //---------------------------------------------------------------------------
-// 설비 배치 타입에 맞춰 메인 화면의 400채널 패널을 생성한다.
-void __fastcall TTotalForm::MakePanel(AnsiString type)
+// SiteConfig.h의 시작 모서리/번호 진행 방향으로 메인 채널 패널을 생성한다.
+void __fastcall TTotalForm::MakePanel()
 {
-	int nx, ny, nw, nh;
-
-	if(type == "3" || type == "4")
-	{
-        nh = (pBase->Height-21)/CELL_ROW_COUNT;
-		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
-		nx = pBase->Width - nw - 1;
-//		nx = 1;
-//		ny = pBase->Height - nh - 1;
-		ny = 1;
-
-//		nx = 2;
-//		ny = 308;
-//		nw = 26;
-//		nh = 19;
-
-		for(int index=0; index<MAXCHANNEL;){
-			panel[index] = new TPanel(this);
-			panel[index]->Parent = pBase;
-			panel[index]->Left =  nx;
-			panel[index]->Top = ny;
-			panel[index]->Width = nw;
-			panel[index]->Height = nh;
-
-			panel[index]->Color = pnormal1->Color;
-
-			panel[index]->BevelInner = bvNone;
-			panel[index]->BevelKind = bkNone;
-			panel[index]->BevelOuter = bvNone;
-			panel[index]->Tag = index;
-	//		panel[index]->Caption = index;
-
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
-			panel[index]->ShowHint = true;
-
-			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
-			panel[index]->OnMouseLeave =  ChInfoMouseLeave;
-
-			index += 1;
-//			nx = nx + nw + 1;
-			nx = nx - nw - 1;
-//			if(index % 2 == 0) nx += 1;
-			if(index % 2 == 0) nx -= 1;
-//			if(index % 10 == 0) nx += 1;
-			if(index % (LINECOUNT / 2) == 0) nx -= 1;
-			if(index % LINECOUNT == 0)
-			{
-//				ny = ny - nh - 1;
-				ny = ny + nh + 1;
-//				nx = 1;
-				nx = pBase->Width - nw - 1;
-//				if( (index / 20) % 10 == 0) ny -= 2;
-				if( (index / LINECOUNT) % (LINECOUNT / 2) == 0) ny += 2;
-			}
-		}
-	}
-	else if(type == "1")
-	{
-        nh = (pBase->Height-21)/CELL_ROW_COUNT;
-		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
-//		nx = pBase->Width - nw - 1;
-		nx = 1;
-		ny = pBase->Height - nh - 1;
-
-//		nh = 13;
-//		nw = 27;
-//		//nx = 421;
-//		nx = 2;
-//		ny = 225;
-
-		for(int index=0; index<MAXCHANNEL;){
-			panel[index] = new TPanel(this);
-			panel[index]->Parent = pBase;
-			panel[index]->Left =  nx;
-			panel[index]->Top = ny;
-			panel[index]->Width = nw;
-			panel[index]->Height = nh;
-
-			panel[index]->Color = pnormal1->Color;
-			panel[index]->ParentBackground = false;
-
-			panel[index]->BevelInner = bvNone;
-			panel[index]->BevelKind = bkNone;
-			panel[index]->BevelOuter = bvNone;
-			panel[index]->Tag = index;
-	//		panel[index]->Caption = index;
-
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
-			panel[index]->ShowHint = true;
-
-			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
-			panel[index]->OnMouseLeave =  ChInfoMouseLeave;
-
-			index += 1;
-			nx = nx + nw + 1;
-			if(index % 2 == 0) nx += 1;
-			if(index % (LINECOUNT / 2) == 0) nx += 1;
-			if(index % LINECOUNT == 0)
-			{
-				ny = ny - nh - 1;
-				nx = 1;
-				if( (index / LINECOUNT) % (LINECOUNT / 2) == 0) ny -= 2;
-			}
-		}
-	}
-    else if(type == "2")
-	{
-        nh = (pBase->Height-21)/CELL_ROW_COUNT;
-		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
-		nx = pBase->Width - nw - 1;
-		ny = pBase->Height - nh - 1;
-
-		for(int index = 0; index < MAXCHANNEL;){
-			panel[index] = new TPanel(this);
-			panel[index]->Parent = pBase;
-			panel[index]->Left =  nx;
-			panel[index]->Top = ny;
-			panel[index]->Width = nw;
-			panel[index]->Height = nh;
-
-			panel[index]->Color = pnormal1->Color;
-			panel[index]->ParentBackground = false;
-
-			panel[index]->BevelInner = bvNone;
-			panel[index]->BevelKind = bkNone;
-			panel[index]->BevelOuter = bvNone;
-			panel[index]->Tag = index;
-	//		panel[index]->Caption = index;
-
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
-			panel[index]->ShowHint = true;
-
-			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
-			panel[index]->OnMouseLeave =  ChInfoMouseLeave;
-
-			index += 1;
-			nx = nx - (nw + 1);
-			if(index % 2 == 0) nx -= 1;
-			if(index % (LINECOUNT / 2) == 0) nx -= 1;
-			if(index % LINECOUNT == 0)
-			{
-				ny = ny - nh - 1;
-				nx = pBase->Width - nw - 1;
-				if( (index / LINECOUNT) % (LINECOUNT / 2) == 0) ny -= 2;
-			}
-		}
-	}
-    else if(type == "5")
-	{
-        nh = (pBase->Height-21)/CELL_ROW_COUNT;
-		nw = (pBase->Width-21)/CELL_COLUMN_COUNT;
-		nx = pBase->Width - nw - 1;
-		ny = pBase->Height - nh - 1;
-
-		for(int index=0; index<MAXCHANNEL;){
-			panel[index] = new TPanel(this);
-			panel[index]->Parent = pBase;
-			panel[index]->Left =  nx;
-			panel[index]->Top = ny;
-			panel[index]->Width = nw;
-			panel[index]->Height = nh;
-
-			panel[index]->Color = pnormal1->Color;
-			panel[index]->ParentBackground = false;
-
-			panel[index]->BevelInner = bvNone;
-			panel[index]->BevelKind = bkNone;
-			panel[index]->BevelOuter = bvNone;
-			panel[index]->Tag = index;
-	//		panel[index]->Caption = index;
-
-			panel[index]->Hint = IntToStr(index+1) + " (" + IntToStr((index/CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
-			panel[index]->ShowHint = true;
-
-			panel[index]->OnMouseEnter =  ChInfoMouseEnter;
-			panel[index]->OnMouseLeave =  ChInfoMouseLeave;
-
-			index += 1;
-            ny = ny - nh - 1;
-
-			if(index % 40 == 0) nx -= 1;
-			if(index % 200 == 0) nx -= 1;
-            if(index % 10 == 0) ny -= 2;
-			if(index % LINECOUNT == 0)
-			{
-				ny = pBase->Height - nh - 1;
-                nx = nx - (nw + 1);
-				//nx = pBase->Width - nw - 1;
-			}
-		}
-	}
+    // 메인/상세 화면에 동일 배치를 적용한다. Tag/배열 첨자는 PLC의 원래 채널 순서를 유지한다.
+    for(int index = 0; index < MAXCHANNEL; ++index)
+    {
+        const ChannelLayout::Rect r = ChannelLayout::ForChannel(
+            index, pBase->ClientWidth, pBase->ClientHeight, false);
+        panel[index] = new TPanel(this);
+        panel[index]->Parent = pBase;
+        panel[index]->SetBounds(r.left, r.top, r.width, r.height);
+        panel[index]->Color = pnormal1->Color;
+        panel[index]->ParentBackground = false;
+        panel[index]->BevelInner = bvNone;
+        panel[index]->BevelKind = bkNone;
+        panel[index]->BevelOuter = bvNone;
+        panel[index]->Tag = index;
+        panel[index]->Hint = IntToStr(index + 1) + " (" +
+            IntToStr(ChannelLayout::RowNumber(index)) + "-" +
+            IntToStr(ChannelLayout::ColumnNumber(index)) + ")";
+        panel[index]->ShowHint = true;
+        panel[index]->OnMouseEnter = ChInfoMouseEnter;
+        panel[index]->OnMouseLeave = ChInfoMouseLeave;
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -264,7 +95,7 @@ void __fastcall TTotalForm::UpdateCellDisplay(int index)
     if(showStartupChannelNumbers)
     {
         sir = IntToStr(index + 1);
-        socv = IntToStr(index / CELL_COLUMN_COUNT + 1) + "-" + IntToStr(index % CELL_COLUMN_COUNT + 1);
+        socv = IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index));
     }
     const bool hasIr = irValueReceived[index], hasOcv = ocvValueReceived[index];
     if(tray.cell[index] == 1)

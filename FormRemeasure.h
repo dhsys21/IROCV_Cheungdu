@@ -92,8 +92,7 @@ __published:	// IDE-managed Components
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
     void __fastcall ChInfoMouseClick(TObject *Sender);
 private:	// User declarations
-	void __fastcall DrawChannelTitle(AnsiString type);
-	void __fastcall MakePanel(AnsiString type);
+	void __fastcall MakePanel();
 	void __fastcall MakeUIPanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);
 	void __fastcall SetUIOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);

@@ -24,6 +24,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	senCnt = 0;
 	CurrentGrp = GrpMain;
 	sock = NULL;
+    config.recontact = true;
 
 	clNoCell = cl_no->Color;
 	clBadIr = cl_badir->Color;
@@ -37,10 +38,13 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	//BaseImage->AutoSize = true;
 
 //	LocalRemeasure = false;
-	MakePanel(BaseForm->lblLineNo->Caption);
+	MakePanel();
 //	this->ScaleBy(60,100);
     isAutoInspectionProcessing = false;
     config.cell_serial_continuous_read = false;
+    autoInspectionBlockedByPlc = true;
+    lastPlcAutoResetVersion = 0;
+    Timer_AutoInspection->Enabled = false;
     cellSerialContinuousReadForTray = false;
     resultSaveStep = RESULT_IDLE;
     resultSaveStartTime = 0;
@@ -49,7 +53,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
     config.probeRemeasureCount = 0;
     config.closedProbeRemeasureMaxNgCount = DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT;
     tray.ams = false; // 설정을 처음 읽을 때 진행 중인 측정으로 오인하지 않게 한다.
-    measNgCount = 0;
+    measurementNgCount = 0;
     showStartupChannelNumbers = true;
     memset(irValueReceived, 0, sizeof(irValueReceived));
     memset(ocvValueReceived, 0, sizeof(ocvValueReceived));
@@ -90,7 +94,7 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
 	bLocal = false;
 
 	ReadSystemInfo();
-	ReadchannelMapping();
+	ReadChannelMapping();
 
 
 	Timer_PLCConnect->Enabled = true;
@@ -104,13 +108,13 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
     pnlConfig->Width = 600;
     pnlConfig->Height = 644; // [CELL SERIAL 공통] 수신 방식 설정 영역 포함.
 
-	this->ReadCaliboffset();                      //20171202 개별보정을 위해 추가
+	this->ReadCalibrationOffsets();                      //20171202 개별보정을 위해 추가
 
 	OldPLCStatus = "";
 	PLCStatus = "";
 	OldErrorCheckStatus = "";
 
-    Initialization();
+    InitializeInspection();
 	btnMeasureInfoClick(this);
 
     //* 임시
@@ -131,12 +135,14 @@ void __fastcall TTotalForm::FormClose(TObject *Sender, TCloseAction &Action)
 //===========================================================================
 void __fastcall TTotalForm::btnSaveConfigClick(TObject *Sender)
 {
+    if(!ValidateConnectionSettings(true, true)) return;
     UnicodeString msg = Form_Language->msgSaveConfig;
     if(MessageBox(Handle, msg.c_str(), L"SAVE", MB_YESNO|MB_ICONQUESTION) == ID_YES){
 	//if(MessageBox(Handle, L"Are you sure you want to save?", L"SAVE", MB_YESNO|MB_ICONQUESTION) == ID_YES){
 		WriteSystemInfo();
 		WriteRemeasureInfo();
         ReadSystemInfo();
+                ApplyConnectionSettings(true, true);
 		pnlConfig->Visible = false;
 	}
 }
@@ -162,7 +168,7 @@ void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
 void __fastcall TTotalForm::localTestClick(TObject *Sender)
 {
 	MeasureInfoForm->display.arl = nLocal;
-	InitMeasureForm();
+	InitializeMeasureForm();
 	MeasureInfoForm->pLocal->Visible = true;
 	bLocal = true;
 }
@@ -186,7 +192,7 @@ void __fastcall TTotalForm::RemeasureBtnClick(TObject *Sender)
 void __fastcall TTotalForm::TrayOutBtnClick(TObject *Sender)
 {
     ForceTrayOut();
-    VisibleBox(GrpMain);
+    ShowPanelGroup(GrpMain);
 }
 //---------------------------------------------------------------------------
 
@@ -200,7 +206,7 @@ void __fastcall TTotalForm::AlarmConfirmBtnClick(TObject *Sender)
 void __fastcall TTotalForm::btnTrayOutClick(TObject *Sender)
 {
 	if(MessageBox(Handle, L"Are you sure you want to eject the tray?", L"", MB_YESNO|MB_ICONQUESTION) == ID_YES){
-        ManualTrayOut();
+        ProcessManualTrayOut();
 	}
 }
 //---------------------------------------------------------------------------
@@ -309,10 +315,10 @@ void __fastcall TTotalForm::MainBtnClick(TObject *Sender)
 {
 	switch(stage.arl){
 		case nAuto:
-			VisibleBox(GrpMain);
+			ShowPanelGroup(GrpMain);
 			break;
 		case nLocal:
-			VisibleBox(GrpLocal);
+			ShowPanelGroup(GrpLocal);
 			break;
 	}
 }
@@ -334,8 +340,8 @@ void __fastcall TTotalForm::btnManualClick(TObject *Sender)
 	stage.arl_reserve = nLocal;
 	stage.arl = nLocal;
 //    Timer_AutoInspection->Enabled = false;
-	this->CmdManualMod(true);
-	VisibleBox(GrpLocal);
+	this->CmdSetManualMode(true);
+	ShowPanelGroup(GrpLocal);
 }
 //---------------------------------------------------------------------------
 
@@ -346,8 +352,8 @@ void __fastcall TTotalForm::btnAutoClick(TObject *Sender)
 	bLocal = false;
 //    Timer_AutoInspection->Enabled = false;
     MeasureInfoForm->pLocal->Visible = false;
-	this->CmdManualMod(false);
-	VisibleBox(GrpMain);
+	this->CmdSetManualMode(false);
+	ShowPanelGroup(GrpMain);
 }
 //---------------------------------------------------------------------------
 
@@ -359,7 +365,7 @@ void __fastcall TTotalForm::btnMeasureInfoClick(TObject *Sender)
     MeasureInfoForm->Left = 640;
     MeasureInfoForm->Top = 85;
     // 수신한 값은 유지하고, 미수신 항목은 채널/위치 번호를 표시한다.
-    InitMeasureForm();
+    InitializeMeasureForm();
 }
 //---------------------------------------------------------------------------
 
@@ -410,7 +416,7 @@ void __fastcall TTotalForm::localCaliClick(TObject *Sender)
     CaliForm->WindowState = wsNormal;
 	CaliForm->BringToFront();
 
-    CaliForm->ReadCaliboffset();
+    CaliForm->ReadCalibrationOffsets();
 }
 //---------------------------------------------------------------------------
 
@@ -426,45 +432,35 @@ void __fastcall TTotalForm::btnCloseConnConfigClick(TObject *Sender)
 //===========================================================================
 void __fastcall TTotalForm::btnConnectPLCClick(TObject *Sender)
 {
-    WriteSystemInfo();
-    ReadSystemInfo();
-	Mod_PLC->Connect(PLC_IPADDRESS, PLC_PLCPORT, PLC_PCPORT);
+    // 다른 설정을 저장하거나 설비 소켓을 건드리지 않고 PLC 입력값만 즉시 적용한다.
+    ApplyConnectionSettings(false, true);
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnDisConnectPLCClick(TObject *Sender)
 {
-    Mod_PLC->DisConnect();
+    Mod_PLC->Disconnect();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::Timer_PLCConnectTimer(TObject *Sender)
 {
-    if(Mod_PLC->ClientSocket_PC->Active == false && Mod_PLC->ClientSocket_PLC->Active == false)
-		Mod_PLC->Connect(PLC_IPADDRESS, PLC_PLCPORT, PLC_PCPORT);
     Timer_PLCConnect->Enabled = false;
+    ApplyConnectionSettings(false, true);
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnConnectIROCVClick(TObject *Sender)
 {
-    if(Client->Active == false){
-		config.recontact = true;
-		this->ReContactTimerTimer(ReContactTimer);
-	}
-	else{
-			Client->Active = false;
-			config.recontact = true;
-			this->ReContactTimerTimer(ReContactTimer);
-	}
+    ApplyConnectionSettings(true, false);
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TTotalForm::btnDisConnectIROCVClick(TObject *Sender)
 {
+    config.recontact = false;
+    ReContactTimer->Enabled = false;
     Client->Active = false;
-    config.recontact = true;
-    this->ReContactTimerTimer(ReContactTimer);
 }
 //---------------------------------------------------------------------------
 
@@ -474,7 +470,7 @@ void __fastcall TTotalForm::btnDisConnectIROCVClick(TObject *Sender)
 void __fastcall TTotalForm::Button1Click(TObject *Sender)
 {
 	SetRemeasureList();
-    CmdTrayOut();
+    ProcessAutoTrayOut();
 }
 //---------------------------------------------------------------------------
 
@@ -493,7 +489,7 @@ void __fastcall TTotalForm::pReadyClick(TObject *Sender)
 void __fastcall TTotalForm::rbSpeedFastClick(TObject *Sender)
 {
     TRadioButton *rb = (TRadioButton*)Sender;
-    CmdSpeedSet(rb->Tag);
+    CmdSetSpeed(rb->Tag);
 }
 //---------------------------------------------------------------------------
 

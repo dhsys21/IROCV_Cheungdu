@@ -5,6 +5,7 @@
 
 #include "FormMeasureInfo.h"
 #include "RVMO_main.h"
+#include "ChannelLayout.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "AdvSmoothButton"
@@ -30,234 +31,74 @@ void __fastcall TMeasureInfoForm::FormShow(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TMeasureInfoForm::InitStruct()
+void __fastcall TMeasureInfoForm::InitializeDisplayData()
 {
 	memset(&display, 0, sizeof(display));
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::FormCreate(TObject *Sender)
 {
-	MakeUIPanel(BaseForm->lblLineNo->Caption);
-	MakePanel(BaseForm->lblLineNo->Caption);
+	MakeUIPanel();
+	MakePanel();
 
-	initChart(10, 40, 1600, 4200);
+	InitializeChart(10, 40, 1600, 4200);
 
 //	this->ScaleBy(75,100);
 }
 //---------------------------------------------------------------------------
-void __fastcall TMeasureInfoForm::MakePanel(AnsiString type)
+void __fastcall TMeasureInfoForm::MakePanel()
 {
-	int nx, ny, nw, nh;
-
-	if(type == "3" || type == "4")
-	{
-		nw = Panel2->Width/22;
-		nh = Panel2->Height/22/2;
-		nx = Panel2->Width - (nw+2);
-		ny = nh*2+5;
-
-		for(int index=0; index<MAXCHANNEL;){
-			pir[index] = new TPanel(this);
-			pocv[index] = new TPanel(this);
-
-			SetOption(pir[index], nx, ny, nw, nh-1, index);
-			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
-			pocv[index]->Color = pnormal2->Color;
-			pocv[index]->ParentBackground = false;
-			pir[index]->ParentBackground = false;
-
-			index += 1;
-			nx -= (nw + 1);
-			if(index % 2 == 0) nx -= 2;
-			if(index % (LINECOUNT / 2) == 0) nx -= 2;
-			if(index % LINECOUNT == 0)
-			{
-				ny += (nh+1)*2+1;
-				nx = Panel2->Width - (nw+2);
-				if( (index / LINECOUNT) % (LINECOUNT / 2) == 0) ny += 2;
-			}
-		}
-	}
-    //* 왼쪽 아래가 1번. 오른쪽 방향으로 1 -> 20
-	else if(type == "1")
-	{
-		nw = Panel35->Width*0.8;
-		nh = Panel2->Height/22/2;
-		nx = pUIx[0]->Left;
-		//ny = Panel2->Height - nh*2 - 5;
-		ny = pUIy[0]->Top;
-
-		for(int index=0; index<MAXCHANNEL;){
-			pir[index] = new TPanel(this);
-			pocv[index] = new TPanel(this);
-
-			SetOption(pir[index], nx, ny, nw, nh-1, index);
-			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
-			pocv[index]->Color = pnormal2->Color;
-			pocv[index]->ParentBackground = false;
-			pir[index]->ParentBackground = false;
-
-			index += 1;
-			nx = nx + (nw + 1);
-			if(index % 2 == 0) nx += 1;
-			if(index % (LINECOUNT / 2) == 0) nx += 1;
-			if(index % LINECOUNT == 0)
-			{
-				ny = ny - nh - nh - 2;
-				nx = nx = pUIx[0]->Left;
-				if( (index / LINECOUNT) % (LINECOUNT / 2) == 0) ny -= 2;
-			}
-		}
-    }
-    //* 오른쪽 아래가 1번. 왼쪽 방향으로 20 <- 1
-    else if(type == "2")
-	{
-		nw = Panel35->Width*0.8;
-		nh = Panel2->Height/22/2;
-		nx = pUIx[0]->Left;
-		//ny = Panel2->Height - nh*2 - 5;
-		ny = pUIy[0]->Top;
-
-		for(int index=0; index<MAXCHANNEL;){
-			pir[index] = new TPanel(this);
-			pocv[index] = new TPanel(this);
-
-			SetOption(pir[index], nx, ny, nw, nh-1, index);
-			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
-			pocv[index]->Color = pnormal2->Color;
-			pocv[index]->ParentBackground = false;
-			pir[index]->ParentBackground = false;
-
-			index += 1;
-			nx = nx - (nw + 1);
-			if(index % 2 == 0) nx -= 1;
-			if(index % (LINECOUNT / 2) == 0) nx -= 1;
-			if(index % LINECOUNT == 0)
-			{
-				ny = ny - nh - nh - 2;
-				nx = pUIx[0]->Left;
-				if( (index / LINECOUNT) % (LINECOUNT / 2) == 0) ny -= 2;
-			}
-		}
-    }
-    //* 오른쪽 아래가 1번. 위쪽 방향으로 20 <- 1
-    else if(type == "5")
-	{
-		nw = Panel35->Width*0.8;
-		nh = Panel2->Height/22/2;
-		nx = pUIx[0]->Left;
-		ny = pUIy[0]->Top;
-
-		for(int index = 0; index < MAXCHANNEL;){
-			pir[index] = new TPanel(this);
-			pocv[index] = new TPanel(this);
-
-			SetOption(pir[index], nx, ny, nw, nh-1, index);
-			SetOption(pocv[index], nx, ny+nh, nw, nh, index);
-			pocv[index]->Caption = IntToStr((index/LINECOUNT)+1) + "-" + IntToStr(index % LINECOUNT + 1);
-			pocv[index]->Color = pnormal2->Color;
-			pocv[index]->ParentBackground = false;
-			pir[index]->ParentBackground = false;
-
-			index += 1;
-            ny = ny - nh - nh - 2;
-			if(index % 40 == 0) nx -= 1;
-			if(index % 200 == 0) nx -= 1;
-            if(index % 10 == 0) ny -= 2;
-			if(index % LINECOUNT == 0)
-			{
-                ny = pUIy[0]->Top;
-                nx = nx - (nw + 1);
-			}
-		}
+    // 한 채널의 두 표시창은 같은 셀 안에 위/아래로 배치한다.
+    for(int index = 0; index < MAXCHANNEL; ++index)
+    {
+        const ChannelLayout::Rect r = ChannelLayout::ForChannel(
+            index, Panel2->ClientWidth, Panel2->ClientHeight, true);
+        const int upperHeight = (r.height - 1) / 2;
+        pir[index] = new TPanel(this);
+        pocv[index] = new TPanel(this);
+        SetOption(pir[index], r.left, r.top, r.width, upperHeight, index);
+        SetOption(pocv[index], r.left, r.top + upperHeight + 1,
+            r.width, r.height - upperHeight - 1, index);
+        pocv[index]->Caption = IntToStr(ChannelLayout::RowNumber(index)) + "-" +
+            IntToStr(ChannelLayout::ColumnNumber(index));
+        pocv[index]->Color = pnormal2->Color;
+        pir[index]->ParentBackground = false;
+        pocv[index]->ParentBackground = false;
     }
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-void __fastcall TMeasureInfoForm::MakeUIPanel(AnsiString type)
+void __fastcall TMeasureInfoForm::MakeUIPanel()
 {
-	int nx, ny, nw, nh;
-
-	//nw = Panel2->Width/22;
-	//nh = Panel2->Height/22 + 1;
-    nw = Panel35->Width*0.8;
-	nh = Panel35->Height*0.8+1;
-
-    clir->Width = nw;
-	clocv->Width = nw;
-	clir->Height = nh/2;
-	clocv->Height = nh/2-1;
-
-	clir->Top = 2;
-	clocv->Top = clir->Height +4;
-
-    if(type == "1"){
-        ny = Panel2->Height - (nh) ;
-        nx = nw + 5;
-
-        for(int index=0; index<LINECOUNT;){
-            pUIx[index] = new TPanel(this);
-            pUIy[index] = new TPanel(this);
-
-            SetUIOption(pUIx[index], nx, Panel35->Top, nw, nh, index);
-            SetUIOption(pUIy[index], Panel35->Width-nw-9, ny-1, nw, nh, index);
-            pUIx[index]->ParentBackground = false;
-            pUIy[index]->ParentBackground = false;
-
-            index ++;
-            nx += (nw+1);
-            if(index % 2 == 0) nx += 1;
-            if(index % (LINECOUNT / 2) == 0) nx += 1;
-            ny -= (nh+1);
-            if( index % (LINECOUNT / 2) == 0) ny -= 2;
-        }
+    // DFM에 남은 16채널 기준 제목은 숨기고, 실제 행/열 수로 축 제목을 생성한다.
+    for(int i = 0; i < Panel2->ControlCount; ++i)
+        Panel2->Controls[i]->Visible = false;
+    Panel2->Caption = "";
+    const int width = Panel2->ClientWidth;
+    const int height = Panel2->ClientHeight;
+    // 배열 번호=안내 번호-1. 제목 위치와 채널 위치는 동일한 시작 모서리를 사용한다.
+    for(int column = 0; column < CELL_COLUMN_COUNT; ++column)
+    {
+        const ChannelLayout::Rect r = ChannelLayout::ColumnTitle(column, width, height);
+        pUIx[column] = new TPanel(this);
+        SetUIOption(pUIx[column], r.left, r.top, r.width, r.height, column);
+        pUIx[column]->Caption = column + 1;
     }
-    else if(type == "2"){
-        ny = Panel2->Height - (nh) ;
-        nx = Panel2->Width - (nw + 2);
-
-        for(int index=0; index<LINECOUNT;){
-            pUIx[index] = new TPanel(this);
-            pUIy[index] = new TPanel(this);
-
-            SetUIOption(pUIx[index], nx, Panel35->Top, nw, nh, index);
-            SetUIOption(pUIy[index], Panel35->Width-nw-9, ny-1, nw, nh, index);
-            pUIx[index]->ParentBackground = false;
-            pUIy[index]->ParentBackground = false;
-
-            index ++;
-            nx -= (nw+1);
-            //if(index % 2 == 0) nx -= 1;
-            if(index % (LINECOUNT / 2) == 0) nx -= 1;
-            ny -= (nh+1);
-            if( index % (LINECOUNT / 2) == 0) ny -= 2;
-        }
+    for(int row = 0; row < CELL_ROW_COUNT; ++row)
+    {
+        const ChannelLayout::Rect r = ChannelLayout::RowTitle(row, width, height);
+        pUIy[row] = new TPanel(this);
+        SetUIOption(pUIy[row], r.left, r.top, r.width, r.height, row);
+        pUIy[row]->Caption = row + 1;
     }
-    else if(type == "5"){
-        ny = Panel2->Height - (nh) ;
-        nx = Panel2->Width - (nw + 2);
-
-        for(int index = 0; index < LINECOUNT;){
-            pUIx[index] = new TPanel(this);
-            pUIy[index] = new TPanel(this);
-
-            SetUIOption(pUIx[index], nx, Panel35->Top, nw, nh, index);
-            pUIx[index]->Caption = (index * CELL_COLUMN_COUNT + 1);
-            SetUIOption(pUIy[index], Panel35->Width-nw-9, ny-1, nw, nh, index);
-            pUIx[index]->ParentBackground = false;
-            pUIy[index]->ParentBackground = false;
-
-            index ++;
-            nx -= (nw+1);
-            if(index % 2 == 0) nx -= 1;
-            if(index % (LINECOUNT / 2) == 0) nx -= 1;
-            ny -= (nh+1);
-            if( index % (LINECOUNT / 2) == 0) ny -= 2;
-        }
-    }
+    // 측정값/보조값 범례도 두 안내 축이 만나는 모서리로 이동한다.
+    const ChannelLayout::Rect corner = ChannelLayout::AxisCorner(width, height);
+    const int legendHeight = (corner.height - 1) / 2;
+    clir->SetBounds(corner.left, corner.top, corner.width, legendHeight);
+    clocv->SetBounds(corner.left, corner.top + legendHeight + 1,
+        corner.width, corner.height - legendHeight - 1);
+    clir->Visible = true;
+    clocv->Visible = true;
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index)
@@ -282,7 +123,7 @@ void __fastcall TMeasureInfoForm::SetOption(TPanel *pnl, int nx, int ny, int nw,
 	pnl->BevelOuter = bvNone;
 	pnl->Tag = index;
 //	pnl->Hint = "채널 : " + IntToStr(index+1) + "(" + IntToStr((index%16)+1) + "-" + IntToStr((index+16)/16)+ ")";
-	pnl->Hint = "CH : " + IntToStr(index+1) + "(" + IntToStr((index/LINECOUNT)+1) + "-" + IntToStr((index%LINECOUNT)+1) + ")";
+	pnl->Hint = "CH : " + IntToStr(index + 1) + " (" + IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index)) + ")";
 	pnl->ShowHint = true;
 	pnl->Caption = index+1;
 }
@@ -393,14 +234,14 @@ void __fastcall TMeasureInfoForm::btnOcvClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::btnInitClick(TObject *Sender)
 {
-	BaseForm->nForm[stage]->OnInit();
+	BaseForm->nForm[stage]->ResetMeasurementData();
 }
 //---------------------------------------------------------------------------
-void __fastcall TMeasureInfoForm::btnAutoClick(TObject *Sender)
+void __fastcall TMeasureInfoForm::btnStartManualInspectionClick(TObject *Sender)
 {
-	BaseForm->nForm[stage]->InitTrayStruct();
+	BaseForm->nForm[stage]->InitializeTrayData();
 	//BaseForm->nForm[stage]->CmdDeviceInfo();
-	BaseForm->nForm[stage]->CmdAutoTest();
+	BaseForm->nForm[stage]->CmdStartMeasurement();
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::btnStopClick(TObject *Sender)
@@ -434,7 +275,7 @@ void __fastcall TMeasureInfoForm::ChInfoMouseEnter(TObject *Sender)
 	index = pnl->Tag;
 	pch->Caption = index + 1;
 //	ppos->Caption = IntToStr((index%16)+1) + "-" + IntToStr((index+16)/16);
-	ppos->Caption = IntToStr((index+LINECOUNT)/LINECOUNT) + "-" + IntToStr((index%LINECOUNT)+1);
+	ppos->Caption = IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index));
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::ChInfoMouseLeave(TObject *Sender)
@@ -472,7 +313,7 @@ void __fastcall TMeasureInfoForm::Panel19Click(TObject *Sender)
 {
 	for(int i = 0; i < MAXCHANNEL; ++i){
 		pir[i]->Caption = IntToStr(i+1);
-		pocv[i]->Caption = IntToStr((i+LINECOUNT)/LINECOUNT) + "-" + IntToStr((i%LINECOUNT)+1);
+		pocv[i]->Caption = IntToStr(ChannelLayout::RowNumber(i)) + "-" + IntToStr(ChannelLayout::ColumnNumber(i));
 	}
 }
 
@@ -493,14 +334,14 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 			{
                 Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
 				Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
-				BaseForm->nForm[stage]->OnInit();
+				BaseForm->nForm[stage]->ResetMeasurementData();
 				nStep = 1;
 			}
 			break;
 		case 1:
 			if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE)){
 				Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
-				BaseForm->nForm[stage]->CmdAutoTest();     // ams -> amf -> if cell-error (< 10) then auto-remeasure
+				BaseForm->nForm[stage]->CmdStartMeasurement();     // ams -> amf -> if cell-error (< 10) then auto-remeasure
 				nStep = 2;
 			}
 			else
@@ -545,7 +386,7 @@ void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 	nStep = 0;
 	msaCount = 0;
 //	msaFN = Now().FormatString("yymmddhhnnss");
-//	BaseForm->nForm[stage]->Initialization();
+//	BaseForm->nForm[stage]->InitializeInspection();
 	MSA_COUNT_CHECK->Caption = "1/"+ Edit1->Text;
 	//msaTimer->Enabled = true;
 
@@ -556,7 +397,7 @@ void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 	msaFN = dir + Now().FormatString("yymmddhhnnss") + ".csv";
 	msaReportFN = dir + Now().FormatString("yymmddhhnnss") + "_report.csv";
 
-	BaseForm->nForm[stage]->Initialization();
+	BaseForm->nForm[stage]->InitializeInspection();
 	msaTimer->Enabled = true;
 }
 //---------------------------------------------------------------------------
@@ -785,7 +626,7 @@ void __fastcall TMeasureInfoForm::advRemeasureTrayOutClick(TObject *Sender)
 //---------------------------------------------------------------------------
 // CHART
 //---------------------------------------------------------------------------
-void __fastcall TMeasureInfoForm::initChart(int ir_min, int ir_max, int ocv_min, int ocv_max)
+void __fastcall TMeasureInfoForm::InitializeChart(int ir_min, int ir_max, int ocv_min, int ocv_max)
 {
     for(int i=0; i<3; ++i){
 		IrChart->Series[i]->Clear();

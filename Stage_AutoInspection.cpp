@@ -44,26 +44,90 @@ TAutoInspectionSetting __fastcall TTotalForm::GetAutoInspectionSetting()
 void __fastcall TTotalForm::WriteAutoStepLog(TAutoInspectionStep previous, AnsiString reason)
 {
     if(previous == autoInspection.GetStep()) return;
-    WritePLCLog("AutoInspection",
+    WritePlcLog("AutoInspection",
         AnsiString(TAutoInspectionSequence::GetStepName(previous)) + " -> " +
         TAutoInspectionSequence::GetStepName(autoInspection.GetStep()) + " : " + reason);
 }
 
 //---------------------------------------------------------------------------
-// 자동측정 단계와 NG 개수를 초기화한다. PLC 출력과 트레이 데이터 초기화는 Initialization에서 한다.
+// 자동측정 단계와 NG 개수를 초기화한다. PLC 출력과 트레이 데이터 초기화는 InitializeInspection에서 한다.
 void __fastcall TTotalForm::ResetAutoInspection()
 {
     TAutoInspectionStep previous = autoInspection.GetStep();
     autoInspection.Initialize(GetAutoInspectionSetting());
-    measNgCount = 0;
+    measurementNgCount = 0;
     WriteAutoStepLog(previous, "Reset");
 }
+
+// 자동 타이머가 꺼져 있어도 상태 타이머에서 PLC 운전 모드를 감시한다.
+// PLC 수동/통신 해제 전환 시 한 번만 초기화하며, 자동 복귀는 TRAY IN 대기부터 시작한다.
+void __fastcall TTotalForm::UpdateAutoInspectionMode()
+{
+    const unsigned long version = Mod_PLC->plcAutoMode.GetResetVersion();
+    if(!(stage.arl == nAuto && !bLocal))
+    {
+        // PC manual/local tests retain independent measurement and result-save behavior.
+        Timer_AutoInspection->Enabled = false;
+        lastPlcAutoResetVersion = version;
+        autoInspectionBlockedByPlc = true;
+        return;
+    }
+
+    const bool plcAuto = Mod_PLC->IsPlcAutoMode();
+    const bool wasBlocked = autoInspectionBlockedByPlc;
+    if(version != lastPlcAutoResetVersion || (!plcAuto && !wasBlocked))
+    {
+        Timer_AutoInspection->Enabled = false;
+        ResetAutoInspectionForPlcMode();
+    }
+    lastPlcAutoResetVersion = version;
+    autoInspectionBlockedByPlc = !plcAuto;
+    Timer_AutoInspection->Enabled = plcAuto;
+
+    if(!plcAuto)
+        DisplayError("PLC manual or mode data unavailable. Automatic inspection is disabled.", true);
+    else if(wasBlocked)
+        DisplayError("");
+}
+//---------------------------------------------------------------------------
+bool __fastcall TTotalForm::IsAutoInspectionBlocked()
+{
+    UpdateAutoInspectionMode();
+    return (stage.arl == nAuto && !bLocal) && autoInspectionBlockedByPlc;
+}
+//---------------------------------------------------------------------------
+// 소프트웨어 시퀀스 초기화이며 물리적인 충전/측정 정지 명령은 보내지 않는다.
+// 기존 측정 표시값은 유지하되, 이전 검사에서 대기하던 결과 저장/COMPLETE는 취소한다.
+void __fastcall TTotalForm::ResetAutoInspectionForPlcMode()
+{
+    CancelResultSave();
+    ResetAutoInspection();
+    InitializePlcData();
+    autoInspectionTrayId = "";
+    tray.ams = false;
+    tray.amf = false;
+    // Discard commands and remeasure state belonging to the cancelled automatic cycle.
+    send.tx_mode = 0;
+    send.time_out = 0;
+    while(!q_cmd.empty()) q_cmd.pop();
+    while(!q_param.empty()) q_param.pop();
+    memset(&retest, 0, sizeof(retest));
+    retest.waitingChannel = -1;
+    // Only a new tray/manual measurement may set RESULT_IDLE and allow saving again.
+    WritePlcLog("PLC MODE", "Automatic cycle reset; next AUTO starts at WAIT_TRAY_IN");
+}
+//---------------------------------------------------------------------------
+
 
 //---------------------------------------------------------------------------
 // 자동측정 타이머 처리: 오류 확인 → 단계 판단 → 명령 실행 → 화면 갱신.
 // 호출 위치: FormTotal.cpp의 Timer_AutoInspectionTimer.
 void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
 {
+    UpdateAutoInspectionMode();
+    if(!Timer_AutoInspection->Enabled) return;
+    // PRECHARGER와 공통 계약: 입력 수집 → 순수 상태 판단 → CMD 실행 → 표시.
+    // IR/OCV 차이: 재개폐 재측정 정책을 전달하며 결과 마감은 Timer_ResultSave가 독립 처리한다.
     // 1. 처리 중이면 중복 실행을 막는다.
     if(isAutoInspectionProcessing) return;
 
@@ -97,7 +161,8 @@ void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
         // 변경 전 단계 보관: 단계 로그와 PROBE OPEN 요청 해제에 사용.
         TAutoInspectionStep previous = autoInspection.GetStep();
 
-        // 다음 단계와 실행할 명령 결정. CMD_NONE이면 대기.
+        // 다음 단계와 실행할 명령을 최대 한 개 결정한다. CMD_NONE은 정상 신호/완료 대기다.
+        // RunAutoStep 내부는 PLC/UI를 조작하지 않고 STEP과 대기 횟수만 갱신한다.
         TAutoInspectionCommand command = autoInspection.RunAutoStep(data);
 
         // 단계가 바뀐 경우에만 로그 기록.
@@ -109,6 +174,7 @@ void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
             ClearProbeOpenSignalToPLC();
 
         // 명령 실행: PLC 출력, 측정 시작, 시리얼 처리, 오류창 등.
+        // 상태 판단 후 실행하므로 새 입력(시리얼 개수/프로브 응답)은 다음 유효 주기에 반영된다.
         RunAutoInspectionCommand(command, data);
 
         // 8. 현재 단계에 맞춰 진행 화면 갱신.
@@ -127,39 +193,6 @@ void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-// 자동 진행을 막는 통신/PLC/운전 모드 오류를 확인한다. true이면 현재 단계를 유지하고 대기한다.
-bool __fastcall TTotalForm::CheckAutoInspectionError()
-{
-    DisplayError("");
-    if(!Client->Active || !Client->Socket->Connected)
-    {
-        RefreshStageStatusImage();
-        DisplayError("IR/OCV Connection Fail.");
-        return true;
-    }
-
-    AnsiString error;
-    if(!Mod_PLC->ClientSocket_PC->Active || !Mod_PLC->ClientSocket_PC->Socket->Connected ||
-       !Mod_PLC->ClientSocket_PLC->Active || !Mod_PLC->ClientSocket_PLC->Socket->Connected)
-        error = "PLC - PC Connection Fail.";
-    else if(Mod_PLC->GetPlcValue(PLC_D_IROCV_ERROR))
-        error = "PLC - Error!!";
-    else if(bLocal && Mod_PLC->GetValue(PC_D_IROCV_STAGE_AUTO_READY) == 0)
-        error = "IR/OCV is not in AutoMode";
-
-    if(error.IsEmpty())
-    {
-        OldErrorCheckStatus = "";
-        return false;
-    }
-    DisplayError(error, true);
-    if(OldErrorCheckStatus != error)
-    {
-        OldErrorCheckStatus = error;
-        WritePLCLog("CheckAutoInspectionError", error);
-    }
-    return true;
-}
 
 //---------------------------------------------------------------------------
 // 운전 모드에 따라 PLC AUTO READY 신호 설정: 자동=1, 수동=0. 값이 바뀔 때만 기록한다.
@@ -171,7 +204,7 @@ void __fastcall TTotalForm::SetAutoReadySignalToPLC()
     else if(stage.arl == nLocal) requested = 0;
     if(requested == current) return;
     Mod_PLC->SetValue(PC_D_IROCV_STAGE_AUTO_READY, requested);
-    WritePLCLog("IROCV STAGE AUTO/MANUAL", "IROCV STAGE AUTO READY = " + IntToStr(requested));
+    WritePlcLog("IROCV STAGE AUTO/MANUAL", "IROCV STAGE AUTO READY = " + IntToStr(requested));
 }
 
 //---------------------------------------------------------------------------
@@ -187,7 +220,7 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
     data.cycleMode = chkCycle->Checked;
     data.cellSerialContinuousRead = cellSerialContinuousReadForTray;
     data.cellCount = tray.cell_count;
-    data.ngCount = measNgCount;
+    data.ngCount = measurementNgCount;
     data.ngLimit = editNgAlarmCount->Text.ToIntDef(10);
     if(autoInspection.GetStep() == STEP_READ_TRAY_ID)
     {
@@ -224,7 +257,7 @@ void __fastcall TTotalForm::StartAutoCellSerialRead()
 {
     // Uses Modplc's existing 4,010-word chunk reader, WITHOUT START/COMPLETE bits.
     Mod_PLC->StartCellSerialRead();
-    WritePLCLog("AutoInspection", "Start reading CELL SERIAL data.");
+    WritePlcLog("AutoInspection", "Start reading CELL SERIAL data.");
 }
 
 //---------------------------------------------------------------------------
@@ -246,9 +279,9 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
         case CMD_TRAY_IN:
             // 트레이 투입부터는 안내 번호를 숨긴다. 미수신 측정값은 공란으로 표시한다.
             showStartupChannelNumbers = false;
-            PLCInitialization();
-            InitTrayStruct();
-            measNgCount = 0;
+            InitializePlcData();
+            InitializeTrayData();
+            measurementNgCount = 0;
             DisplayStatus(nREADY);
             break;
         case CMD_READ_TRAY_ID:
@@ -256,7 +289,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             tray.trayid = autoInspectionTrayId;
             pTrayid->Caption = tray.trayid;
             editTrayId->Text = tray.trayid;
-            WritePLCLog("AutoInspection", "TRAY ID = " + tray.trayid);
+            WritePlcLog("AutoInspection", "TRAY ID = " + tray.trayid);
             break;
         case CMD_READ_CELL_DATA:
             ReadAutoCellData();
@@ -264,13 +297,13 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
         case CMD_PROBE_CLOSE:
         case CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL:
             Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
-            WritePLCLog("AutoInspection", "PC_D_IROCV_PROB_CLOSE = 1");
+            WritePlcLog("AutoInspection", "PC_D_IROCV_PROB_CLOSE = 1");
             // 미체크만 투입 시 전체 수신/개수 검사. 상시 모드는 결과 저장 때 검사한다.
             if(command == CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL) StartAutoCellSerialRead();
             break;
         case CMD_SAVE_CELL_SERIAL:
             SaveTrayInfo(tray.trayid);
-            WritePLCLog("AutoInspection", "CELL SERIAL complete. Serial = " +
+            WritePlcLog("AutoInspection", "CELL SERIAL complete. Serial = " +
                 IntToStr(data.serialCount) + ", CellData = " + IntToStr(data.cellCount));
             break;
         case CMD_CELL_SERIAL_COUNT_ERROR:
@@ -281,9 +314,9 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
                 "Check CELL DATA count and complete CELL SERIAL data.",
                 "SAVE: accept data / CANCEL: read again");
             if(command == CMD_CELL_SERIAL_TIMEOUT)
-                WritePLCLog("AutoInspection", "CELL SERIAL Read Timeout.");
+                WritePlcLog("AutoInspection", "CELL SERIAL Read Timeout.");
             else
-                WritePLCLog("AutoInspection", "CELL SERIAL Count Error. Serial = " +
+                WritePlcLog("AutoInspection", "CELL SERIAL Count Error. Serial = " +
                     IntToStr(data.serialCount) + ", CellData = " + IntToStr(data.cellCount));
             Form_CellIdError->DisplayErrorMessage(this->Tag);
             break;
@@ -296,7 +329,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             // 재개폐 횟수와 닫힘 재측정 NG 제한은 별개. 전체/선택 전환은 사이트 정책 유지.
             if(data.ngCount > PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD)
             {
-                OnInit(); // 시리얼/파일명/트레이 누계는 보존한다.
+                ResetMeasurementData(); // 시리얼/파일명/트레이 누계는 보존한다.
                 memset(&retest, 0, sizeof(retest));
                 retest.waitingChannel = -1;
                 tray.rem_mode = 0;
@@ -309,7 +342,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             }
             resultSaveStep = RESULT_IDLE;
             Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
-            WritePLCLog("PROBE REMEASURE", "Request " +
+            WritePlcLog("PROBE REMEASURE", "Request " +
                 IntToStr(autoInspection.GetProbeRemeasureDoneCount() + 1) + "/" +
                 IntToStr(autoInspection.GetSetting().probeRemeasureCount));
             break;
@@ -324,9 +357,9 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             WriteCommLog("AutoInspection", command == CMD_MEASURE_START ?
                 "IR/OCV Measure Start" : "IR/OCV Re-Measure Start");
             if(command == CMD_REMEASURE_START && retest.re_excute)
-                RemeasureExcute();
+                ExecuteRemeasure();
             else
-                CmdAutoTest();
+                CmdStartMeasurement();
             break;
         case CMD_NG_ERROR:
             // Already in STEP_WAIT_NG_ERROR before showing a modeless dialog.
@@ -346,7 +379,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
             Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 1);
             DisplayStatus(nFinish);
-            WritePLCLog("AutoInspection", command == CMD_BYPASS_TRAY_OUT ?
+            WritePlcLog("AutoInspection", command == CMD_BYPASS_TRAY_OUT ?
                 "BYPASS TRAY OUT = 1" : "IROCV TRAY OUT = 1");
             break;
         case CMD_TRAY_OUT_COMPLETE:
@@ -443,7 +476,7 @@ void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
     Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
     DisplayStatus(nEND);
     DisplayError(message, true);
-    WritePLCLog("AutoInspection ERROR", AnsiString(TAutoInspectionSequence::GetStepName(previous)) + ": " + message);
+    WritePlcLog("AutoInspection ERROR", AnsiString(TAutoInspectionSequence::GetStepName(previous)) + ": " + message);
 }
 
 
@@ -485,7 +518,7 @@ void __fastcall TTotalForm::RetryCellSerialRead()
 
 //---------------------------------------------------------------------------
 // 결과 처리 함수 종료를 시퀀스에 알린다. 이후 PLC 프로브 열림을 확인해야 자동 배출한다.
-void __fastcall TTotalForm::SetAutoMeasureComplete()
+void __fastcall TTotalForm::SetAutoMeasurementComplete()
 {
     TAutoInspectionStep previous = autoInspection.GetStep();
     if(autoInspection.SetMeasureComplete())
@@ -499,7 +532,7 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
     TAutoInspectionStep previous = autoInspection.GetStep();
     if(!autoInspection.StartRemeasure())
     {
-        WritePLCLog("AutoInspection", "Remeasure ignored in " +
+        WritePlcLog("AutoInspection", "Remeasure ignored in " +
             AnsiString(TAutoInspectionSequence::GetStepName(previous)));
         return false;
     }
@@ -508,7 +541,7 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
     resultSaveStep = RESULT_IDLE;
     tray.ams = false;
     tray.amf = false;
-    measNgCount = 0;
+    measurementNgCount = 0;
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
     return true;
@@ -516,8 +549,9 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
 
 //---------------------------------------------------------------------------
 // 자동 배출 판단: Auto/프로브 열림/결과 완료를 확인하고 NG 조건에 따라 오류 대기 또는 배출한다.
-void __fastcall TTotalForm::CmdTrayOut()
+void __fastcall TTotalForm::ProcessAutoTrayOut()
 {
+    if(IsAutoInspectionBlocked()) return;
     // Automatic/diagnostic entry: cannot skip result publication or NG waiting.
     TAutoInspectionStep previous = autoInspection.GetStep();
     TAutoInspectionData data = ReadAutoInspectionData();
@@ -554,25 +588,25 @@ void __fastcall TTotalForm::RestartAutoInspection()
 {
     try
     {
-        Initialization();
-        WritePLCLog("AutoInspection", "Operator restart from TRAY IN");
+        InitializeInspection();
+        WritePlcLog("AutoInspection", "Operator restart from TRAY IN");
     }
     catch(const Exception &error) { StopAutoInspectionOnError(error.Message); }
 }
 
 //---------------------------------------------------------------------------
 // 자동 검사 전체 초기화: PLC 출력 → 트레이 데이터 → 단계 순서로 초기화한다.
-void __fastcall TTotalForm::Initialization()
+void __fastcall TTotalForm::InitializeInspection()
 {
-    PLCInitialization();
-    InitTrayStruct();
+    InitializePlcData();
+    InitializeTrayData();
     ResetAutoInspection();
     DisplayProcess(sReady, "AutoInspection", " IR/OCV is ready... ");
 }
 
 //---------------------------------------------------------------------------
 // 메인 화면 수동 배출: 재측정 목록 정리, 강제 배출, PROBE CLOSE=0 / OPEN=1 / COMPLETE=1.
-void __fastcall TTotalForm::ManualTrayOut()
+void __fastcall TTotalForm::ProcessManualTrayOut()
 {
 		for(int i = 0; i < MAXCHANNEL; i++) retest.cell[i] = 0;
 		this->ForceTrayOut();

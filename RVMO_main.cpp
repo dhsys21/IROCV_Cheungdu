@@ -294,7 +294,7 @@ vector<int> __fastcall TBaseForm::StringToVector(UnicodeString str)
 //---------------------------------------------------------------------------
 void __fastcall TBaseForm::btnInitClick(TObject *Sender)
 {
-    nForm[0]->Initialization();
+    nForm[0]->InitializeInspection();
 }
 //---------------------------------------------------------------------------
 void __fastcall TBaseForm::FormCloseQuery(TObject *Sender, bool &CanClose)

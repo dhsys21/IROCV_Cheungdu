@@ -74,7 +74,7 @@ __published:	// IDE-managed Components
 
 private:	// User declarations
 
-	void __fastcall MakePanel(AnsiString type);
+	void __fastcall MakePanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);
 	void __fastcall WriteCaliFile(bool Data);
 public:		// User declarations
@@ -90,8 +90,8 @@ public:		// User declarations
     bool modecalib;
 
 	void __fastcall InsertMeasure(int pos, double value);
-	void __fastcall WriteCaliboffset();
-	void __fastcall ReadCaliboffset();
+	void __fastcall WriteCalibrationOffsets();
+	void __fastcall ReadCalibrationOffsets();
 	double *measure;
 	double *standard;
 	double *offset;

@@ -5,6 +5,7 @@
 
 #include "FormCalibration.h"
 #include "RVMO_main.h"
+#include "ChannelLayout.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "AdvSmoothButton"
@@ -23,7 +24,7 @@ __fastcall TCaliForm::TCaliForm(TComponent* Owner)
 
 void __fastcall TCaliForm::FormCreate(TObject *Sender)
 {
-	MakePanel(BaseForm->lblLineNo->Caption);
+	MakePanel();
 }
 //---------------------------------------------------------------------------
 void __fastcall TCaliForm::FormShow(TObject *Sender)
@@ -40,241 +41,40 @@ void __fastcall TCaliForm::FormShow(TObject *Sender)
 	OffsetEdit->Enabled = false;
 }
 
-void __fastcall TCaliForm::MakePanel(AnsiString type)
+void __fastcall TCaliForm::MakePanel()
 {
-	int nx, ny, nw, nh;
-
-	if(type == "3" || type == "4")
-	{
-		nx = 4;
-//		nx = 1300;
-		ny = 600;
-//		ny = 4;
-//		nw = 37;
-		nw = 30;
-//		nh = 25;
-		nh = 20;
-		for(int index=399; index>=0;){
-			pch[index] = new TPanel(this);
-			SetOption(pch[index], nx, ny, nw, nh-1, index);
-			pch[index]->Caption = pch[index]->Hint;
-			pch[index]->Color = clSkyBlue;
-			pch[index]->ParentBackground = false;
-
-			nx = nx + nw + 1;
-			pstandard[index] = new TEdit(this);
-			pstandard[index]->Parent = pBase;
-			pstandard[index]->Font->Size = 10;
-			pstandard[index]->Left =  nx;
-			pstandard[index]->Top = ny;
-			pstandard[index]->Width = nw + 1;
-			pstandard[index]->Height = nh + 5;
-			pstandard[index]->Tag = index;
-
-
-			ny = ny + nh;
-			nx = pch[index]->Left;
-			poffset[index] = new TPanel(this);
-			SetOption(poffset[index], nx, ny, nw, nh, index);
-			poffset[index]->Color = pnormal2->Color;
-			poffset[index]->ParentBackground = false;
-			poffset[index]->Caption = "0";
-			poffset[index]->ParentBackground = false;
-
-			nx = nx + nw + 1;
-			pmeasure[index] = new TPanel(this);
-			SetOption(pmeasure[index], nx, ny, nw, nh, index);
-			pmeasure[index]->Color = pnormal2->Color;
-			pmeasure[index]->ParentBackground = false;
-			pmeasure[index]->Caption = "0.00";
-			pmeasure[index]->ParentBackground = false;
-
-
-			nx = nx + nw + 3;
-//			nx = nx - nw - 3;
-			ny = ny - nh;
-//			ny = ny + nh;
-			if(index % 2 == 0) nx += 2;
-//			if(index % 2 == 0) nx -= 2;
-			if(index % CELL_COLUMN_COUNT == 0)
-			{
-				ny = ny - nh - nh  - 1;
-//				ny = ny + nh + nh + 1;
-				nx = 4;
-//				nx = 1300;
-				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny -= 3;
-//				if( (index / CELL_COLUMN_COUNT) % 10 == 0) ny += 3;
-			}
-			index -= 1;
-		}
-	}
-	else if(type == "6")
-	{
-		nx = 1200;
-		ny = 600;
-		nw = 30;
-		nh = 20;
-		for(int index=0; index< MAXCHANNEL;){
-			pch[index] = new TPanel(this);
-			SetOption(pch[index], nx, ny, nw, nh-1, index);
-			pch[index]->Caption = pch[index]->Hint;
-			pch[index]->Color = clSkyBlue;
-			pch[index]->ParentBackground = false;
-
-			nx = nx - nw - 1;
-			pstandard[index] = new TEdit(this);
-			pstandard[index]->Parent = pBase;
-			pstandard[index]->Font->Size = 10;
-			pstandard[index]->Left =  nx;
-			pstandard[index]->Top = ny;
-			pstandard[index]->Width = nw + 1;
-			pstandard[index]->Height = nh + 5;
-			pstandard[index]->Tag = index;
-
-
-			ny = ny + nh;
-			nx = pch[index]->Left;
-			poffset[index] = new TPanel(this);
-			SetOption(poffset[index], nx, ny, nw, nh, index);
-			poffset[index]->Color = pnormal2->Color;
-			poffset[index]->ParentBackground = false;
-			poffset[index]->Caption = "0";
-			poffset[index]->ParentBackground = false;
-
-			nx = nx - nw - 1;
-			pmeasure[index] = new TPanel(this);
-			SetOption(pmeasure[index], nx, ny, nw, nh, index);
-			pmeasure[index]->Color = pnormal2->Color;
-			pmeasure[index]->ParentBackground = false;
-			pmeasure[index]->Caption = "0.00";
-			pmeasure[index]->ParentBackground = false;
-
-
-			index += 1;
-			nx = nx - nw - 3;
-			ny = ny - nh;
-			if(index % 2 == 0) nx -= 2;
-			if(index % CELL_COLUMN_COUNT == 0)
-			{
-				ny = ny - nh - nh  - 1;
-				nx = 1200;
-				if( (index / CELL_COLUMN_COUNT) % 4 == 0) ny -= 3;
-			}
-		}
-	}
-    else if(type == "1" || type == "2")
-	{
-		nx = 4;
-		ny = 600;
-		nw = 30;
-		nh = 20;
-		for(int index=0; index< MAXCHANNEL;){
-			pch[index] = new TPanel(this);
-			SetOption(pch[index], nx, ny, nw, nh-1, index);
-			pch[index]->Caption = pch[index]->Hint;
-			pch[index]->Color = clSkyBlue;
-			pch[index]->ParentBackground = false;
-
-			nx = nx + nw + 1;
-			pstandard[index] = new TEdit(this);
-			pstandard[index]->Parent = pBase;
-			pstandard[index]->Font->Size = 10;
-			pstandard[index]->Left =  nx;
-			pstandard[index]->Top = ny;
-			pstandard[index]->Width = nw + 1;
-			pstandard[index]->Height = nh + 5;
-			pstandard[index]->Tag = index;
-
-
-			ny = ny + nh;
-			nx = pch[index]->Left;
-			poffset[index] = new TPanel(this);
-			SetOption(poffset[index], nx, ny, nw, nh, index);
-			poffset[index]->Color = pnormal2->Color;
-			poffset[index]->ParentBackground = false;
-			poffset[index]->Caption = "0";
-			poffset[index]->ParentBackground = false;
-
-			nx = nx + nw + 1;
-			pmeasure[index] = new TPanel(this);
-			SetOption(pmeasure[index], nx, ny, nw, nh, index);
-			pmeasure[index]->Color = pnormal2->Color;
-			pmeasure[index]->ParentBackground = false;
-			pmeasure[index]->Caption = "0.00";
-			pmeasure[index]->ParentBackground = false;
-
-
-			index += 1;
-			nx = nx + nw + 3;
-			ny = ny - nh;
-			if(index % 2 == 0) nx += 2;
-			if(index % CELL_COLUMN_COUNT == 0)
-			{
-				ny = ny - nh - nh  - 1;
-				nx = 4;
-				if( (index / CELL_COLUMN_COUNT) % 4 == 0) ny -= 3;
-			}
-		}
-	}
-    else if(type == "5")
-	{
-		nx = 1200;
-		ny = 600;
-		nw = 30;
-		nh = 20;
-		for(int index = 0; index < MAXCHANNEL;){
-			pch[index] = new TPanel(this);
-			SetOption(pch[index], nx, ny, nw, nh-1, index);
-			pch[index]->Caption = pch[index]->Hint;
-			pch[index]->Color = clSkyBlue;
-			pch[index]->ParentBackground = false;
-
-			nx = nx - nw - 1;
-			pstandard[index] = new TEdit(this);
-			pstandard[index]->Parent = pBase;
-			pstandard[index]->Font->Size = 10;
-			pstandard[index]->Left =  nx;
-			pstandard[index]->Top = ny;
-			pstandard[index]->Width = nw + 1;
-			pstandard[index]->Height = nh + 5;
-			pstandard[index]->Tag = index;
-
-
-			ny = ny + nh;
-			nx = pch[index]->Left;
-			poffset[index] = new TPanel(this);
-			SetOption(poffset[index], nx, ny, nw, nh, index);
-			poffset[index]->Color = pnormal2->Color;
-			poffset[index]->ParentBackground = false;
-			poffset[index]->Caption = "0";
-			poffset[index]->ParentBackground = false;
-
-			nx = nx - nw - 1;
-			pmeasure[index] = new TPanel(this);
-			SetOption(pmeasure[index], nx, ny, nw, nh, index);
-			pmeasure[index]->Color = pnormal2->Color;
-			pmeasure[index]->ParentBackground = false;
-			pmeasure[index]->Caption = "0.00";
-			pmeasure[index]->ParentBackground = false;
-
-
-			index += 1;
-            nx = pch[index-1]->Left;
-            ny = ny - 3 * nh - 1;
-            //ny = ny - nh - nh  - 1;
-			//nx = nx + nw + 3;
-			//ny = ny - nh;
-			//if(index % 2 == 0) nx += 2;
-			if(index % CELL_COLUMN_COUNT == 0)
-			{
-                nx = nx - 2 * nw - 3;
-                ny = 600;
-                //nx = nx + nw + 3;
-				//nx = 4;
-				//if( (index / CELL_COLUMN_COUNT) % 4 == 0) ny -= 3;
-			}
-		}
-	}
+    // 교정값도 동일 채널 인덱스를 사용한다. 셀 내부는 번호/기준값, 보정값/측정값의 2x2 구성.
+    pBase->AutoSize = false;
+    pBase->Width = btnInit->Left - pBase->Left - 8;
+    pBase->Height = ClientHeight - pBase->Top - 8;
+    for(int index = 0; index < MAXCHANNEL; ++index)
+    {
+        const ChannelLayout::Rect r = ChannelLayout::ForChannel(
+            index, pBase->ClientWidth, pBase->ClientHeight, false);
+        const int leftWidth = (r.width - 1) / 2;
+        const int upperHeight = (r.height - 1) / 2;
+        pch[index] = new TPanel(this);
+        SetOption(pch[index], r.left, r.top, leftWidth, upperHeight, index);
+        pch[index]->Caption = index + 1;
+        pch[index]->ShowHint = true;
+        pstandard[index] = new TEdit(this);
+        pstandard[index]->Parent = pBase;
+        pstandard[index]->AutoSize = false;
+        pstandard[index]->Font->Size = 8;
+        pstandard[index]->SetBounds(r.left + leftWidth + 1, r.top,
+            r.width - leftWidth - 1, upperHeight);
+        pstandard[index]->Tag = index;
+        poffset[index] = new TPanel(this);
+        SetOption(poffset[index], r.left, r.top + upperHeight + 1,
+            leftWidth, r.height - upperHeight - 1, index);
+        poffset[index]->Color = pnormal2->Color;
+        poffset[index]->Caption = "0";
+        pmeasure[index] = new TPanel(this);
+        SetOption(pmeasure[index], r.left + leftWidth + 1, r.top + upperHeight + 1,
+            r.width - leftWidth - 1, r.height - upperHeight - 1, index);
+        pmeasure[index]->Color = pnormal2->Color;
+        pmeasure[index]->Caption = "0.00";
+    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TCaliForm::SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index)
@@ -295,7 +95,7 @@ void __fastcall TCaliForm::SetOption(TPanel *pnl, int nx, int ny, int nw, int nh
 	pnl->BevelKind = bkNone;
 	pnl->BevelOuter = bvNone;
 	pnl->Tag = index;
-	pnl->Hint = IntToStr((index / CELL_COLUMN_COUNT)+1) + "-" + IntToStr((index+20)%20 + 1);
+	pnl->Hint = "CH : " + IntToStr(index + 1) + " (" + IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index)) + ")";
 	pnl->ShowHint = false;
 }
 //---------------------------------------------------------------------------
@@ -340,13 +140,13 @@ void __fastcall TCaliForm::btnStopClick(TObject *Sender)
 
 void __fastcall TCaliForm::btnAuto1Click(TObject *Sender)
 {
-	BaseForm->nForm[stage]->InitTrayStruct();
+	BaseForm->nForm[stage]->InitializeTrayData();
 	for(int i = 0; i < MAXCHANNEL; i++)
 	{
 		poffset[i]->Caption = "-";
 		pmeasure[i]->Caption = "-";
 	}
-	BaseForm->nForm[stage]->CmdAutoTest();
+	BaseForm->nForm[stage]->CmdStartMeasurement();
 }
 //---------------------------------------------------------------------------
 void __fastcall TCaliForm::InsertMeasure(int pos, double value)
@@ -448,7 +248,7 @@ void __fastcall TCaliForm::ConfigBtn1Click(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
-void __fastcall TCaliForm::WriteCaliboffset()
+void __fastcall TCaliForm::WriteCalibrationOffsets()
 {
 	TIniFile *ini;
 
@@ -467,7 +267,7 @@ void __fastcall TCaliForm::WriteCaliboffset()
 	delete ini;
 }
 //---------------------------------------------------------------------------
-void __fastcall TCaliForm::ReadCaliboffset()
+void __fastcall TCaliForm::ReadCalibrationOffsets()
 {
 	TIniFile *ini;
 	ini = new TIniFile((AnsiString)BIN_PATH + "Caliboffset_" + IntToStr(this->stage) + ".cali");
@@ -488,7 +288,7 @@ void __fastcall TCaliForm::btnApplyClick(TObject *Sender)
 //		BaseForm->IR_Offset[i] = poffset[i]->Caption.ToDouble();
 		BaseForm->nForm[stage]->stage.ir_offset[i] = poffset[i]->Caption.ToDouble();
 	}
-	WriteCaliboffset();
+	WriteCalibrationOffsets();
 }
 //---------------------------------------------------------------------------
 void __fastcall TCaliForm::FormClose(TObject *Sender, TCloseAction &Action)
