@@ -16,6 +16,24 @@ public:
     TState state[Count];
 
     TOperationViewState() { Reset(); }
+    // Current step only: completed history must not leave multiple green tiles.
+    static int ActiveTile(TAutoInspectionStep step)
+    {
+        switch(step)
+        {
+            case STEP_WAIT_TRAY_IN: return Ready;
+            case STEP_READ_TRAY_ID: return TrayId;
+            case STEP_READ_CELL_DATA:
+            case STEP_WAIT_START_DELAY:
+            case STEP_WAIT_CELL_SERIAL: return CellData;
+            case STEP_WAIT_PROBE_CLOSE:
+            case STEP_WAIT_REMEASURE_PROBE_CLOSE: return CloseConfirmed;
+            case STEP_WAIT_MEASURE_COMPLETE: return Measure;
+            case STEP_WAIT_PROBE_OPEN: return OpenConfirmed;
+            case STEP_WAIT_TRAY_OUT: return OutConfirmed;
+            default: return -1; // Error/operator-decision state: no running tile.
+        }
+    }
     void Reset()
     {
         for(int i = 0; i < Count; ++i) state[i] = Pending;
@@ -84,5 +102,25 @@ public:
         state[ResultTransmit] = Waiting;
     }
     void ResultSent() { state[ResultTransmit] = Done; }
+};
+
+// Display clock only; unsigned 32-bit subtraction also handles GetTickCount wrap.
+// Start is idempotent, so retry/remeasure cannot restart the tray's total time.
+class TOperationCycleClock
+{
+    bool running;
+    unsigned long started;
+public:
+    TOperationCycleClock() : running(false), started(0) {}
+    void Reset() { running = false; started = 0; }
+    void Start(unsigned long now) { if(!running) { running = true; started = now; } }
+    bool IsRunning() const { return running; }
+    unsigned long Elapsed(unsigned long now) const { return running ? now - started : 0; }
+    unsigned long Finish(unsigned long now)
+    {
+        unsigned long elapsed = Elapsed(now);
+        Reset();
+        return elapsed;
+    }
 };
 #endif

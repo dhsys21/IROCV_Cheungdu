@@ -339,14 +339,15 @@ __published:	// IDE-managed Components
     TGroupBox *grpOperationProcess;
     TGroupBox *grpOperationCurrent;
     TGroupBox *grpOperationLog;
-    TLabel *lblOperationMode;
+    TPanel *pnlOperationPcMode;
+    TPanel *pnlOperationPlcMode;
     TLabel *lblOperationSerial;
     TLabel *lblOperationTitle;
     TLabel *lblOperationDetail;
     TLabel *lblOperationElapsed;
     TMemo *memoOperationLog;
     TCheckBox *chkOperationFollow;
-    TButton *btnOperationCopy;
+    TButton *btnOperationLogFile;
     TPanel *pOpReady;
     TLabel *lblOpReady;
     TPanel *pOpTrayIn;

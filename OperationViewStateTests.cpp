@@ -75,6 +75,28 @@ int main()
     Check(plc.IsValid() && !plc.IsAutomatic(), "manual is known, not disconnected");
     plc.Invalidate();
     Check(!plc.IsValid(), "invalidated data is unknown");
-    printf("PASS: %d newGui progress / confirmation / bypass / retry / validity checks\n", checks);
+    Check(V::ActiveTile(STEP_WAIT_TRAY_IN) == V::Ready, "ready only is active while idle");
+    Check(V::ActiveTile(STEP_READ_TRAY_ID) == V::TrayId, "tray ID active");
+    Check(V::ActiveTile(STEP_WAIT_CELL_SERIAL) == V::CellData, "serial read preparation active");
+    Check(V::ActiveTile(STEP_WAIT_PROBE_CLOSE) == V::CloseConfirmed, "probe down confirmation active");
+    Check(V::ActiveTile(STEP_WAIT_REMEASURE_PROBE_CLOSE) == V::CloseConfirmed, "remeasure probe down active");
+    Check(V::ActiveTile(STEP_WAIT_MEASURE_COMPLETE) == V::Measure, "measurement active");
+    Check(V::ActiveTile(STEP_WAIT_PROBE_OPEN) == V::OpenConfirmed, "probe open confirmation active");
+    Check(V::ActiveTile(STEP_WAIT_TRAY_OUT) == V::OutConfirmed, "tray out confirmation active");
+    Check(V::ActiveTile(STEP_ERROR_STOP) == -1 && V::ActiveTile(STEP_WAIT_NG_ERROR) == -1,
+        "operator/error waits have no active measurement tile");
+    TOperationCycleClock clock;
+    Check(clock.Elapsed(9999) == 0, "READY never accumulates elapsed time");
+    clock.Start(1000);
+    Check(clock.Elapsed(2500) == 1500, "elapsed begins at tray in");
+    clock.Start(2000);
+    Check(clock.Elapsed(3000) == 2000, "repeated start does not reset tray time");
+    Check(clock.Finish(4000) == 3000, "tray out returns total time for log");
+    Check(clock.Elapsed(10000) == 0 && !clock.IsRunning(), "ready is zero after tray out");
+    clock.Start(12000);clock.Reset();
+    Check(clock.Elapsed(15000) == 0, "manual/reset cancels displayed tray timing");
+    clock.Start(0xFFFFFFF0UL);
+    Check(clock.Elapsed(0x20UL) == 48, "32-bit timer rollover");
+    printf("PASS: %d newGui progress / current-step / tray-clock / validity checks\n", checks);
     return 0;
 }

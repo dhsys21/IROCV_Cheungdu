@@ -62,9 +62,23 @@ foreach($name in $original.Keys){
 foreach($name in $nodes.Keys | Where-Object {!$original.ContainsKey($_)}){
  if($header -notmatch ('\b'+$nodes[$name].Type+'\s*\*\s*'+$name+'\s*;')){throw "Missing IDE field $name"}
 }
-foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','lblOperationMode','localTest','localCali','chkCycle','chkBypass')){
+foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','pnlOperationPcMode','pnlOperationPlcMode','localTest','localCali','chkCycle','chkBypass')){
  if($nodes[$name].Parent -ne 'pback'){throw "Incorrect design parent: $name"}
 }
+foreach($pair in @(@('btnConfig','btnReset'),@('btnManual','btnTrayOut'),@('btnAuto','btnRemeasureInfo'))){
+ $top=$nodes[$pair[0]].Props;$bottom=$nodes[$pair[1]].Props
+ if($top.Left -ne $bottom.Left -or $top.Width -ne $bottom.Width -or [int]$bottom.Top -lt [int]$top.Top+[int]$top.Height){throw "Button column mismatch: $($pair[1])"}
+}
+foreach($name in @('pnlOperationPcMode','pnlOperationPlcMode')){
+ if($nodes[$name].Type -ne 'TPanel' -or [int]$nodes[$name].Props.Left+[int]$nodes[$name].Props.Width -gt [int]$nodes.btnReset.Props.Left){throw 'Mode panels must be left of action buttons'}
+}
+if($nodes.ContainsKey('btnOperationCopy') -or $nodes.ContainsKey('lblOperationMode')){throw 'Old combined mode label / COPY button remains'}
+if($nodes.btnOperationLogFile.Props.Caption -ne "'LOG FILE'" -or !$view.Contains('ShellExecuteW') -or !$view.Contains('FindNotepadPlusPlus()')){throw 'Notepad++ log file action missing'}
+if(!$view.Contains('FILE_APPEND_DATA') -or !$view.Contains('FILE_SHARE_READ | FILE_SHARE_WRITE') -or !$view.Contains('_OPERATION_')){throw 'Persistent readable operation log missing'}
+if(!$view.Contains('cycleClock.Start(GetTickCount())') -or !$view.Contains('cycleClock.Elapsed(GetTickCount())') -or $view.Contains('waitStarted')){throw 'Elapsed must time tray cycle, not each state'}
+if(!$view.Contains('tiles[i]->Color = i == active ? clLime : clSilver;')){throw 'Active-only process colors'}
+if(!$view.Contains('pcModePanel->Color = local ? clRed : clLime;') -or !$view.Contains('valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed')){throw 'AUTO/non-AUTO colors'}
+if(!$view.Contains('currentDetail->Caption = OperatorSignalText(detail)')){throw 'Operator-friendly signal text missing'}
 foreach($name in @('flowChart','GroupBox7','pBase','Panel1','GrpMain','GrpLocal','Panel_State','Panel3','pConInfo','pnlTrayIn','pnlTrayOut','pnlProbeOpen','pnlProbeClose')){
  if($nodes[$name].Parent -ne 'pnlLegacyDisplay'){throw "Legacy control overlaps designer: $name"}
 }
@@ -82,6 +96,7 @@ $tileNames=@('Ready','TrayIn','TrayId','CellData','CloseRequest','CloseConfirmed
 foreach($suffix in $tileNames){
  if($nodes['pOp'+$suffix].Parent -ne 'grpOperationProcess' -or $nodes['lblOp'+$suffix].Parent -ne 'pOp'+$suffix){throw "Design tile hierarchy: $suffix"}
  if(!$view.Contains('owner->pOp'+$suffix) -or !$view.Contains('owner->lblOp'+$suffix)){throw "Display binding missing: $suffix"}
+ if($nodes['lblOp'+$suffix].Props.Caption -match '#13|#10|WAIT|DONE|SET'){throw "Obsolete tile state suffix: $suffix"}
 }
 foreach($node in $nodes.Values | Where-Object {$_.Props.ContainsKey('TabOrder')}){
  $siblings=@($nodes.Values | Where-Object {$_.Parent -eq $node.Parent -and $_.Props.TabOrder -eq $node.Props.TabOrder})

@@ -2065,20 +2065,39 @@ object TotalForm: TTotalForm
     Version = '1.5.2.1'
     TabOrder = 2
     TMSStyle = 0
-    object lblOperationMode: TLabel
-      Left = 332
-      Top = 52
-      Width = 276
-      Height = 26
-      AutoSize = False
-      Caption = 'PC: AUTO   PLC: UNKNOWN'
+    object pnlOperationPcMode: TPanel
+      Left = 10
+      Top = 49
+      Width = 138
+      Height = 32
+      BevelOuter = bvNone
+      Caption = 'PC: AUTO'
+      Color = clLime
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
+      Font.Color = clBlack
       Font.Height = -13
       Font.Name = 'Segoe UI'
-      Font.Style = []
+      Font.Style = [fsBold]
       ParentFont = False
-      WordWrap = True
+      ParentBackground = False
+      TabOrder = 14
+    end
+    object pnlOperationPlcMode: TPanel
+      Left = 154
+      Top = 49
+      Width = 138
+      Height = 32
+      BevelOuter = bvNone
+      Caption = 'PLC: UNKNOWN'
+      Color = clRed
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -13
+      Font.Name = 'Segoe UI'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentBackground = False
+      TabOrder = 15
     end
     object grpOperationProcess: TGroupBox
       Left = 10
@@ -2101,7 +2120,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 12250367
+        Color = clLime
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2118,7 +2137,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'READY'#13#10'WAIT'
+          Caption = 'READY'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2137,7 +2156,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2154,7 +2173,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'TRAY IN'#13#10'-'
+          Caption = 'TRAY IN'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2173,7 +2192,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2190,7 +2209,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'TRAY ID'#13#10'-'
+          Caption = 'TRAY ID'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2209,7 +2228,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2226,7 +2245,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'CELL DATA'#13#10'-'
+          Caption = 'CELL DATA'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2245,7 +2264,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2262,7 +2281,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'CLOSE REQ'#13#10'-'
+          Caption = 'DOWN REQ'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2281,7 +2300,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2298,7 +2317,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'CLOSE OK'#13#10'-'
+          Caption = 'DOWN OK'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2317,7 +2336,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2334,7 +2353,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'MEASURE'#13#10'-'
+          Caption = 'MEASURE'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2353,7 +2372,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2370,7 +2389,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'SAVE FILE'#13#10'-'
+          Caption = 'SAVE FILE'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2389,7 +2408,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2406,7 +2425,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'RESULT TX'#13#10'-'
+          Caption = 'RESULT TX'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2425,7 +2444,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2442,7 +2461,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'COMPLETE'#13#10'-'
+          Caption = 'COMPLETE'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2461,7 +2480,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2478,7 +2497,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'OPEN REQ'#13#10'-'
+          Caption = 'OPEN REQ'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2497,7 +2516,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2514,7 +2533,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'OPEN OK'#13#10'-'
+          Caption = 'OPEN OK'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2533,7 +2552,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2550,7 +2569,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'OUT REQ'#13#10'-'
+          Caption = 'OUT REQ'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2569,7 +2588,7 @@ object TotalForm: TTotalForm
         Width = 79
         Height = 44
         BevelOuter = bvNone
-        Color = 16117738
+        Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -2586,7 +2605,7 @@ object TotalForm: TTotalForm
           Width = 79
           Height = 44
           AutoSize = False
-          Caption = 'OUT OK'#13#10'-'
+          Caption = 'OUT OK'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2702,12 +2721,14 @@ object TotalForm: TTotalForm
         State = cbChecked
         TabOrder = 0
       end
-      object btnOperationCopy: TButton
+      object btnOperationLogFile: TButton
         Left = 496
         Top = 15
         Width = 92
         Height = 25
-        Caption = 'COPY'
+        Caption = 'LOG FILE'
+        ShowHint = True
+        Hint = 'Open operation log in Notepad++'
         TabOrder = 1
       end
       object memoOperationLog: TMemo
@@ -2783,7 +2804,7 @@ object TotalForm: TTotalForm
       TMSStyle = 8
     end
     object btnReset: TAdvSmoothButton
-      Left = 10
+      Left = 306
       Top = 49
       Width = 100
       Height = 32
@@ -2894,7 +2915,7 @@ object TotalForm: TTotalForm
       TMSStyle = 8
     end
     object btnTrayOut: TAdvSmoothButton
-      Left = 116
+      Left = 408
       Top = 49
       Width = 100
       Height = 32
@@ -3005,7 +3026,7 @@ object TotalForm: TTotalForm
       end
     end
     object btnRemeasureInfo: TAdvSmoothButton
-      Left = 222
+      Left = 510
       Top = 49
       Width = 100
       Height = 32
