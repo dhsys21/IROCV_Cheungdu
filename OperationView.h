@@ -8,13 +8,13 @@
 
 class TTotalForm;
 
-// Owned by the stage form. All controls and the refresh timer share that lifetime.
+// Owned by the stage form. Borrows DFM controls; owns only the refresh timer.
 class TOperationView : public TComponent
 {
     TTotalForm *stageForm;
     TTimer *refreshTimer;
-    TGroupBox *processGroup, *currentGroup, *logGroup;
     TPanel *tiles[TOperationViewState::Count];
+    TLabel *tileLabels[TOperationViewState::Count];
     TLabel *modeLabel, *currentTitle, *currentDetail, *elapsedLabel, *serialLabel;
     TMemo *logMemo;
     TCheckBox *followLog;

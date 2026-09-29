@@ -335,6 +335,46 @@ __published:	// IDE-managed Components
 	TRadioButton *rbSpeedFast;
 	TRadioButton *rbSpeedSlow;
 	TEdit *editMaxDelayTime;
+    TPanel *pnlLegacyDisplay;
+    TGroupBox *grpOperationProcess;
+    TGroupBox *grpOperationCurrent;
+    TGroupBox *grpOperationLog;
+    TLabel *lblOperationMode;
+    TLabel *lblOperationSerial;
+    TLabel *lblOperationTitle;
+    TLabel *lblOperationDetail;
+    TLabel *lblOperationElapsed;
+    TMemo *memoOperationLog;
+    TCheckBox *chkOperationFollow;
+    TButton *btnOperationCopy;
+    TPanel *pOpReady;
+    TLabel *lblOpReady;
+    TPanel *pOpTrayIn;
+    TLabel *lblOpTrayIn;
+    TPanel *pOpTrayId;
+    TLabel *lblOpTrayId;
+    TPanel *pOpCellData;
+    TLabel *lblOpCellData;
+    TPanel *pOpCloseRequest;
+    TLabel *lblOpCloseRequest;
+    TPanel *pOpCloseConfirmed;
+    TLabel *lblOpCloseConfirmed;
+    TPanel *pOpMeasure;
+    TLabel *lblOpMeasure;
+    TPanel *pOpFileSave;
+    TLabel *lblOpFileSave;
+    TPanel *pOpResultTransmit;
+    TLabel *lblOpResultTransmit;
+    TPanel *pOpComplete;
+    TLabel *lblOpComplete;
+    TPanel *pOpOpenRequest;
+    TLabel *lblOpOpenRequest;
+    TPanel *pOpOpenConfirmed;
+    TLabel *lblOpOpenConfirmed;
+    TPanel *pOpOutRequest;
+    TLabel *lblOpOutRequest;
+    TPanel *pOpOutConfirmed;
+    TLabel *lblOpOutConfirmed;
     // IDE 관리 영역: 컴포넌트 선언은 위에, 이벤트 함수 선언은 아래에 모은다.
     // 이벤트 선언 뒤에 컴포넌트를 추가하면 폼 디자이너가 해석하지 못할 수 있다.
 	void __fastcall ClientConnect(TObject *Sender,

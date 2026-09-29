@@ -20,32 +20,6 @@ const int OutputAddresses[] = { PC_D_IROCV_STAGE_AUTO_READY, PC_D_IROCV_PROB_CLO
     PC_D_IROCV_PROB_OPEN, PC_D_IROCV_TRAY_OUT, PC_D_IROCV_COMPLETE, PC_D_IROCV_ERROR };
 const char *OutputNames[] = { "AUTO_READY", "PROB_CLOSE", "PROB_OPEN", "TRAY_OUT", "COMPLETE", "ERROR" };
 
-TLabel *MakeLabel(TComponent *owner, TWinControl *parent, int x, int y, int w, int h, int fontHeight)
-{
-    TLabel *label = new TLabel(owner);
-    label->Parent = parent;
-    label->AutoSize = false;
-    label->SetBounds(x, y, w, h);
-    label->Font->Name = "Segoe UI";
-    label->Font->Height = fontHeight;
-    label->Font->Style = TFontStyles();
-    label->WordWrap = true;
-    return label;
-}
-TGroupBox *MakeGroup(TComponent *owner, TWinControl *parent, const char *caption,
-    int x, int y, int w, int h)
-{
-    TGroupBox *group = new TGroupBox(owner);
-    group->Parent = parent;
-    group->SetBounds(x, y, w, h);
-    group->Caption = caption;
-    group->Font->Name = "Segoe UI";
-    group->Font->Height = -13;
-    group->Font->Style = TFontStyles();
-    group->Color = clWhite;
-    group->ParentBackground = false;
-    return group;
-}
 bool Connected(TClientSocket *client)
 {
     return client && client->Active && client->Socket && client->Socket->Connected;
@@ -56,97 +30,45 @@ __fastcall TOperationView::TOperationView(TTotalForm *owner)
     : TComponent(owner), stageForm(owner), refreshTimer(NULL), logMemo(NULL),
       waitStarted(GetTickCount()), signalsKnown(false), plcWasValid(false), previousCloseRequest(0)
 {
-    // Keep legacy controls alive: language changes, colors, alarm counts and existing
-    // callbacks still reference them. Only their duplicate visual presentation is removed.
-    owner->flowChart->Visible = false;
-    owner->GroupBox7->Visible = false;
-    owner->pBase->Visible = false;
-    owner->Panel1->Visible = false;
-    owner->GrpMain->Visible = false;
-    owner->StatusImage->Visible = false;
-    owner->GrpLocal->Visible = false;
-    owner->Image5->Visible = false;
-    owner->pConInfo->Visible = false;
-    owner->pnlTrayIn->Visible = false;
-    owner->pnlTrayOut->Visible = false;
-    owner->pnlProbeOpen->Visible = false;
-    owner->pnlProbeClose->Visible = false;
-    owner->btnReset->SetBounds(10, 49, 100, 32);
-    owner->btnTrayOut->SetBounds(116, 49, 100, 32);
-    owner->btnRemeasureInfo->SetBounds(222, 49, 100, 32);
-    modeLabel = MakeLabel(this, owner->pback, 332, 52, 276, 26, -13);
-
-    owner->Panel16->SetBounds(10, 90, 600, 46);
-    owner->lblTrayInfo->Visible = false;
-    owner->Panel3->Visible = false;
-    owner->Panel_State->Visible = false;
-    owner->Panel6->SetBounds(6, 8, 92, 28);
-    owner->pTrayid->SetBounds(104, 8, 480, 28);
-    owner->pTrayid->Font->Height = -18;
-    owner->editTrayId->SetBounds(0, 0, 480, 28);
-
-    processGroup = MakeGroup(this, owner->pback, "PROCESS INFO", 10, 145, 600, 151);
-    for(int i = 0; i < TOperationViewState::Count; ++i)
-    {
-        tiles[i] = new TPanel(this);
-        tiles[i]->Parent = processGroup;
-        tiles[i]->SetBounds(9 + (i % 7) * 83, 21 + (i / 7) * 48, 79, 44);
-        tiles[i]->BevelOuter = bvNone;
-        tiles[i]->ParentBackground = false;
-        tiles[i]->Font->Name = "Segoe UI";
-        tiles[i]->Font->Height = -11;
-        tiles[i]->Font->Style = TFontStyles();
-        tiles[i]->ShowHint = true;
-        tiles[i]->Hint = "Display only. REQ = PC output setting; OK = PLC input condition.";
-        tiles[i]->Caption = "";
-        TLabel *text = MakeLabel(this, tiles[i], 0, 0, 79, 44, -11);
-        text->Alignment = taCenter;
-        text->Layout = tlCenter;
-    }
-    serialLabel = MakeLabel(this, processGroup, 10, 121, 580, 23, -12);
-    currentGroup = MakeGroup(this, owner->pback, "CURRENT OPERATION", 10, 303, 600, 182);
-    currentTitle = MakeLabel(this, currentGroup, 10, 22, 468, 25, -17);
-    elapsedLabel = MakeLabel(this, currentGroup, 482, 25, 106, 23, -12);
-    elapsedLabel->Alignment = taRightJustify;
-    currentDetail = MakeLabel(this, currentGroup, 10, 56, 578, 113, -13);
-
-    logGroup = MakeGroup(this, owner->pback, "OPERATION LOG", 10, 492, 600, 360);
-    followLog = new TCheckBox(this);
-    followLog->Parent = logGroup;
-    followLog->SetBounds(352, 15, 136, 25);
-    followLog->Caption = "Follow latest";
-    followLog->Checked = true;
+    // Layout belongs to FormTotal.dfm. Never override designer bounds at runtime.
+    // The form owns visual controls; this observer owns only its refresh timer.
+    modeLabel = owner->lblOperationMode;
+    serialLabel = owner->lblOperationSerial;
+    currentTitle = owner->lblOperationTitle;
+    currentDetail = owner->lblOperationDetail;
+    elapsedLabel = owner->lblOperationElapsed;
+    logMemo = owner->memoOperationLog;
+    followLog = owner->chkOperationFollow;
     followLog->OnClick = FollowLogClick;
-    TButton *copy = new TButton(this);
-    copy->Parent = logGroup;
-    copy->SetBounds(496, 15, 92, 25);
-    copy->Caption = "COPY";
-    copy->OnClick = CopyLog;
-    logMemo = new TMemo(this);
-    logMemo->Parent = logGroup;
-    logMemo->SetBounds(10, 45, 578, 303);
-    logMemo->ReadOnly = true;
-    logMemo->ScrollBars = ssVertical;
-    logMemo->WordWrap = true;
-    logMemo->Font->Name = "Consolas";
-    logMemo->Font->Height = -13;
-    logMemo->Color = (TColor)RGB(247, 249, 252);
-    logMemo->HideSelection = false;
-
-    // Manual tools are retained without the old full-size LOCAL MODE image.
-    owner->localTest->Parent = owner->pback;
-    owner->localCali->Parent = owner->pback;
-    owner->localTest->SetBounds(10, 859, 130, 34);
-    owner->localCali->SetBounds(146, 859, 180, 34);
-    owner->localTest->Visible = false;
-    owner->localCali->Visible = false;
-    owner->chkCycle->Parent = owner->pback;
-    owner->chkBypass->Parent = owner->pback;
-    owner->chkCycle->SetBounds(338, 864, 130, 25);
-    owner->chkBypass->SetBounds(478, 864, 120, 25);
-    // Do not expose previously hidden test / bypass controls automatically.
-
-    // Dynamic groups are created last; preserve an already visible alarm's z-order.
+    owner->btnOperationCopy->OnClick = CopyLog;
+    tiles[0] = owner->pOpReady;
+    tileLabels[0] = owner->lblOpReady;
+    tiles[1] = owner->pOpTrayIn;
+    tileLabels[1] = owner->lblOpTrayIn;
+    tiles[2] = owner->pOpTrayId;
+    tileLabels[2] = owner->lblOpTrayId;
+    tiles[3] = owner->pOpCellData;
+    tileLabels[3] = owner->lblOpCellData;
+    tiles[4] = owner->pOpCloseRequest;
+    tileLabels[4] = owner->lblOpCloseRequest;
+    tiles[5] = owner->pOpCloseConfirmed;
+    tileLabels[5] = owner->lblOpCloseConfirmed;
+    tiles[6] = owner->pOpMeasure;
+    tileLabels[6] = owner->lblOpMeasure;
+    tiles[7] = owner->pOpFileSave;
+    tileLabels[7] = owner->lblOpFileSave;
+    tiles[8] = owner->pOpResultTransmit;
+    tileLabels[8] = owner->lblOpResultTransmit;
+    tiles[9] = owner->pOpComplete;
+    tileLabels[9] = owner->lblOpComplete;
+    tiles[10] = owner->pOpOpenRequest;
+    tileLabels[10] = owner->lblOpOpenRequest;
+    tiles[11] = owner->pOpOpenConfirmed;
+    tileLabels[11] = owner->lblOpOpenConfirmed;
+    tiles[12] = owner->pOpOutRequest;
+    tileLabels[12] = owner->lblOpOutRequest;
+    tiles[13] = owner->pOpOutConfirmed;
+    tileLabels[13] = owner->lblOpOutConfirmed;
     if(owner->CurrentGrp && owner->CurrentGrp->Visible)
         owner->CurrentGrp->BringToFront();
 
@@ -249,7 +171,7 @@ void TOperationView::DrawTiles()
         if(state == TOperationViewState::Done &&
             (i == TOperationViewState::CloseRequest || i == TOperationViewState::OpenRequest ||
              i == TOperationViewState::OutRequest || i == TOperationViewState::Complete)) status = "SET";
-        static_cast<TLabel*>(tiles[i]->Controls[0])->Caption = AnsiString(TileNames[i]) + "\r\n" + status;
+        tileLabels[i]->Caption = AnsiString(TileNames[i]) + "\r\n" + status;
         tiles[i]->Color = state == TOperationViewState::Done ? (TColor)RGB(220, 242, 226) :
             state == TOperationViewState::Waiting ? (TColor)RGB(255, 236, 186) :
             state == TOperationViewState::Warning ? (TColor)RGB(255, 212, 212) : (TColor)RGB(234, 239, 245);

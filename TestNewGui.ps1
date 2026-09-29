@@ -23,9 +23,71 @@ if($plc.Left -ne $equipment.Left -or $plc.Top+$plc.Height -gt $equipment.Top){th
 if((Dfm-Block 'AdvSmoothPanel_PLC') -notmatch 'OnClick = advPLCInterfaceShowClick'){throw 'PLC panel must use the original PLC interface handler'}
 $view=Read-Source 'Stage_OperationView.cpp'
 if($view -match '(?:SetValue|SendText|RunAutoStep|WriteIROCVValue|InitializePlcData)\s*\('){throw 'Display module may not control production'}
-foreach($token in @('owner->pBase->Visible = false','owner->flowChart->Visible = false','owner->StatusImage->Visible = false','while(logMemo->Lines->Count >= 500)','if(i < 6 && !valid) continue')){
+foreach($token in @('while(logMemo->Lines->Count >= 500)','if(i < 6 && !valid) continue')){
  if(!$view.Contains($token)){throw "Missing display contract: $token"}
 }
+if($view -match 'new T(?:Label|Panel|GroupBox|Memo|CheckBox|Button)\s*\(' -or $view -match '->SetBounds\s*\('){throw 'Operation controls/bounds must come from DFM, not runtime construction'}
+$totalDfm=Read-Source 'FormTotal.dfm'
+$header=Read-Source 'FormTotal.h'
+function Read-DfmNodes([string]$text){
+ $nodes=@{};$stack=[Collections.Generic.List[object]]::new()
+ foreach($line in ($text -split '\r?\n')){
+  if($line -match '^( *)object (\w+): (\w+)'){
+   $depth=$Matches[1].Length;$name=$Matches[2];$type=$Matches[3]
+   while($stack.Count -gt 0 -and $stack[$stack.Count-1].Depth -ge $depth){$stack.RemoveAt($stack.Count-1)}
+   if($nodes.ContainsKey($name)){throw "Duplicate DFM component $name"}
+   $parent=if($stack.Count){$stack[$stack.Count-1].Name}else{''}
+   $node=@{Name=$name;Type=$type;Depth=$depth;Parent=$parent;Props=@{}}
+   $nodes[$name]=$node;$stack.Add($node)
+  }elseif($line -match '^( *)([\w.]+) = (.*)$' -and $stack.Count){
+   $node=$stack[$stack.Count-1]
+   if($Matches[1].Length -eq $node.Depth+2){$node.Props[$Matches[2]]=$Matches[3]}
+  }
+ }
+ return $nodes
+}
+$nodes=Read-DfmNodes $totalDfm
+$originalText=(& git show '592f738:FormTotal.dfm') -join "`n"
+$original=Read-DfmNodes $originalText
+function Image-Payloads([string]$text){
+ return @([regex]::Matches($text,'(?s)\w+\.Data = \{([^}]+)\}') | ForEach-Object {$_.Groups[1].Value -replace '\s',''} | Sort-Object)
+}
+if(Compare-Object (Image-Payloads $originalText) (Image-Payloads $totalDfm)){throw 'Legacy image data changed during DFM migration'}
+foreach($name in $original.Keys){
+ if(!$nodes.ContainsKey($name) -or $nodes[$name].Type -ne $original[$name].Type){throw "Lost legacy component $name"}
+ foreach($prop in $original[$name].Props.Keys | Where-Object {$_ -like 'On*'}){
+  if($nodes[$name].Props[$prop] -ne $original[$name].Props[$prop]){throw "Changed legacy event $name.$prop"}
+ }
+}
+foreach($name in $nodes.Keys | Where-Object {!$original.ContainsKey($_)}){
+ if($header -notmatch ('\b'+$nodes[$name].Type+'\s*\*\s*'+$name+'\s*;')){throw "Missing IDE field $name"}
+}
+foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','lblOperationMode','localTest','localCali','chkCycle','chkBypass')){
+ if($nodes[$name].Parent -ne 'pback'){throw "Incorrect design parent: $name"}
+}
+foreach($name in @('flowChart','GroupBox7','pBase','Panel1','GrpMain','GrpLocal','Panel_State','Panel3','pConInfo','pnlTrayIn','pnlTrayOut','pnlProbeOpen','pnlProbeClose')){
+ if($nodes[$name].Parent -ne 'pnlLegacyDisplay'){throw "Legacy control overlaps designer: $name"}
+}
+if($nodes.pnlLegacyDisplay.Props.Visible -ne 'False' -or [int]$nodes.pnlLegacyDisplay.Props.Left -lt [int]$nodes.TotalForm.Props.ClientWidth){throw 'Legacy storage must be hidden and outside the live canvas'}
+foreach($node in $nodes.Values | Where-Object {$_.Parent -eq 'TotalForm' -and $_.Type -notmatch 'Timer|Socket' -and $_.Name -ne 'pback'}){
+ if([int]$node.Props.Left -lt 630){throw "Auxiliary control covers designer canvas: $($node.Name)"}
+}
+$previousBottom=0
+foreach($name in @('Panel16','grpOperationProcess','grpOperationCurrent','grpOperationLog')){
+ $props=$nodes[$name].Props
+ if([int]$props.Top -lt $previousBottom -or [int]$props.Left+[int]$props.Width -gt [int]$nodes.pback.Props.Width){throw "Design bounds overlap / overflow: $name"}
+ $previousBottom=[int]$props.Top+[int]$props.Height
+}
+$tileNames=@('Ready','TrayIn','TrayId','CellData','CloseRequest','CloseConfirmed','Measure','FileSave','ResultTransmit','Complete','OpenRequest','OpenConfirmed','OutRequest','OutConfirmed')
+foreach($suffix in $tileNames){
+ if($nodes['pOp'+$suffix].Parent -ne 'grpOperationProcess' -or $nodes['lblOp'+$suffix].Parent -ne 'pOp'+$suffix){throw "Design tile hierarchy: $suffix"}
+ if(!$view.Contains('owner->pOp'+$suffix) -or !$view.Contains('owner->lblOp'+$suffix)){throw "Display binding missing: $suffix"}
+}
+foreach($node in $nodes.Values | Where-Object {$_.Props.ContainsKey('TabOrder')}){
+ $siblings=@($nodes.Values | Where-Object {$_.Parent -eq $node.Parent -and $_.Props.TabOrder -eq $node.Props.TabOrder})
+ if($siblings.Count -ne 1){throw "Duplicate sibling TabOrder: $($node.Name)"}
+}
+'PASS: design-time controls, 14 tile bindings, legacy event preservation, bounds and tab order'
 $form=Read-Source 'FormTotal.cpp'
 if(!$form.Contains('operationView = NULL;') -or !$form.Contains('CreateOperationView();')){throw 'Stage view lifetime wiring'}
 if(!(Read-Source 'Stage_Form.cpp').Contains('if(operationView && grp->Visible) grp->BringToFront();')){throw 'Alarm groups must remain above the dynamic log area'}

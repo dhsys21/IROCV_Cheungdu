@@ -16,8 +16,14 @@
 
 ## 표시와 제어의 경계
 
-`Stage_OperationView.cpp`의 `TOperationView`가 왼쪽 화면을 동적으로 만듭니다.
-따라서 새 영역은 실행 시 보이며, 기존 FormTotal DFM의 채널 맵은 호환용으로 남아 있습니다.
+왼쪽 화면은 `FormTotal.dfm`의 실제 컴포넌트입니다. C++Builder에서 FormTotal의 Design 탭을 열면
+PROCESS INFO / CURRENT OPERATION / OPERATION LOG와 운전 버튼 배치를 확인·수정할 수 있습니다.
+`Stage_OperationView.cpp`의 `TOperationView`는 DFM 컴포넌트에 연결되어 값·색상·로그만 갱신합니다.
+위치·크기를 실행 중 다시 지정하지 않으므로 디자이너에서 수정한 새 영역의 배치가 유지됩니다.
+
+기존 채널 맵·범례·대형 상태 이미지는 참조 호환용 `pnlLegacyDisplay`에 보관합니다.
+이 판넬은 화면 밖(Left=1950)에 있고 실행 중 숨김 상태입니다. 필요할 때 Structure/Object Tree에서
+선택할 수 있습니다. 기존 오류/설정 창과 오른쪽 `FormMeasureInfo`는 그대로 유지합니다.
 
 - 화면은 별도 200ms 타이머로 갱신합니다. 자동 검사 타이머가 꺼진 수동/오류 대기 중에도 갱신됩니다.
 - 생산 명령 실행 후 알림, 실제 파일 저장 결과, 현재 PLC 입력/PC 출력 설정, 기존 로그를 관찰합니다.
@@ -57,7 +63,8 @@ SAVE FILE / RESULT TX / COMPLETE / OPEN REQ / OPEN OK / OUT REQ / OUT OK
 | 파일 | 역할 |
 |---|---|
 | `RVMO_main.dfm/.cpp/.h` | 상단 버튼 배치, 두 연결 표시, PLC 연결 판넬 클릭 |
-| `Stage_OperationView.cpp`, `OperationView.h` | 왼쪽 동적 배치, 현재 작업, 화면 로그, 표시 타이머 |
+| `FormTotal.dfm/.h` | 디자이너에서 편집 가능한 왼쪽 배치와 컴포넌트 선언 |
+| `Stage_OperationView.cpp`, `OperationView.h` | DFM 표시 컴포넌트 연결, 현재 작업, 화면 로그, 표시 타이머 |
 | `OperationViewState.h` | 화면용 요청/완료/생략/경고 이력. PLC/VCL 없이 테스트 가능 |
 | `FormTotal.cpp/.h` | 표시 객체 생성/소유. 새 타이머는 폼과 함께 해제 |
 | `Stage_AutoInspection.cpp` | 명령 실행 후 관찰 알림 및 초기화 알림 |
