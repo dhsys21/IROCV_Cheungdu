@@ -2,6 +2,7 @@
 #include "PlcAutoMode.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int checks = 0;
 static void Check(bool condition, const char *message)
@@ -102,6 +103,40 @@ int main()
         "after confirmation advance to measurement, do not hold stale DOWN OK");
     Check(V::ActiveTile(STEP_ERROR_STOP) == -1 && V::ActiveTile(STEP_WAIT_NG_ERROR) == -1,
         "operator/error waits have no active measurement tile");
+    Check(strcmp(V::TileName(V::Ready), "READY") == 0, "log READY matches process label");
+    Check(strcmp(V::TileName(V::CloseConfirmed), "DOWN OK") == 0, "log DOWN OK matches process label");
+    Check(V::CommandTile(CMD_TRAY_IN) == V::TrayIn, "tray-in command logs before next TRAY ID step");
+    Check(V::CommandTile(CMD_READ_TRAY_ID) == V::TrayId, "tray ID command retains its phase");
+    Check(V::CommandTile(CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL) == V::CloseRequest, "close command phase despite parallel serial read");
+    Check(V::CommandTile(CMD_TRAY_OUT_COMPLETE) == V::OutConfirmed, "completion logs OUT OK, not following READY");
+    view.Reset();
+    Check(view.SignalTile(2, true, true, true, false, true, V::Ready) == V::Ready,
+        "unrequested close input does not fabricate DOWN OK phase");
+    view.Command(CMD_PROBE_CLOSE);
+    Check(view.SignalTile(7, true, true, false, false, true, V::CellData) == V::CloseRequest,
+        "PC close assertion logs DOWN REQ");
+    Check(view.SignalTile(2, true, true, true, false, true, V::Measure) == V::CloseConfirmed,
+        "PLC closed logs DOWN OK even after sequence advances");
+    Check(view.SignalTile(7, false, true, true, false, true, V::Measure) == V::CloseConfirmed,
+        "PC close request reset after confirmation logs DOWN OK");
+    Check(view.SignalTile(7, false, false, true, false, true, V::Measure) == V::Measure,
+        "invalid PLC buffer cannot label reset as confirmed");
+    Check(view.SignalTile(7, false, true, false, false, true, V::CloseRequest) == V::CloseRequest,
+        "cancel without confirmation must not be DOWN OK");
+    view.Output(V::OpenRequest, true);
+    Check(view.SignalTile(8, true, true, false, false, true, V::FileSave) == V::OpenRequest,
+        "open output has its own phase during file save");
+    Check(view.SignalTile(3, true, true, false, true, true, V::ResultTransmit) == V::OpenConfirmed,
+        "open input has its own phase during result transmission");
+    Check(view.SignalTile(2, false, true, false, true, true, V::OpenConfirmed) == V::OpenConfirmed,
+        "falling closed input uses current phase, not DOWN OK");
+    view.Command(CMD_TRAY_OUT);
+    Check(view.SignalTile(1, false, true, false, true, false, V::Ready) == V::OutConfirmed,
+        "tray absence logs OUT OK after READY transition");
+    Check(view.SignalTile(9, false, true, false, true, false, V::Ready) == V::OutConfirmed,
+        "tray out request reset logs OUT OK");
+    Check(view.SignalTile(10, true, true, false, true, true, V::ResultTransmit) == V::Complete,
+        "COMPLETE output retains event phase");
     TOperationCycleClock clock;
     Check(clock.Elapsed(9999) == 0, "READY never accumulates elapsed time");
     clock.Start(1000);

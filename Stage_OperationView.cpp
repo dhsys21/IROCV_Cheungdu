@@ -9,16 +9,12 @@
 
 namespace
 {
-const char *TileNames[TOperationViewState::Count] = {
-    "READY", "TRAY IN", "TRAY ID", "CELL DATA", "DOWN REQ", "DOWN OK", "MEASURE",
-    "SAVE FILE", "RESULT TX", "COMPLETE", "OPEN REQ", "OPEN OK", "OUT REQ", "OUT OK"
-};
 const int InputAddresses[] = { PLC_D_IROCV_AUTO_MANUAL, PLC_D_IROCV_TRAY_IN,
     PLC_D_IROCV_PROB_CLOSE, PLC_D_IROCV_PROB_OPEN, PLC_D_IROCV_COMPLETE, PLC_D_IROCV_ERROR };
-const char *InputNames[] = { "AUTO_MANUAL", "TRAY_IN", "PROB_CLOSE", "PROB_OPEN", "COMPLETE", "ERROR" };
+const char *InputNames[] = { "AUTO_MANUAL", "TRAY_IN", "PROBE_CLOSE", "PROBE_OPEN", "COMPLETE", "ERROR" };
 const int OutputAddresses[] = { PC_D_IROCV_STAGE_AUTO_READY, PC_D_IROCV_PROB_CLOSE,
     PC_D_IROCV_PROB_OPEN, PC_D_IROCV_TRAY_OUT, PC_D_IROCV_COMPLETE, PC_D_IROCV_ERROR };
-const char *OutputNames[] = { "AUTO_READY", "PROB_CLOSE", "PROB_OPEN", "TRAY_OUT", "COMPLETE", "ERROR" };
+const char *OutputNames[] = { "AUTO_READY", "PROBE_CLOSE", "PROBE_OPEN", "TRAY_OUT", "COMPLETE", "ERROR" };
 
 bool Connected(TClientSocket *client)
 {
@@ -66,7 +62,8 @@ AnsiString OperatorSignalText(AnsiString text)
 
 __fastcall TOperationView::TOperationView(TTotalForm *owner)
     : TComponent(owner), stageForm(owner), refreshTimer(NULL), logMemo(NULL),
-      logWriteFailed(false), signalsKnown(false), plcWasValid(false), previousCloseRequest(0)
+      logWriteFailed(false), signalsKnown(false), plcWasValid(false), previousCloseRequest(0),
+      commandLogTile(-1), lastProcessTile(TOperationViewState::Ready)
 {
     // Layout belongs to FormTotal.dfm. Never override designer bounds at runtime.
     // The form owns visual controls; this observer owns only its refresh timer.
@@ -171,17 +168,38 @@ void __fastcall TOperationView::FollowLogClick(TObject *)
         logMemo->Perform(EM_SCROLLCARET, 0, 0);
     }
 }
-void TOperationView::Append(AnsiString source, AnsiString message)
+TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoInspectionCommand command)
+    : view(owner->operationView), previous(-1)
+{
+    if(!view) return;
+    previous = view->commandLogTile;
+    int tile = TOperationViewState::CommandTile(command);
+    if(tile >= 0) view->commandLogTile = tile;
+}
+TOperationCommandLogScope::~TOperationCommandLogScope()
+{
+    if(view) view->commandLogTile = previous;
+}
+void TOperationView::Append(AnsiString source, AnsiString message, int processTile)
 {
     if(!logMemo || message.IsEmpty()) return;
     message = StringReplace(message, "\r", " ", TReplaceFlags() << rfReplaceAll);
     message = StringReplace(message, "\n", " ", TReplaceFlags() << rfReplaceAll);
     if(message.Length() > 1200) message = message.SubString(1, 1200) + " ...";
-    // Existing DisplayProcess writes the same text into both files. One UI row is enough.
-    AnsiString key = source + ": " + message.Trim();
+    // Explicit event > executing command > current process > last process on error.
+    if(processTile < 0)
+    {
+        processTile = commandLogTile >= 0 ? commandLogTile : CurrentProcessTile();
+        if(processTile >= 0) lastProcessTile = processTile;
+        else processTile = lastProcessTile;
+    }
+    source = StringReplace(source, " ", "_", TReplaceFlags() << rfReplaceAll);
+    AnsiString phase = TOperationViewState::TileName(processTile);
+    // Do not suppress identical text from a different inspection phase.
+    AnsiString key = "[" + phase + "] " + source + " " + message.Trim();
     if(key == lastLog) return;
     lastLog = key;
-    UnicodeString line = Now().FormatString("hh:nn:ss.zzz ") + "[" + source + "] " + message.Trim();
+    UnicodeString line = Now().FormatString("hh:nn:ss.zzz ") + key;
     try { logWriteFailed = !WriteOperationLog(line); } catch(...) { logWriteFailed = true; }
     stageForm->btnOperationLogFile->Caption = logWriteFailed ? "LOG ERROR" : "LOG FILE";
     stageForm->btnOperationLogFile->Hint = logWriteFailed ? UnicodeString(L"Log write failed: check folder/disk space.") : operationLogFile;
@@ -217,7 +235,8 @@ void TOperationView::Reset()
     elapsedLabel->Caption = "Elapsed 0.0 s";
     previousCloseRequest = 0;
     lastWaitKey = "";
-    Append("PC", "Inspection reset; waiting for a new tray.");
+    lastProcessTile = TOperationViewState::Ready;
+    Append("PC", "Inspection reset; waiting for a new tray.", TOperationViewState::Ready);
     DrawTiles();
 }
 void TOperationView::Command(TAutoInspectionCommand command)
@@ -225,34 +244,34 @@ void TOperationView::Command(TAutoInspectionCommand command)
     if(command == CMD_TRAY_IN || command == CMD_BYPASS_TRAY_OUT) cycleClock.Start(GetTickCount());
     if(command == CMD_TRAY_OUT_COMPLETE) FinishCycle();
     progress.Command(command);
-    if(command == CMD_TRAY_IN) Append("PLC RX", "TRAY IN confirmed; new cycle.");
-    if(command == CMD_READ_CELL_DATA) Append("PC", "CELL DATA read: " + IntToStr(stageForm->tray.cell_count) + " cells.");
+    if(command == CMD_TRAY_IN) Append("PLC RX", "TRAY IN confirmed; new cycle.", TOperationViewState::TrayIn);
+    if(command == CMD_READ_CELL_DATA) Append("PC", "CELL DATA read: " + IntToStr(stageForm->tray.cell_count) + " cells.", TOperationViewState::CellData);
     if(command == CMD_MEASURE_START || command == CMD_REMEASURE_START)
-        Append("PLC RX", "PROBE CLOSED and TRAY IN confirmed; measurement requested.");
-    if(command == CMD_TRAY_OUT_COMPLETE) Append("PLC RX", "TRAY IN = 0; tray-out complete.");
+        Append("PLC RX", "PROBE CLOSED and TRAY IN confirmed; measurement requested.", TOperationViewState::CloseConfirmed);
+    if(command == CMD_TRAY_OUT_COMPLETE) Append("PLC RX", "TRAY IN = 0; tray-out complete.", TOperationViewState::OutConfirmed);
     DrawTiles();
 }
 void TOperationView::FinishCycle()
 {
     if(!cycleClock.IsRunning()) return;
     unsigned long elapsed = cycleClock.Finish(GetTickCount());
-    Append("CYCLE", "TRAY IN -> TRAY OUT complete: " + FormatFloat("0.0", elapsed / 1000.0) + " s");
+    Append("CYCLE", "TRAY IN -> TRAY OUT complete: " + FormatFloat("0.0", elapsed / 1000.0) + " s", TOperationViewState::OutConfirmed);
     elapsedLabel->Caption = "Elapsed 0.0 s";
 }
 void TOperationView::FileSaved(bool saved)
 {
     progress.FileSaved(saved);
-    Append(saved ? "PC" : "WARNING", saved ? "Result file saved." : "Result file save failed after retry; existing continue policy retained.");
+    Append(saved ? "PC" : "WARNING", saved ? "Result file saved." : "Result file save failed after retry; existing continue policy retained.", TOperationViewState::FileSave);
     DrawTiles();
 }
 void TOperationView::MeasurementStarted()
 {
     if(stageForm->bLocal || stageForm->stage.arl == nLocal) progress.Reset();
     progress.MeasurementStarted();
-    Append("PC", "Measurement command queued (AMS); waiting for device responses.");
+    Append("PC", "Measurement command queued (AMS); waiting for device responses.", TOperationViewState::Measure);
     DrawTiles();
 }
-void TOperationView::DrawTiles()
+int TOperationView::CurrentProcessTile()
 {
     const bool valid = Mod_PLC->plcAutoMode.IsValid() &&
         Connected(Mod_PLC->ClientSocket_PC) && Connected(Mod_PLC->ClientSocket_PLC);
@@ -267,11 +286,18 @@ void TOperationView::DrawTiles()
     else if(stageForm->resultSaveStep == RESULT_WAIT_PLC_SEND)
         active = Mod_PLC->WasResultTransmitted() ? TOperationViewState::Complete : TOperationViewState::ResultTransmit;
     if(stageForm->resultSaveStep == RESULT_ERROR) active = -1;
+    return active;
+}
+void TOperationView::DrawTiles()
+{
+    int active = CurrentProcessTile();
+    const bool valid = Mod_PLC->plcAutoMode.IsValid() &&
+        Connected(Mod_PLC->ClientSocket_PC) && Connected(Mod_PLC->ClientSocket_PLC);
     if(!Connected(stageForm->Client) || !valid ||
         stageForm->Panel_State->Color == clRed) active = -1;
     for(int i = 0; i < TOperationViewState::Count; ++i)
     {
-        tileLabels[i]->Caption = TileNames[i];
+        tileLabels[i]->Caption = TOperationViewState::TileName(i);
         tiles[i]->Color = i == active ? clLime : clSilver;
     }
 }
@@ -290,7 +316,13 @@ void TOperationView::ObserveSignals(bool valid)
         else if(text != lastSignals[i])
         {
             AnsiString name = i < 6 ? InputNames[i] : OutputNames[i - 6];
-            Append(i < 6 ? "PLC RX" : "PC SET", name + " (D" + IntToStr(address) + "): " + lastSignals[i] + " -> " + text);
+            int current = CurrentProcessTile();
+            if(current < 0) current = lastProcessTile;
+            int phase = progress.SignalTile(i, value == 1, valid,
+                Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1,
+                Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1,
+                Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1, current);
+            Append(i < 6 ? "PLC_RX" : "PC_SET", name + " (D" + IntToStr(address) + "): " + lastSignals[i] + " -> " + text, phase);
             lastSignals[i] = text;
         }
     }
@@ -439,14 +471,16 @@ void __fastcall TTotalForm::AppendOperationLog(AnsiString type, AnsiString messa
     try
     {
         if(!operationView) return;
+        int phase = -1;
         // Raw IR/OCV samples and polling traffic stay in the original communication file.
         if(type == "RX" || type == "TX")
         {
             if(message.Pos("AMS") == 0 && message.Pos("AMF") == 0 && message.Pos("STP") == 0) return;
             type = type == "RX" ? "DEVICE RX" : "DEVICE TX REQUEST";
+            phase = TOperationViewState::Measure;
         }
         if(type == "AutoInspection" && message.Pos("...") != 0) return;
-        operationView->Append(type, message);
+        operationView->Append(type, message, phase);
     }
     catch(...) {} // UI logging is not part of the production-control contract.
 }

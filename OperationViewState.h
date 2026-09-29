@@ -16,6 +16,54 @@ public:
     TState state[Count];
 
     TOperationViewState() { Reset(); }
+    static const char *TileName(int tile)
+    {
+        static const char *names[Count] = { "READY", "TRAY IN", "TRAY ID", "CELL DATA",
+            "DOWN REQ", "DOWN OK", "MEASURE", "SAVE FILE", "RESULT TX", "COMPLETE",
+            "OPEN REQ", "OPEN OK", "OUT REQ", "OUT OK" };
+        return tile >= 0 && tile < Count ? names[tile] : names[Ready];
+    }
+    static int CommandTile(TAutoInspectionCommand command)
+    {
+        switch(command)
+        {
+            case CMD_TRAY_IN: return TrayIn;
+            case CMD_READ_TRAY_ID: return TrayId;
+            case CMD_READ_CELL_DATA:
+            case CMD_SAVE_CELL_SERIAL:
+            case CMD_CELL_SERIAL_COUNT_ERROR:
+            case CMD_CELL_SERIAL_TIMEOUT: return CellData;
+            case CMD_PROBE_CLOSE:
+            case CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL:
+            case CMD_REQUEST_PROBE_REMEASURE: return CloseRequest;
+            case CMD_MEASURE_START:
+            case CMD_REMEASURE_START: return Measure;
+            case CMD_NG_ERROR: return OpenConfirmed;
+            case CMD_BYPASS_TRAY_OUT:
+            case CMD_TRAY_OUT: return OutRequest;
+            case CMD_TRAY_OUT_COMPLETE: return OutConfirmed;
+            default: return -1;
+        }
+    }
+    // The UI may have advanced before its next signal sample. Tag a confirmed
+    // handshake reset by its event, not by the following measurement/READY step.
+    int SignalTile(int index, bool on, bool valid, bool closed, bool opened,
+        bool trayPresent, int current) const
+    {
+        if(index < 6 && !valid) return current;
+        if(index == 1 && on) return TrayIn;
+        if((index == 1 || index == 9) && !on && valid && !trayPresent && state[OutRequest] == Done)
+            return OutConfirmed;
+        if(index == 7 && on) return CloseRequest;
+        if(((index == 2 && on) || (index == 7 && !on)) && valid && closed && trayPresent && state[CloseRequest] == Done)
+            return CloseConfirmed;
+        if(index == 8 && on) return OpenRequest;
+        if(index == 3 && on && valid && opened && state[OpenRequest] == Done) return OpenConfirmed;
+        if(index == 9 && on) return OutRequest;
+        if((index == 4 || index == 10) && on) return Complete;
+        if(index == 6 && on) return Ready;
+        return current;
+    }
     // Current step only: completed history must not leave multiple green tiles.
     static int ActiveTile(TAutoInspectionStep step, bool valid = false,
         bool closed = false, bool opened = false, bool trayPresent = true)

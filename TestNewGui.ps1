@@ -79,6 +79,17 @@ if(!$view.Contains('cycleClock.Start(GetTickCount())') -or !$view.Contains('cycl
 if(!$view.Contains('tiles[i]->Color = i == active ? clLime : clSilver;')){throw 'Active-only process colors'}
 if(!$view.Contains('pcModePanel->Color = local ? clRed : clLime;') -or !$view.Contains('valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed')){throw 'AUTO/non-AUTO colors'}
 if(!$view.Contains('currentDetail->Caption = OperatorSignalText(detail)')){throw 'Operator-friendly signal text missing'}
+foreach($token in @('AnsiString phase = TOperationViewState::TileName(processTile);',
+ 'AnsiString key = "[" + phase + "] " + source + " " + message.Trim();',
+ 'UnicodeString line = Now().FormatString("hh:nn:ss.zzz ") + key;',
+ 'WriteOperationLog(line)', 'logMemo->Lines->Add(line)',
+ 'view->commandLogTile = previous;', 'progress.SignalTile(')){
+ if(!$view.Contains($token)){throw "Missing process-tagged log contract: $token"}
+}
+$autoSource=Read-Source 'Stage_AutoInspection.cpp'
+if($autoSource -notmatch 'RunAutoInspectionCommand\([^\r\n]+\)\s*\{\s*TOperationCommandLogScope operationLogScope\(this, command\);'){
+ throw 'Command phase scope must begin before command-side logs'
+}
 foreach($name in @('flowChart','GroupBox7','pBase','Panel1','GrpMain','GrpLocal','Panel_State','Panel3','pConInfo','pnlTrayIn','pnlTrayOut','pnlProbeOpen','pnlProbeClose')){
  if($nodes[$name].Parent -ne 'pnlLegacyDisplay'){throw "Legacy control overlaps designer: $name"}
 }

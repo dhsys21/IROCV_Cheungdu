@@ -11,6 +11,7 @@ class TTotalForm;
 // Owned by the stage form. Borrows DFM controls; owns only the refresh timer.
 class TOperationView : public TComponent
 {
+    friend class TOperationCommandLogScope;
     TTotalForm *stageForm;
     TTimer *refreshTimer;
     TPanel *tiles[TOperationViewState::Count];
@@ -26,21 +27,34 @@ class TOperationView : public TComponent
     bool logWriteFailed;
     bool signalsKnown, plcWasValid;
     int previousCloseRequest;
+    int commandLogTile, lastProcessTile;
     void __fastcall TimerTick(TObject *Sender);
     void __fastcall OpenLogFile(TObject *Sender);
     void __fastcall FollowLogClick(TObject *Sender);
     void Refresh();
     void DrawTiles();
+    int CurrentProcessTile();
     void ObserveSignals(bool valid);
     void SetCurrent(AnsiString title, AnsiString detail, bool error);
     void FinishCycle();
     bool WriteOperationLog(const UnicodeString &line);
 public:
     __fastcall TOperationView(TTotalForm *owner);
-    void Append(AnsiString source, AnsiString message);
+    void Append(AnsiString source, AnsiString message, int processTile = -1);
     void Command(TAutoInspectionCommand command);
     void FileSaved(bool saved);
     void MeasurementStarted();
     void Reset();
+};
+
+// Logs written inside a command retain that command's phase even though the
+// automatic sequence has already advanced its step. Restore on exceptions too.
+class TOperationCommandLogScope
+{
+    TOperationView *view;
+    int previous;
+public:
+    TOperationCommandLogScope(TTotalForm *owner, TAutoInspectionCommand command);
+    ~TOperationCommandLogScope();
 };
 #endif

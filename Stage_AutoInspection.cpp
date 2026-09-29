@@ -5,6 +5,7 @@
 #pragma hdrstop
 
 #include "FormTotal.h"
+#include "OperationView.h"
 #include "RVMO_main.h"
 
 
@@ -273,6 +274,7 @@ void __fastcall TTotalForm::ClearProbeOpenSignalToPLC()
 // 단계 판단에서 반환한 명령을 한 번 실행한다. 실제 PLC 출력·측정 시작·오류창은 이곳에서 처리한다.
 void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand command, const TAutoInspectionData &data)
 {
+    TOperationCommandLogScope operationLogScope(this, command);
     switch(command)
     {
         case CMD_NONE:

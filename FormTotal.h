@@ -435,6 +435,7 @@ __published:	// IDE-managed Components
 private:
     // newGui is an observer only; production decisions stay in Stage_* / sequence.
     friend class TOperationView;
+    friend class TOperationCommandLogScope;
     TOperationView *operationView;
     void __fastcall CreateOperationView();
     void __fastcall ResetOperationView();
