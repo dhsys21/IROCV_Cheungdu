@@ -2,6 +2,7 @@
 #define OperationViewStateH
 
 #include "AutoInspectionSequence.h"
+#include <string.h>
 
 // Display-only history. No PLC writes, timing decisions or production interlocks.
 // Completion is recorded from executed commands / confirmed inputs, not from tile order.
@@ -16,6 +17,13 @@ public:
     TState state[Count];
 
     TOperationViewState() { Reset(); }
+    // The sequence updates its next step before executing the current command.
+    // Keep that internal trace in the original PLC file, not the operator timeline.
+    static bool IsInternalStepTrace(const char *source, const char *message)
+    {
+        return strcmp(source, "AutoInspection") == 0 &&
+            strncmp(message, "STEP_", 5) == 0 && strstr(message, " -> STEP_") != 0;
+    }
     static const char *TileName(int tile)
     {
         static const char *names[Count] = { "READY", "TRAY IN", "TRAY ID", "CELL DATA",

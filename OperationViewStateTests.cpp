@@ -104,6 +104,28 @@ int main()
     Check(V::ActiveTile(STEP_ERROR_STOP) == -1 && V::ActiveTile(STEP_WAIT_NG_ERROR) == -1,
         "operator/error waits have no active measurement tile");
     Check(strcmp(V::TileName(V::Ready), "READY") == 0, "log READY matches process label");
+    Check(V::IsInternalStepTrace("AutoInspection", "STEP_WAIT_TRAY_IN -> STEP_READ_TRAY_ID : Timer"),
+        "early next-step trace is excluded from operator timeline");
+    Check(V::IsInternalStepTrace("AutoInspection", "STEP_READ_TRAY_ID -> STEP_READ_CELL_DATA : Timer"),
+        "cell-data next-step trace is excluded before tray-id command logs");
+    Check(!V::IsInternalStepTrace("AutoInspection", "TRAY ID = TEST01"), "actual tray ID event stays visible");
+    Check(!V::IsInternalStepTrace("AutoInspection ERROR", "STEP_WAIT_TRAY_IN: PLC error"),
+        "failure diagnostics are not filtered as step traces");
+    Check(!V::IsInternalStepTrace("PC_SET", "PROBE_CLOSE (D5): 1 -> 0"), "signal transitions remain visible");
+    // Reported startup regression: future-step traces must not split actual commands.
+    const char *sources[] = {"PC", "STATE", "AutoInspection", "PLCInitialization",
+        "PLC_RX", "STATE", "AutoInspection", "AutoInspection", "STATE"};
+    const char *messages[] = {"reset", "Waiting for TRAY IN",
+        "STEP_WAIT_TRAY_IN -> STEP_READ_TRAY_ID : Timer", "outputs reset", "TRAY IN confirmed",
+        "Reading TRAY ID", "STEP_READ_TRAY_ID -> STEP_READ_CELL_DATA : Timer", "TRAY ID = TEST01", "Reading CELL DATA"};
+    const int phases[] = {V::Ready, V::Ready, V::TrayId, V::TrayIn, V::TrayIn, V::TrayId, V::CellData, V::TrayId, V::CellData};
+    int previousPhase = V::Ready;
+    for(int event = 0; event < 9; ++event)
+    {
+        if(V::IsInternalStepTrace(sources[event], messages[event])) continue;
+        Check(phases[event] >= previousPhase, "normal startup operator timeline does not move backward");
+        previousPhase = phases[event];
+    }
     Check(strcmp(V::TileName(V::CloseConfirmed), "DOWN OK") == 0, "log DOWN OK matches process label");
     Check(V::CommandTile(CMD_TRAY_IN) == V::TrayIn, "tray-in command logs before next TRAY ID step");
     Check(V::CommandTile(CMD_READ_TRAY_ID) == V::TrayId, "tray ID command retains its phase");

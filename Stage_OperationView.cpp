@@ -175,6 +175,13 @@ TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoIns
     previous = view->commandLogTile;
     int tile = TOperationViewState::CommandTile(command);
     if(tile >= 0) view->commandLogTile = tile;
+    // Confirmation precedes the command's measurement/AMS logs, not follows them.
+    if(command == CMD_MEASURE_START || command == CMD_REMEASURE_START)
+    {
+        try { view->Append("PLC_RX", "PROBE CLOSED and TRAY IN confirmed; measurement requested.",
+            TOperationViewState::CloseConfirmed); }
+        catch(...) {} // A display/log failure must not abort the production command.
+    }
 }
 TOperationCommandLogScope::~TOperationCommandLogScope()
 {
@@ -246,8 +253,6 @@ void TOperationView::Command(TAutoInspectionCommand command)
     progress.Command(command);
     if(command == CMD_TRAY_IN) Append("PLC RX", "TRAY IN confirmed; new cycle.", TOperationViewState::TrayIn);
     if(command == CMD_READ_CELL_DATA) Append("PC", "CELL DATA read: " + IntToStr(stageForm->tray.cell_count) + " cells.", TOperationViewState::CellData);
-    if(command == CMD_MEASURE_START || command == CMD_REMEASURE_START)
-        Append("PLC RX", "PROBE CLOSED and TRAY IN confirmed; measurement requested.", TOperationViewState::CloseConfirmed);
     if(command == CMD_TRAY_OUT_COMPLETE) Append("PLC RX", "TRAY IN = 0; tray-out complete.", TOperationViewState::OutConfirmed);
     DrawTiles();
 }
@@ -316,13 +321,17 @@ void TOperationView::ObserveSignals(bool valid)
         else if(text != lastSignals[i])
         {
             AnsiString name = i < 6 ? InputNames[i] : OutputNames[i - 6];
-            int current = CurrentProcessTile();
+            int current = commandLogTile >= 0 ? commandLogTile : CurrentProcessTile();
             if(current < 0) current = lastProcessTile;
             int phase = progress.SignalTile(i, value == 1, valid,
                 Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1,
                 Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1,
                 Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1, current);
-            Append(i < 6 ? "PLC_RX" : "PC_SET", name + " (D" + IntToStr(address) + "): " + lastSignals[i] + " -> " + text, phase);
+            AnsiString detail = name + " (D" + IntToStr(address) + "): " + lastSignals[i] + " -> " + text;
+            // Samples can arrive after the sequence advanced. Keep the current
+            // process heading, and preserve the signal's event phase in the body.
+            if(phase != current) detail += AnsiString(" (event: ") + TOperationViewState::TileName(phase) + ")";
+            Append(i < 6 ? "PLC_RX" : "PC_SET", detail, current);
             lastSignals[i] = text;
         }
     }
@@ -471,6 +480,7 @@ void __fastcall TTotalForm::AppendOperationLog(AnsiString type, AnsiString messa
     try
     {
         if(!operationView) return;
+        if(TOperationViewState::IsInternalStepTrace(type.c_str(), message.c_str())) return;
         int phase = -1;
         // Raw IR/OCV samples and polling traffic stay in the original communication file.
         if(type == "RX" || type == "TX")

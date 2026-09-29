@@ -87,6 +87,14 @@ foreach($token in @('AnsiString phase = TOperationViewState::TileName(processTil
  if(!$view.Contains($token)){throw "Missing process-tagged log contract: $token"}
 }
 $autoSource=Read-Source 'Stage_AutoInspection.cpp'
+if(!$view.Contains('if(TOperationViewState::IsInternalStepTrace(type.c_str(), message.c_str())) return;')){
+ throw 'Early internal step traces must stay out of the operator timeline'
+}
+if(!$view.Contains('Append(i < 6 ? "PLC_RX" : "PC_SET", detail, current);') -or !$view.Contains('(event: ')){
+ throw 'Late signal samples must preserve current heading and event context'
+}
+$commandObserver=[regex]::Match($view,'(?s)void TOperationView::Command\(.*?void TOperationView::FinishCycle').Value
+if($commandObserver.Contains('PROBE CLOSED and TRAY IN confirmed')){throw 'DOWN OK must not be logged after measurement command completes'}
 if($autoSource -notmatch 'RunAutoInspectionCommand\([^\r\n]+\)\s*\{\s*TOperationCommandLogScope operationLogScope\(this, command\);'){
  throw 'Command phase scope must begin before command-side logs'
 }
