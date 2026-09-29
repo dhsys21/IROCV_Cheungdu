@@ -17,7 +17,8 @@ public:
 
     TOperationViewState() { Reset(); }
     // Current step only: completed history must not leave multiple green tiles.
-    static int ActiveTile(TAutoInspectionStep step)
+    static int ActiveTile(TAutoInspectionStep step, bool valid = false,
+        bool closed = false, bool opened = false, bool trayPresent = true)
     {
         switch(step)
         {
@@ -27,10 +28,12 @@ public:
             case STEP_WAIT_START_DELAY:
             case STEP_WAIT_CELL_SERIAL: return CellData;
             case STEP_WAIT_PROBE_CLOSE:
-            case STEP_WAIT_REMEASURE_PROBE_CLOSE: return CloseConfirmed;
+            case STEP_WAIT_REMEASURE_PROBE_CLOSE:
+                // WAIT is the request phase, not proof of PLC completion.
+                return valid && closed && trayPresent ? CloseConfirmed : CloseRequest;
             case STEP_WAIT_MEASURE_COMPLETE: return Measure;
-            case STEP_WAIT_PROBE_OPEN: return OpenConfirmed;
-            case STEP_WAIT_TRAY_OUT: return OutConfirmed;
+            case STEP_WAIT_PROBE_OPEN: return valid && opened ? OpenConfirmed : OpenRequest;
+            case STEP_WAIT_TRAY_OUT: return valid && !trayPresent ? OutConfirmed : OutRequest;
             default: return -1; // Error/operator-decision state: no running tile.
         }
     }

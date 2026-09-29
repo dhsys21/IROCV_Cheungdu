@@ -78,11 +78,28 @@ int main()
     Check(V::ActiveTile(STEP_WAIT_TRAY_IN) == V::Ready, "ready only is active while idle");
     Check(V::ActiveTile(STEP_READ_TRAY_ID) == V::TrayId, "tray ID active");
     Check(V::ActiveTile(STEP_WAIT_CELL_SERIAL) == V::CellData, "serial read preparation active");
-    Check(V::ActiveTile(STEP_WAIT_PROBE_CLOSE) == V::CloseConfirmed, "probe down confirmation active");
-    Check(V::ActiveTile(STEP_WAIT_REMEASURE_PROBE_CLOSE) == V::CloseConfirmed, "remeasure probe down active");
+    Check(V::ActiveTile(STEP_WAIT_PROBE_CLOSE) == V::CloseRequest, "probe down wait is request, not OK");
+    Check(V::ActiveTile(STEP_WAIT_REMEASURE_PROBE_CLOSE) == V::CloseRequest, "remeasure probe down wait is request");
     Check(V::ActiveTile(STEP_WAIT_MEASURE_COMPLETE) == V::Measure, "measurement active");
-    Check(V::ActiveTile(STEP_WAIT_PROBE_OPEN) == V::OpenConfirmed, "probe open confirmation active");
-    Check(V::ActiveTile(STEP_WAIT_TRAY_OUT) == V::OutConfirmed, "tray out confirmation active");
+    Check(V::ActiveTile(STEP_WAIT_PROBE_OPEN) == V::OpenRequest, "probe open wait is request");
+    Check(V::ActiveTile(STEP_WAIT_TRAY_OUT) == V::OutRequest, "tray out wait is request");
+    for(int valid = 0; valid < 2; ++valid)
+    for(int closed = 0; closed < 2; ++closed)
+    for(int opened = 0; opened < 2; ++opened)
+    for(int trayPresent = 0; trayPresent < 2; ++trayPresent)
+    {
+        int down = valid && closed && trayPresent ? V::CloseConfirmed : V::CloseRequest;
+        Check(V::ActiveTile(STEP_WAIT_PROBE_CLOSE, valid, closed, opened, trayPresent) == down,
+            "DOWN OK requires valid PLC closed and tray present");
+        Check(V::ActiveTile(STEP_WAIT_REMEASURE_PROBE_CLOSE, valid, closed, opened, trayPresent) == down,
+            "remeasure uses the same confirmation conditions");
+        Check(V::ActiveTile(STEP_WAIT_PROBE_OPEN, valid, closed, opened, trayPresent) ==
+            (valid && opened ? V::OpenConfirmed : V::OpenRequest), "OPEN OK requires valid PLC open");
+        Check(V::ActiveTile(STEP_WAIT_TRAY_OUT, valid, closed, opened, trayPresent) ==
+            (valid && !trayPresent ? V::OutConfirmed : V::OutRequest), "OUT OK requires valid tray absence");
+    }
+    Check(V::ActiveTile(STEP_WAIT_MEASURE_COMPLETE, true, true, false, true) == V::Measure,
+        "after confirmation advance to measurement, do not hold stale DOWN OK");
     Check(V::ActiveTile(STEP_ERROR_STOP) == -1 && V::ActiveTile(STEP_WAIT_NG_ERROR) == -1,
         "operator/error waits have no active measurement tile");
     TOperationCycleClock clock;

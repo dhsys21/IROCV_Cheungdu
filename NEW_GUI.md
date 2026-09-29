@@ -42,7 +42,9 @@ SAVE FILE / RESULT TX / COMPLETE / OPEN REQ / OPEN OK / OUT REQ / OUT OK
 - 현재 진행/대기 단계 하나만 Lime, 나머지는 완료 여부와 관계없이 Silver로 표시합니다.
 - WAIT / DONE / SET / SKIP 등 별도 상태 문자열은 판넬에 표시하지 않습니다. 이전 사건은 로그에서 확인합니다.
 - REQ는 **PC 출력 버퍼 설정**을 뜻하며, 실제 전송 또는 PLC 동작 완료와 다릅니다.
-- DOWN OK, OPEN OK는 해당 요청 이후 PLC 입력 확인 단계입니다.
+- 닫힘/열림/배출 완료를 기다리는 동안에는 DOWN REQ / OPEN REQ / OUT REQ를 강조합니다.
+- DOWN OK는 유효한 PLC 닫힘=1 및 TRAY IN=1, OPEN OK는 유효한 열림=1을 확인한 경우에만 표시합니다.
+  다음 검사 단계로 넘어가면 그 단계를 강조합니다. 완료 표시를 위해 검사 진행을 지연하지 않습니다.
 - OUT OK는 기존 시퀀스와 동일하게 **TRAY IN = 0** 조건입니다. 별도 배출 완료 주소를 만들지 않습니다.
 - RESULT TX는 기존 `WasResultTransmitted()`로 확인합니다. PLC 내부 적용 ACK를 뜻하지 않습니다.
 - 프로브 열기는 실제 코드상 결과 파일/PLC 결과 처리가 끝나기 전에 요청될 수 있습니다.

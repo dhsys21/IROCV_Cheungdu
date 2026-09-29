@@ -254,7 +254,12 @@ void TOperationView::MeasurementStarted()
 }
 void TOperationView::DrawTiles()
 {
-    int active = TOperationViewState::ActiveTile(stageForm->autoInspection.GetStep());
+    const bool valid = Mod_PLC->plcAutoMode.IsValid() &&
+        Connected(Mod_PLC->ClientSocket_PC) && Connected(Mod_PLC->ClientSocket_PLC);
+    int active = TOperationViewState::ActiveTile(stageForm->autoInspection.GetStep(), valid,
+        Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1,
+        Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1,
+        Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1);
     if(stageForm->bLocal || stageForm->stage.arl == nLocal)
         active = stageForm->tray.ams && !stageForm->tray.amf ? TOperationViewState::Measure : TOperationViewState::Ready;
     if(stageForm->resultSaveStep == RESULT_WAIT_SERIAL || stageForm->resultSaveStep == RESULT_WRITE_FILE)
@@ -262,8 +267,7 @@ void TOperationView::DrawTiles()
     else if(stageForm->resultSaveStep == RESULT_WAIT_PLC_SEND)
         active = Mod_PLC->WasResultTransmitted() ? TOperationViewState::Complete : TOperationViewState::ResultTransmit;
     if(stageForm->resultSaveStep == RESULT_ERROR) active = -1;
-    if(!Connected(stageForm->Client) || !Mod_PLC->plcAutoMode.IsValid() ||
-        !Connected(Mod_PLC->ClientSocket_PC) || !Connected(Mod_PLC->ClientSocket_PLC) ||
+    if(!Connected(stageForm->Client) || !valid ||
         stageForm->Panel_State->Color == clRed) active = -1;
     for(int i = 0; i < TOperationViewState::Count; ++i)
     {
