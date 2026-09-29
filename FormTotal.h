@@ -151,6 +151,8 @@ typedef struct ExtOutput		// Bit Field 이용
 	uint8_t OUT2_8: 1;				// 2-O8	
 } TExtOutput;
 
+class TOperationView;
+
 class TTotalForm : public TForm
 {
 __published:	// IDE-managed Components
@@ -390,6 +392,15 @@ __published:	// IDE-managed Components
 	void __fastcall GroupBox8DblClick(TObject *Sender);
 
 private:
+    // newGui is an observer only; production decisions stay in Stage_* / sequence.
+    friend class TOperationView;
+    TOperationView *operationView;
+    void __fastcall CreateOperationView();
+    void __fastcall ResetOperationView();
+    void __fastcall RecordOperationCommand(TAutoInspectionCommand command);
+    void __fastcall RecordOperationFileSave(bool saved);
+    void __fastcall RecordOperationMeasurementStart();
+    void __fastcall AppendOperationLog(AnsiString type, AnsiString message);
     // 디자이너 이벤트 정의는 반드시 FormTotal.cpp에 둔다. 아래는 역할별 파일의 실제 처리 함수.
     // Stage_AutoInspection.cpp: 자동측정 타이머 처리. Timer_AutoInspectionTimer에서 한 번 호출한다.
     void __fastcall ProcessAutoInspection(TObject *Sender);

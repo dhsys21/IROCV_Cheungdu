@@ -237,6 +237,9 @@
         <CppCompile Include="Stage_Form.cpp">
             <BuildOrder>8</BuildOrder>
         </CppCompile>
+        <CppCompile Include="Stage_OperationView.cpp">
+            <BuildOrder>26</BuildOrder>
+        </CppCompile>
         <CppCompile Include="Stage_log.cpp">
             <BuildOrder>9</BuildOrder>
         </CppCompile>

@@ -57,6 +57,7 @@ void __fastcall TTotalForm::ResetAutoInspection()
     autoInspection.Initialize(GetAutoInspectionSetting());
     measurementNgCount = 0;
     WriteAutoStepLog(previous, "Reset");
+    ResetOperationView();
 }
 
 // 자동 타이머가 꺼져 있어도 상태 타이머에서 PLC 운전 모드를 감시한다.
@@ -392,6 +393,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             editTrayId->Text = "";
             break;
     }
+    RecordOperationCommand(command);
 }
 
 //---------------------------------------------------------------------------

@@ -23,6 +23,7 @@ public:
         automatic = false;
     }
     bool IsAutomatic() const { return valid && automatic; }
+    bool IsValid() const { return valid; } // Read-only UI indication; not an interlock change.
     unsigned long GetResetVersion() const { return resetVersion; }
 };
 

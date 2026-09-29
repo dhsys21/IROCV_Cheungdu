@@ -272,6 +272,7 @@ void __fastcall TTotalForm::UpdateRemeasureAlarm(int remeasure_alarm_count)
 
 void __fastcall TTotalForm::WriteCommLog(AnsiString Type, AnsiString Msg)
 {
+    AppendOperationLog(Type, Msg);
 	AnsiString str, dir;
 	int file_handle;
 
@@ -296,6 +297,7 @@ void __fastcall TTotalForm::WriteCommLog(AnsiString Type, AnsiString Msg)
 
 void __fastcall TTotalForm::WritePlcLog(AnsiString Type, AnsiString Msg)
 {
+    AppendOperationLog(Type, Msg);
 	AnsiString str, dir;
 	int file_handle;
 

@@ -20,6 +20,7 @@ __fastcall TBaseForm::TBaseForm(TComponent* Owner)
 {
 	ErrorCount = 0;
 	FormCnt = 1;
+    nForm[0] = NULL; // Clock timer may run before the stage form is constructed.
 	DeleteDay = 180;
 	DeleteIndex = 0;
 	rem_date = Now();
@@ -101,20 +102,28 @@ void __fastcall TBaseForm::FormClose(TObject *Sender, TCloseAction &Action)
 
 
 
+static void UpdateConnectionIndicator(TAdvSmoothPanel *panel, bool connected,
+    TColor onColor, TColor offColor, const AnsiString &name)
+{
+    TColor color = connected ? onColor : offColor;
+    panel->Fill->Color = color;
+    panel->Fill->ColorMirror = color;
+    panel->Fill->ColorMirrorTo = color;
+    panel->Fill->ColorTo = color;
+    panel->Caption->Text = name + (connected ? " ON" : " OFF");
+}
+
 void __fastcall TBaseForm::ClockTimerTimer(TObject *Sender)
 {
-	if(Mod_PLC->ClientSocket_PC->Active && Mod_PLC->ClientSocket_PLC->Active)
-	{
-		AdvSmoothPanel_PLC->Fill->Color = pon->Color;
-		AdvSmoothPanel_PLC->Fill->ColorMirror = pon->Color;
-		AdvSmoothPanel_PLC->Fill->ColorMirrorTo = pon->Color;
-		AdvSmoothPanel_PLC->Fill->ColorTo = pon->Color;
-	}else{
-		AdvSmoothPanel_PLC->Fill->Color = poff->Color;
-		AdvSmoothPanel_PLC->Fill->ColorMirror = poff->Color;
-		AdvSmoothPanel_PLC->Fill->ColorMirrorTo = poff->Color;
-		AdvSmoothPanel_PLC->Fill->ColorTo = poff->Color;
-	}
+    const bool plcConnected = Mod_PLC &&
+        Mod_PLC->ClientSocket_PC->Active && Mod_PLC->ClientSocket_PC->Socket &&
+        Mod_PLC->ClientSocket_PC->Socket->Connected &&
+        Mod_PLC->ClientSocket_PLC->Active && Mod_PLC->ClientSocket_PLC->Socket &&
+        Mod_PLC->ClientSocket_PLC->Socket->Connected;
+    const bool equipmentConnected = nForm[0] && nForm[0]->Client->Active &&
+        nForm[0]->Client->Socket && nForm[0]->Client->Socket->Connected;
+    UpdateConnectionIndicator(AdvSmoothPanel_PLC, plcConnected, pon->Color, poff->Color, "PLC");
+    UpdateConnectionIndicator(AdvSmoothPanel_IROCV, equipmentConnected, pon->Color, poff->Color, "IR/OCV");
 
 	if(Now().FormatString("hhnn") == "0700") {
 		DeleteDay = 180;	// 12시가 되면 DeleteDay를 180으로 초기화
@@ -363,7 +372,6 @@ void __fastcall TBaseForm::OpenFolder(UnicodeString path)
 	 ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
 }
 //---------------------------------------------------------------------------
-
 
 
 

@@ -151,6 +151,7 @@ public:
     void __fastcall CancelResultSave();
     void __fastcall FinishMeasurement();
     void __fastcall WriteMeasurementResults(bool saveWithoutCellSerial=false);
+    void RecordOperationFileSave(bool) {} // Display-only observer; no production side effect.
     void __fastcall SetRemeasureListAfter();
     void __fastcall SetRemeasureList();
     int __fastcall JudgeCellResult(int index);

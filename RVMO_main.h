@@ -38,9 +38,9 @@ __published:	// IDE-managed Components
 	TPanel *Panel1;
 	TImage *Image12;
 	TLabel *Label1;
-	TAdvSmoothButton *advPLCInterfaceShow;
 	TAdvSmoothButton *btnInit;
 	TAdvSmoothPanel *AdvSmoothPanel_PLC;
+    TAdvSmoothPanel *AdvSmoothPanel_IROCV;
 	TMemo *Memo1;
 	TPanel *pPassword;
 	TPanel *Panel61;

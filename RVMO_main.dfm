@@ -5768,43 +5768,8 @@ object BaseForm: TBaseForm
         82}
     end
   end
-  object advPLCInterfaceShow: TAdvSmoothButton
-    Left = 1671
-    Top = 6
-    Width = 110
-    Height = 55
-    Appearance.Font.Charset = DEFAULT_CHARSET
-    Appearance.Font.Color = clBlack
-    Appearance.Font.Height = -20
-    Appearance.Font.Name = 'Tahoma'
-    Appearance.Font.Style = [fsBold]
-    Appearance.Rounding = 3
-    Status.Caption = '0'
-    Status.Appearance.Fill.Color = clRed
-    Status.Appearance.Fill.ColorMirror = clNone
-    Status.Appearance.Fill.ColorMirrorTo = clNone
-    Status.Appearance.Fill.GradientType = gtSolid
-    Status.Appearance.Fill.GradientMirrorType = gtSolid
-    Status.Appearance.Fill.BorderColor = clGray
-    Status.Appearance.Fill.Rounding = 8
-    Status.Appearance.Fill.ShadowOffset = 0
-    Status.Appearance.Fill.Glow = gmNone
-    Status.Appearance.Font.Charset = DEFAULT_CHARSET
-    Status.Appearance.Font.Color = clWhite
-    Status.Appearance.Font.Height = -11
-    Status.Appearance.Font.Name = 'Tahoma'
-    Status.Appearance.Font.Style = []
-    BevelColor = clSilver
-    Caption = 'PLC'
-    Color = 14935011
-    ParentFont = False
-    TabOrder = 5
-    Version = '2.1.1.5'
-    OnClick = advPLCInterfaceShowClick
-    TMSStyle = 8
-  end
   object btnInit: TAdvSmoothButton
-    Left = 1556
+    Left = 1616
     Top = 6
     Width = 110
     Height = 55
@@ -5841,12 +5806,14 @@ object BaseForm: TBaseForm
     TMSStyle = 8
   end
   object AdvSmoothPanel_PLC: TAdvSmoothPanel
-    Left = 1786
+    Left = 1816
     Top = 6
-    Width = 110
-    Height = 55
-    Cursor = crDefault
-    Caption.Text = 'PLC'
+    Width = 80
+    Height = 26
+    Cursor = crHandPoint
+    Hint = 'Open PLC interface'
+    ShowHint = True
+    Caption.Text = 'PLC OFF'
     Caption.Location = plCenterCenter
     Caption.HTMLFont.Charset = DEFAULT_CHARSET
     Caption.HTMLFont.Color = clWindowText
@@ -5856,7 +5823,7 @@ object BaseForm: TBaseForm
     Caption.HTMLURLColor = clBlack
     Caption.Font.Charset = DEFAULT_CHARSET
     Caption.Font.Color = clWindowText
-    Caption.Font.Height = -24
+    Caption.Font.Height = -12
     Caption.Font.Name = 'Tahoma'
     Caption.Font.Style = [fsBold]
     Caption.ColorStart = clWhite
@@ -5876,6 +5843,32 @@ object BaseForm: TBaseForm
     Fill.Glow = gmNone
     Version = '1.5.2.1'
     TabOrder = 7
+    OnClick = advPLCInterfaceShowClick
+    TMSStyle = 0
+  end
+  object AdvSmoothPanel_IROCV: TAdvSmoothPanel
+    Left = 1816
+    Top = 35
+    Width = 80
+    Height = 26
+    Caption.Text = 'IR/OCV OFF'
+    Caption.Location = plCenterCenter
+    Caption.Font.Charset = DEFAULT_CHARSET
+    Caption.Font.Color = clWindowText
+    Caption.Font.Height = -12
+    Caption.Font.Name = 'Tahoma'
+    Caption.Font.Style = [fsBold]
+    Caption.Line = False
+    Caption.TextAlignment = taCenter
+    Fill.Color = clRed
+    Fill.ColorTo = clRed
+    Fill.ColorMirror = clRed
+    Fill.ColorMirrorTo = clRed
+    Fill.BorderColor = 14922381
+    Fill.Rounding = 5
+    Fill.ShadowOffset = 0
+    Version = '1.5.2.1'
+    TabOrder = 13
     TMSStyle = 0
   end
   object Memo1: TMemo
@@ -6089,7 +6082,7 @@ object BaseForm: TBaseForm
     end
   end
   object btnViewLog: TAdvSmoothButton
-    Left = 1471
+    Left = 1731
     Top = 6
     Width = 80
     Height = 27
@@ -6124,7 +6117,7 @@ object BaseForm: TBaseForm
     TMSStyle = 8
   end
   object btnViewData: TAdvSmoothButton
-    Left = 1471
+    Left = 1731
     Top = 34
     Width = 80
     Height = 27

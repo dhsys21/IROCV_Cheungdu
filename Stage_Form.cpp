@@ -334,7 +334,9 @@ void __fastcall TTotalForm::ShowPanelGroup(TGroupBox *grp)
         if(CurrentGrp != NULL){
             CurrentGrp->Visible = false;
         }
-        grp->Visible = true;
+        // newGui replaces only the large main/local image. Alarm/error groups stay intact.
+        grp->Visible = !(operationView && (grp == GrpMain || grp == GrpLocal));
+        if(operationView && grp->Visible) grp->BringToFront();
         OldGrp = CurrentGrp;
         CurrentGrp = grp;
 	}

@@ -21,6 +21,7 @@ TTotalForm *TotalForm;
 __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	: TForm(Owner)
 {
+    operationView = NULL;
 	senCnt = 0;
 	CurrentGrp = GrpMain;
 	sock = NULL;
@@ -120,6 +121,7 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
     //* юс╫ц
     acc_finalng = 0;
     acc_totaltray = 0;
+    CreateOperationView();
 }
 //---------------------------------------------------------------------------
 

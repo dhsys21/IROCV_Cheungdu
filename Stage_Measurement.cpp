@@ -37,6 +37,7 @@ void __fastcall TTotalForm::CmdStartMeasurement()
     tray.ams = false;
     tray.amf = false;
     MakeData(3, "AMS");
+    RecordOperationMeasurementStart();
 }
 
 //---------------------------------------------------------------------------
@@ -367,7 +368,9 @@ void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
     else if(!cellSerialContinuousReadForTray && !LoadTrayInfo(tray.trayid))
         ReadCellSerial();
     // 참고용 CSV: 최초 1회 + 재시도 1회. 재시도에서 판정/생산 누계를 다시 처리하지 않는다.
-    if(!WriteResultFile() && !WriteResultFile())
+    const bool fileSaved = WriteResultFile() || WriteResultFile();
+    RecordOperationFileSave(fileSaved);
+    if(!fileSaved)
         WritePlcLog("RESULT FILE WARNING", "Save failed twice; continue production: " + resultFileName);
     // 새 결과 전송을 확인할 PC 내부 표식. PLC 신호/프로그램은 추가하지 않는다.
     Mod_PLC->BeginResultTransmission();
