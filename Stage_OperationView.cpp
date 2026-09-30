@@ -74,8 +74,6 @@ __fastcall TOperationView::TOperationView(TTotalForm *owner)
     currentDetail = owner->lblOperationDetail;
     elapsedLabel = owner->lblOperationElapsed;
     logMemo = owner->memoOperationLog;
-    followLog = owner->chkOperationFollow;
-    followLog->OnClick = FollowLogClick;
     owner->btnOperationLogFile->OnClick = OpenLogFile;
     tiles[0] = owner->pOpReady;
     tileLabels[0] = owner->lblOpReady;
@@ -160,14 +158,6 @@ void __fastcall TOperationView::OpenLogFile(TObject *)
     if((INT_PTR)ShellExecuteW(stageForm->Handle, L"open", editor.c_str(), args.c_str(), NULL, SW_SHOWNORMAL) <= 32)
         ShowMessage("Cannot start Notepad++.");
 }
-void __fastcall TOperationView::FollowLogClick(TObject *)
-{
-    if(followLog->Checked)
-    {
-        logMemo->SelStart = logMemo->Text.Length();
-        logMemo->Perform(EM_SCROLLCARET, 0, 0);
-    }
-}
 TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoInspectionCommand command)
     : view(owner->operationView), previous(-1)
 {
@@ -221,30 +211,20 @@ void TOperationView::Append(AnsiString source, AnsiString message, int processTi
     try { logWriteFailed = !WriteOperationLog(line); } catch(...) { logWriteFailed = true; }
     stageForm->btnOperationLogFile->Caption = logWriteFailed ? "LOG ERROR" : "LOG FILE";
     stageForm->btnOperationLogFile->Hint = logWriteFailed ? UnicodeString(L"Log write failed: check folder/disk space.") : operationLogFile;
-    int firstLine = logMemo->Perform(EM_GETFIRSTVISIBLELINE, 0, 0);
-    int selection = logMemo->SelStart, length = logMemo->SelLength;
     logMemo->Lines->BeginUpdate();
     try
     {
-        // Bounded memory even during a long production run; original file logs remain intact.
+        // Bounded history; a new entry always returns the viewport to the latest line.
         while(logMemo->Lines->Count >= 500)
-        {
-            selection -= logMemo->Lines->Strings[0].Length() + 2;
-            if(selection < 0) selection = 0;
             logMemo->Lines->Delete(0);
-            if(firstLine > 0) --firstLine;
-        }
         logMemo->Lines->Add(line);
     }
     __finally { logMemo->Lines->EndUpdate(); }
-    if(followLog->Checked) FollowLogClick(NULL);
-    else
-    {
-        logMemo->SelStart = selection;
-        logMemo->SelLength = length;
-        int visible = logMemo->Perform(EM_GETFIRSTVISIBLELINE, 0, 0);
-        logMemo->Perform(EM_LINESCROLL, 0, firstLine - visible);
-    }
+    // Move the caret/viewport, never keyboard focus from another operator control.
+    logMemo->SelStart = logMemo->Text.Length();
+    logMemo->SelLength = 0;
+    logMemo->Perform(EM_SCROLLCARET, 0, 0);
+    logMemo->Perform(WM_VSCROLL, SB_BOTTOM, 0);
 }
 void TOperationView::Reset()
 {
@@ -419,7 +399,6 @@ void TOperationView::Refresh()
     pcModePanel->Color = local ? clRed : clLime;
     plcModePanel->Caption = !valid ? "PLC: UNKNOWN" : Mod_PLC->IsPlcAutoMode() ? "PLC: AUTO" : "PLC: MANUAL";
     plcModePanel->Color = valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed;
-    f->localTest->Visible = local;
     f->localCali->Visible = local;
     const TAutoInspectionStep step = f->autoInspection.GetStep();
     if(step == STEP_WAIT_TRAY_IN) cycleClock.Reset(); // READY is always zero, including mode changes.

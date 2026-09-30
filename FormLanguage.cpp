@@ -56,7 +56,6 @@ void __fastcall TForm_Language::LanguageChange(int LangIndex)
 
         BaseForm->nForm[i]->localCali->Caption = vle->Values["CALIBRATION"];
         BaseForm->nForm[i]->lblTrayInfo->Caption = vle->Values["TRAYINFO"];
-        BaseForm->nForm[i]->lblProcessInfo->Caption = vle->Values["PROCESSINFO"];
     }
 
     MeasureInfoForm->btnProbeOpen->Caption = vle->Values["OPEN"];

@@ -19,7 +19,6 @@ class TOperationView : public TComponent
     TPanel *pcModePanel, *plcModePanel;
     TLabel *currentTitle, *currentDetail, *elapsedLabel, *serialLabel;
     TMemo *logMemo;
-    TCheckBox *followLog;
     TOperationViewState progress;
     TOperationTimeline timeline;
     TOperationCycleClock cycleClock;
@@ -31,7 +30,6 @@ class TOperationView : public TComponent
     int commandLogTile;
     void __fastcall TimerTick(TObject *Sender);
     void __fastcall OpenLogFile(TObject *Sender);
-    void __fastcall FollowLogClick(TObject *Sender);
     void Refresh();
     void DrawTiles();
     int CurrentProcessTile();

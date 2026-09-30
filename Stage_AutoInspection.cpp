@@ -406,13 +406,13 @@ void __fastcall TTotalForm::DisplayAutoInspectionStep()
     if(resultSaveStep == RESULT_WAIT_PLC_SEND)
     {
         Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
-        DisplayProcess(sFinish, "RESULT SAVE", " Waiting for PLC results / COMPLETE delay ... ");
+        DisplayProcess("RESULT SAVE", " Waiting for PLC results / COMPLETE delay ... ");
         return;
     }
     if(IsWaitingForResultSave())
     {
         Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
-        DisplayProcess(sBarcode, "CELL SERIAL", " Reading CELL SERIAL before result save ... ");
+        DisplayProcess("CELL SERIAL", " Reading CELL SERIAL before result save ... ");
         return;
     }
     TAutoInspectionStep step = autoInspection.GetStep();
@@ -422,43 +422,43 @@ void __fastcall TTotalForm::DisplayAutoInspectionStep()
     {
         case STEP_WAIT_TRAY_IN:
             DisplayStatus(nVacancy);
-            DisplayProcess(sReady, "AutoInspection", " IR/OCV is ready... ");
+            DisplayProcess("AutoInspection", " IR/OCV is ready... ");
             break;
         case STEP_READ_TRAY_ID:
-            DisplayProcess(sBarcode, "AutoInspection", " Waiting for TRAY ID ... ");
+            DisplayProcess("AutoInspection", " Waiting for TRAY ID ... ");
             break;
         case STEP_READ_CELL_DATA:
-            DisplayProcess(sBarcode, "AutoInspection", " Reading CELL DATA ... ");
+            DisplayProcess("AutoInspection", " Reading CELL DATA ... ");
             break;
         case STEP_WAIT_START_DELAY:
-            DisplayProcess(sProbeDown, "AutoInspection", tray.cell_count > 0 ?
+            DisplayProcess("AutoInspection", tray.cell_count > 0 ?
                 AnsiString(" Start delay: ") + IntToStr((int)autoInspection.GetWaitCount()) +
                     " / " + IntToStr((int)autoInspection.GetSetting().startDelayCount) :
                 AnsiString(" NO CELL ... "), tray.cell_count <= 0);
             break;
         case STEP_WAIT_CELL_SERIAL:
-            DisplayProcess(sBarcode, "AutoInspection", " Reading CELL SERIAL ... ");
+            DisplayProcess("AutoInspection", " Reading CELL SERIAL ... ");
             break;
         case STEP_WAIT_CELL_SERIAL_ERROR:
-            DisplayProcess(sBarcode, "AutoInspection", " CELL SERIAL error - waiting for SAVE / CANCEL ... ", true);
+            DisplayProcess("AutoInspection", " CELL SERIAL error - waiting for SAVE / CANCEL ... ", true);
             break;
         case STEP_WAIT_PROBE_CLOSE:
         case STEP_WAIT_REMEASURE_PROBE_CLOSE:
-            DisplayProcess(sProbeDown, "AutoInspection", " Waiting for PLC PROBE CLOSED ... ");
+            DisplayProcess("AutoInspection", " Waiting for PLC PROBE CLOSED ... ");
             break;
         case STEP_WAIT_MEASURE_COMPLETE:
-            DisplayProcess(sMeasure, "AutoInspection", " Measuring / remeasuring - waiting for results ... ");
+            DisplayProcess("AutoInspection", " Measuring / remeasuring - waiting for results ... ");
             break;
         case STEP_WAIT_PROBE_OPEN:
-            DisplayProcess(sProbeOpen, "AutoInspection", " Results complete - waiting for PLC PROBE OPEN ... ");
+            DisplayProcess("AutoInspection", " Results complete - waiting for PLC PROBE OPEN ... ");
             break;
         case STEP_WAIT_NG_ERROR:
             DisplayStatus(nEND);
-            DisplayProcess(sFinish, "AutoInspection", " NG alarm - waiting for Tray Out / Restart ... ", true);
+            DisplayProcess("AutoInspection", " NG alarm - waiting for Tray Out / Restart ... ", true);
             break;
         case STEP_WAIT_TRAY_OUT:
             DisplayStatus(nFinish);
-            DisplayProcess(sTrayOut, "AutoInspection", " IROCV Tray Out ... ");
+            DisplayProcess("AutoInspection", " IROCV Tray Out ... ");
             break;
         case STEP_ERROR_STOP:
             DisplayStatus(nEND);
@@ -605,7 +605,7 @@ void __fastcall TTotalForm::InitializeInspection()
     InitializePlcData();
     InitializeTrayData();
     ResetAutoInspection();
-    DisplayProcess(sReady, "AutoInspection", " IR/OCV is ready... ");
+    DisplayProcess("AutoInspection", " IR/OCV is ready... ");
 }
 
 //---------------------------------------------------------------------------

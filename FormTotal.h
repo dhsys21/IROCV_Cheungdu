@@ -188,7 +188,6 @@ __published:	// IDE-managed Components
 	TLabel *lblTitle;
 	TGroupBox *GrpLocal;
 	TImage *Image5;
-	TAdvSmoothButton *localTest;
 	TTimer *Timer_AutoInspection;
     TTimer *Timer_ResultSave;
     TGroupBox *grpCellSerialReadMode;
@@ -237,20 +236,9 @@ __published:	// IDE-managed Components
 	TPanel *pIrValue;
 	TPanel *Panel63;
 	TPanel *pOcvValue;
-	TPanel *flowChart;
-	TLabel *lblProcessInfo;
-	TPanel *pReady;
-	TPanel *pTrayIn;
-	TPanel *pBarcode;
-	TPanel *pMeasure;
-	TPanel *pFinish;
-	TPanel *pProbeOpen;
-	TPanel *pTrayOut;
-	TPanel *pProbeDown;
 	TAdvSmoothButton *btnReset;
 	TAdvSmoothButton *btnAuto;
 	TAdvSmoothButton *btnManual;
-	TLabel *lblRemeasureAlarmCheck;
 	TAdvSmoothButton *btnTrayOut;
 	TPanel *Panel16;
 	TLabel *lblTrayInfo;
@@ -346,7 +334,6 @@ __published:	// IDE-managed Components
     TLabel *lblOperationDetail;
     TLabel *lblOperationElapsed;
     TMemo *memoOperationLog;
-    TCheckBox *chkOperationFollow;
     TButton *btnOperationLogFile;
     TPanel *pOpReady;
     TLabel *lblOpReady;
@@ -394,7 +381,6 @@ __published:	// IDE-managed Components
 	void __fastcall btnRemeasureInfoClick(TObject *Sender);
 	void __fastcall RemeasureAllBtnClick(TObject *Sender);
 	void __fastcall RemeasureBtnClick(TObject *Sender);
-	void __fastcall localTestClick(TObject *Sender);
 	void __fastcall AlarmConfirmBtnClick(TObject *Sender);
 	void __fastcall btnAutoClick(TObject *Sender);
 	void __fastcall btnTrayOutClick(TObject *Sender);
@@ -424,7 +410,6 @@ __published:	// IDE-managed Components
 	void __fastcall Timer_PLCConnectTimer(TObject *Sender);
 	void __fastcall btnConnectIROCVClick(TObject *Sender);
 	void __fastcall Button1Click(TObject *Sender);
-	void __fastcall pReadyClick(TObject *Sender);
 	void __fastcall btnDisConnectIROCVClick(TObject *Sender);
 	void __fastcall PasswordBtnClick(TObject *Sender);
 	void __fastcall cancelBtn2Click(TObject *Sender);
@@ -522,8 +507,6 @@ private:
     bool irValueReceived[MAXCHANNEL];
     // OCV 실제 수신 여부: IR과 별도로 수신한 채널만 측정값 표시.
     bool ocvValueReceived[MAXCHANNEL];
-    // 준비~배출 8단계의 진행 표시 패널.
-    TPanel *pProcess[8];
     // NG 오류창 기준 개수: 존재 셀의 IR/OCV/접촉 불량만 집계.
     int measurementNgCount;
 
@@ -626,7 +609,7 @@ private:
     // 메인/재측정/오류 그룹을 전환하고 오류 화면 표시 개수를 갱신한다.
     void __fastcall ShowPanelGroup(TGroupBox *grp);
     void __fastcall RefreshStageStatusImage();
-    void __fastcall DisplayProcess(int status, AnsiString Status_Step, AnsiString msg, bool bError = false);
+    void __fastcall DisplayProcess(AnsiString Status_Step, AnsiString msg, bool bError = false);
     void __fastcall DisplayError(AnsiString msg, bool bError = false);
     // Stage_Form.cpp: 자동은 true일 때 진행 보류, 수동은 오류 표시만 수행한다.
     bool __fastcall CheckAutoInspectionError();

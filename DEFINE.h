@@ -72,16 +72,6 @@ const int nReadyError 	= 30;
 const int nFinishError  = 32;
 const int nDefaultError = 40;
 
-// Process Status
-const int sReady   		= 0;
-const int sTrayIn  		= 1;
-const int sBarcode 		= 2;
-const int sProbeDown 	= 3;
-const int sMeasure      = 4;
-const int sFinish       = 5;
-const int sProbeOpen    = 6;
-const int sTrayOut      = 7;
-
 #define		COMM_RECEIVE	WM_USER + 1003
 
 

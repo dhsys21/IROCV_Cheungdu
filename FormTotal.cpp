@@ -59,14 +59,6 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
     memset(irValueReceived, 0, sizeof(irValueReceived));
     memset(ocvValueReceived, 0, sizeof(ocvValueReceived));
 
-    pProcess[0] = pReady;
-	pProcess[1] = pTrayIn;
-	pProcess[2] = pBarcode;
-	pProcess[3] = pProbeDown;
-	pProcess[4] = pMeasure;
-	pProcess[5] = pFinish;
-	pProcess[6] = pProbeOpen;
-	pProcess[7] = pTrayOut;
 }
 //---------------------------------------------------------------------------
 
@@ -164,15 +156,6 @@ void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
     RemeasureForm->Left = 200;
     RemeasureForm->Top = 70;
 	RemeasureForm->Visible = true;
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TTotalForm::localTestClick(TObject *Sender)
-{
-	MeasureInfoForm->display.arl = nLocal;
-	InitializeMeasureForm();
-	MeasureInfoForm->pLocal->Visible = true;
-	bLocal = true;
 }
 //---------------------------------------------------------------------------
 
@@ -344,6 +327,11 @@ void __fastcall TTotalForm::btnManualClick(TObject *Sender)
 //    Timer_AutoInspection->Enabled = false;
 	this->CmdSetManualMode(true);
 	ShowPanelGroup(GrpLocal);
+    // MANUAL opens the former LOCAL TEST controls directly.
+    MeasureInfoForm->display.arl = nLocal;
+    InitializeMeasureForm();
+    MeasureInfoForm->pLocal->Visible = true;
+    bLocal = true;
 }
 //---------------------------------------------------------------------------
 
@@ -476,15 +464,6 @@ void __fastcall TTotalForm::Button1Click(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TTotalForm::pReadyClick(TObject *Sender)
-{
-    // 오류창 표시 시험: 실제 검사 상태나 PLC 오류 출력은 변경하지 않는다.
-    Form_Error->Tag = this->Tag;
-    Form_Error->DisplayErrorMessage("IR/OCV NG ERROR",
-										"There is too many ng cells. Please check it.",
-										"Select [Tray Out] or [Restart]");
-}
-//---------------------------------------------------------------------------
 
 
 

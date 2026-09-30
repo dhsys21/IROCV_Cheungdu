@@ -261,12 +261,10 @@ void __fastcall TTotalForm::UpdateRemeasureAlarm(int remeasure_alarm_count)
 	if(remeasure_alarm_count > 0) {
 		Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data,  PC_D_IROCV_NG_ALARM, 1);
 		btnRemeasureInfo->Color = clRed;
-		lblRemeasureAlarmCheck->Visible = true;
 	}
 	else{
         Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data,  PC_D_IROCV_NG_ALARM, 0);
 		btnRemeasureInfo->Color = clWhite;
-		lblRemeasureAlarmCheck->Visible = false;
     }
 }
 

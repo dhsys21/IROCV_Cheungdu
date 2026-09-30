@@ -22,25 +22,12 @@ void __fastcall TTotalForm::ProcessError(AnsiString err1, AnsiString err2,AnsiSt
 }
 
 
-void __fastcall TTotalForm::DisplayProcess(int status, AnsiString Status_Step, AnsiString msg, bool bError)
+void __fastcall TTotalForm::DisplayProcess(AnsiString Status_Step, AnsiString msg, bool bError)
 {
-	for(int i = 0; i < 8; i++)
-		pProcess[i]->Color = clSilver;
-
-	PLCStatus = msg;
-	pProcess[status]->Color = p0->Color;
-	Panel_State->Caption = PLCStatus;
-
-	if(bError == true)
-	{
-        Panel_State->Color = clRed;
-		Panel_State->Font->Color = clWhite;
-	}
-	else
-	{
-        Panel_State->Color = clWhite;
-		Panel_State->Font->Color = clBlack;
-    }
+    // The current operation view still reads this message/error backing state.
+    // Only the retired eight-panel color display has been removed.
+    PLCStatus = msg;
+    DisplayError(msg, bError);
 
 	if(OldPLCStatus != PLCStatus) {
 		OldPLCStatus = PLCStatus;
@@ -143,7 +130,6 @@ void __fastcall TTotalForm::ResponseError(AnsiString param)
 void __fastcall TTotalForm::DisplayStageError(int err)
 {
 	AnsiString err1, err2, err3, err4;
-    int nstatus = 0;
 //	bool ErrorMode = true;   // false : 알람모드 true: 에러모드
 	switch(err){
 		case BARCODE_ERROR:
@@ -164,42 +150,36 @@ void __fastcall TTotalForm::DisplayStageError(int err)
 		case ACOUNT:	break;
 
 		case nRunningError:
-			nstatus = sMeasure;
 			 err1 = "RUNNING";
 			 err2 = "";
 			 err3 = "Lapse of Over 120 Seconds";
 			 err4 = "Restart IR/OCV";
 			break;
 		case nReadyError:
-			nstatus = sReady;
 			 err1 = "READY";
 			 err2 = "";
 			 err3 = "Lapse of Over 100 Seconds";
 			 err4 = "Restart IR/OCV";
 			 break;
 		case nRedEnd:
-            nstatus = sTrayIn;
 			 err1 = "TrayIn";
 			 err2 = "";
 			 err3 = "Lapse of Over 100 Seconds";
 			 err4 = "Restart IR/OCV";
 			break;
 		case nBlueEnd:
-			nstatus = sFinish;
 			 err1 = "END";
 			 err2 = "";
 			 err3 = "Lapse of Over 100 Seconds";
 			 err4 = "Please Tray Out Manually and Initialize IR/OCV";
 			break;
 		case nFinishError:
-			nstatus = sTrayOut;
 			 err1 = "FINISH";
 			 err2 = "";
 			 err3 = "Lapse of Over 100 Seconds";
 			 err4 = "Please Tray Out Manually and Initialize IR/OCV";
 			break;
 		case nDefaultError:
-			nstatus = 0;
 			err1 = "STAGE Status";
 			err2 = "";
 			err3 = "Lapse of Over 100 Seconds";
@@ -216,7 +196,7 @@ void __fastcall TTotalForm::DisplayStageError(int err)
 		ErrorTime->Caption = Now().FormatString("hh : nn : ss");
 		WriteErrorLog();
 		//* 2023 06 14 설비가 멈췄을 경우 에러
-        DisplayProcess(nstatus, err1, err3, true);
+        DisplayProcess(err1, err3, true);
 		//Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 1);
 		//ShowPanelGroup(GrpError);
 	}

@@ -272,3 +272,10 @@ MSBuild.exe IROCV.cbproj /t:_ResolveIcons;BuildVersionResource;Build /p:Config=D
 ## 이름 규칙 및 이전 이름 찾기
 
 현재 함수·변수 이름의 규칙과 이전→현재 대응표는 [NAMING_CONVENTIONS.md](NAMING_CONVENTIONS.md)를 참고한다. `TestNamingConventions.ps1`로 등록 소스의 이전 이름 잔존 여부를 검사한다.
+
+## 구형 공정 패널 정리
+
+- 숨겨진 `flowChart`의 8개 단계 패널과 `pProcess` 배열, 전용 단계 번호·클릭 이벤트·라벨을 제거했다. 현재 공정 표시는 `Stage_OperationView.cpp`의 14개 단계 표시를 사용한다.
+- `DisplayProcess`는 구형 패널 번호를 받지 않고 메시지·오류 상태와 중복 방지 PLC/통신 로그를 유지한다.
+- 숨겨진 `Panel_State`는 현재 화면이 메시지와 오류 색상을 읽는 상태 저장용이므로 유지한다. 재측정 PLC 알람 출력과 현재 재측정 버튼 표시도 유지한다.
+- `TestProcessDisplay.ps1`는 실제 표시 함수를 추출하여 메시지·오류 색상·로그·중복 방지 동작 및 구형 참조 제거를 검사한다. 실제 설비에는 접속하지 않는다.

@@ -48,7 +48,7 @@ void __fastcall TTotalForm::ProcessMeasurementCompleteResponse()
     if(resultSaveStep != RESULT_IDLE || tray.rem_mode == 1) return; // 중복 AMF로 재측정을 다시 시작하지 않는다.
 	if(bLocal == true){
 		FinishMeasurement();
-        DisplayProcess(sFinish, "AutoInspection_Measure", " AMF - Measure finished ... ");
+        DisplayProcess("AutoInspection_Measure", " AMF - Measure finished ... ");
 		WriteCommLog("IR/OCV STOP", "AMF - ResponseautoTestfinish()");
 	}
 	else

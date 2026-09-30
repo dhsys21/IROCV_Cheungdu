@@ -1,0 +1,43 @@
+#include <cassert>
+#include <string>
+#include <vector>
+#include <iostream>
+typedef std::string AnsiString;
+enum { clRed=1, clWhite=2, clBlack=3 };
+struct TestFont { int Color; };
+struct TestPanel { AnsiString Caption; int Color; TestFont *Font; };
+class TTotalForm {
+public:
+    TestPanel *Panel_State;
+    AnsiString PLCStatus, OldPLCStatus;
+    std::vector<std::string> logs;
+    void __fastcall DisplayProcess(AnsiString Status_Step, AnsiString msg, bool bError=false);
+    void __fastcall DisplayError(AnsiString msg, bool bError);
+    void WritePlcLog(AnsiString step, AnsiString msg) { logs.push_back("PLC:"+step+":"+msg); }
+    void WriteCommLog(AnsiString step, AnsiString msg) { logs.push_back("COMM:"+step+":"+msg); }
+};
+
+@@METHODS@@
+
+int main() {
+    TestFont font; TestPanel panel; panel.Font=&font;
+    TTotalForm form; form.Panel_State=&panel;
+    form.DisplayProcess("AutoInspection","Ready");
+    assert(panel.Caption=="Ready" && panel.Color==clWhite && font.Color==clBlack);
+    assert(form.logs.size()==2 && form.logs[0]=="PLC:AutoInspection:Ready");
+    assert(form.logs[1]=="COMM:AutoInspection:Ready");
+    form.DisplayProcess("AutoInspection","Ready");
+    assert(form.logs.size()==2);
+    form.DisplayProcess("CELL SERIAL","Read failed",true);
+    assert(panel.Caption=="Read failed" && panel.Color==clRed && font.Color==clWhite);
+    assert(form.logs.size()==4);
+    form.DisplayProcess("CELL SERIAL","Read failed",false);
+    assert(panel.Color==clWhite && form.logs.size()==4);
+    form.OldPLCStatus="";
+    form.DisplayProcess("AutoInspection","Read failed");
+    assert(form.logs.size()==6);
+    form.DisplayError("Stopped",true);
+    assert(panel.Caption=="Stopped" && panel.Color==clRed && form.logs.size()==6);
+    std::cout << "PASS: current-view state, error colors, both logs, deduplication and reset" << std::endl;
+    return 0;
+}

@@ -22,6 +22,7 @@ if($init.Left+$init.Width -ge $log.Left -or $log.Left -ne $data.Left -or $log.To
 if($plc.Left -ne $equipment.Left -or $plc.Top+$plc.Height -gt $equipment.Top){throw 'Connection panels must be vertically stacked'}
 if((Dfm-Block 'AdvSmoothPanel_PLC') -notmatch 'OnClick = advPLCInterfaceShowClick'){throw 'PLC panel must use the original PLC interface handler'}
 $view=Read-Source 'Stage_OperationView.cpp'
+if(!$view.Contains('logMemo->Perform(WM_VSCROLL, SB_BOTTOM, 0);') -or $view.Contains('EM_GETFIRSTVISIBLELINE') -or $view.Contains('followLog') -or $view.Contains('logMemo->SetFocus')){throw 'New entries must always scroll to bottom without stealing keyboard focus'}
 if($view -match '(?:SetValue|SendText|RunAutoStep|WriteIROCVValue|InitializePlcData)\s*\('){throw 'Display module may not control production'}
 foreach($token in @('while(logMemo->Lines->Count >= 500)','if(i < 6 && !valid) continue')){
  if(!$view.Contains($token)){throw "Missing display contract: $token"}
@@ -53,7 +54,12 @@ function Image-Payloads([string]$text){
  return @([regex]::Matches($text,'(?s)\w+\.Data = \{([^}]+)\}') | ForEach-Object {$_.Groups[1].Value -replace '\s',''} | Sort-Object)
 }
 if(Compare-Object (Image-Payloads $originalText) (Image-Payloads $totalDfm)){throw 'Legacy image data changed during DFM migration'}
-foreach($name in $original.Keys){
+$retiredProcessControls=@('flowChart','lblProcessInfo','lblRemeasureAlarmCheck',
+ 'pReady','pTrayIn','pBarcode','pMeasure','pFinish','pProbeOpen','pTrayOut','pProbeDown','localTest')
+foreach($name in $retiredProcessControls){
+ if($nodes.ContainsKey($name)){throw "Retired process component remains: $name"}
+}
+foreach($name in $original.Keys | Where-Object {$_ -notin $retiredProcessControls}){
  if(!$nodes.ContainsKey($name) -or $nodes[$name].Type -ne $original[$name].Type){throw "Lost legacy component $name"}
  foreach($prop in $original[$name].Props.Keys | Where-Object {$_ -like 'On*'}){
   if($nodes[$name].Props[$prop] -ne $original[$name].Props[$prop]){throw "Changed legacy event $name.$prop"}
@@ -62,7 +68,7 @@ foreach($name in $original.Keys){
 foreach($name in $nodes.Keys | Where-Object {!$original.ContainsKey($_)}){
  if($header -notmatch ('\b'+$nodes[$name].Type+'\s*\*\s*'+$name+'\s*;')){throw "Missing IDE field $name"}
 }
-foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','pnlOperationPcMode','pnlOperationPlcMode','localTest','localCali','chkCycle','chkBypass')){
+foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','pnlOperationPcMode','pnlOperationPlcMode','localCali','chkCycle','chkBypass')){
  if($nodes[$name].Parent -ne 'pback'){throw "Incorrect design parent: $name"}
 }
 foreach($pair in @(@('btnConfig','btnReset'),@('btnManual','btnTrayOut'),@('btnAuto','btnRemeasureInfo'))){
@@ -102,7 +108,7 @@ if($commandObserver.Contains('PROBE CLOSED and TRAY IN confirmed')){throw 'DOWN 
 if($autoSource -notmatch 'RunAutoInspectionCommand\([^\r\n]+\)\s*\{\s*TOperationCommandLogScope operationLogScope\(this, command\);'){
  throw 'Command phase scope must begin before command-side logs'
 }
-foreach($name in @('flowChart','GroupBox7','pBase','Panel1','GrpMain','GrpLocal','Panel_State','Panel3','pConInfo','pnlTrayIn','pnlTrayOut','pnlProbeOpen','pnlProbeClose')){
+foreach($name in @('GroupBox7','pBase','Panel1','GrpMain','GrpLocal','Panel_State','Panel3','pConInfo','pnlTrayIn','pnlTrayOut','pnlProbeOpen','pnlProbeClose')){
  if($nodes[$name].Parent -ne 'pnlLegacyDisplay'){throw "Legacy control overlaps designer: $name"}
 }
 if($nodes.pnlLegacyDisplay.Props.Visible -ne 'False' -or [int]$nodes.pnlLegacyDisplay.Props.Left -lt [int]$nodes.TotalForm.Props.ClientWidth){throw 'Legacy storage must be hidden and outside the live canvas'}
@@ -127,6 +133,13 @@ foreach($node in $nodes.Values | Where-Object {$_.Props.ContainsKey('TabOrder')}
 }
 'PASS: design-time controls, 14 tile bindings, legacy event preservation, bounds and tab order'
 $form=Read-Source 'FormTotal.cpp'
+$manual=[regex]::Match($form,'(?ms)^void __fastcall TTotalForm::btnManualClick\([^;{]*\)\s*\{.*?^\}').Value
+foreach($token in @('MeasureInfoForm->display.arl = nLocal;','InitializeMeasureForm();','MeasureInfoForm->pLocal->Visible = true;','bLocal = true;')){
+ if(!$manual.Contains($token)){throw "MANUAL must open manual controls directly: $token"}
+}
+if($form.Contains('localTestClick') -or $header.Contains('localTest') -or $view.Contains('localTest')){throw 'Obsolete LOCAL TEST references'}
+if($nodes.localCali.Props.Top -ne $nodes.btnConfig.Props.Top -or [int]$nodes.localCali.Props.Left+[int]$nodes.localCali.Props.Width -ge [int]$nodes.btnConfig.Props.Left){throw 'CALIBRATION must be beside CONFIG'}
+if([int]$nodes.memoOperationLog.Props.Height -lt 377 -or [int]$nodes.grpOperationLog.Props.Top+[int]$nodes.grpOperationLog.Props.Height -gt [int]$nodes.pback.Props.Height){throw 'Expanded operation log bounds'}
 if(!$form.Contains('operationView = NULL;') -or !$form.Contains('CreateOperationView();')){throw 'Stage view lifetime wiring'}
 if(!(Read-Source 'Stage_Form.cpp').Contains('if(operationView && grp->Visible) grp->BringToFront();')){throw 'Alarm groups must remain above the dynamic log area'}
 [xml]$project=Read-Source 'IROCV.cbproj'

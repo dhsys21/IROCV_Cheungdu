@@ -23,21 +23,34 @@ object TotalForm: TTotalForm
     Top = 0
     Width = 620
     Height = 913
-    Caption = 'Legacy display controls - compatibility only'
     BevelOuter = bvNone
-    Visible = False
+    Caption = 'Legacy display controls - compatibility only'
     TabOrder = 0
+    Visible = False
     object lblStatus: TLabel
-      Visible = False
       Left = 890
       Top = 891
       Width = 31
       Height = 13
       Alignment = taRightJustify
       Caption = 'Status'
+      Visible = False
+    end
+    object lblTrayInfo: TLabel
+      Left = 6
+      Top = 5
+      Width = 84
+      Height = 21
+      Caption = 'Tray Info.'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 16744448
+      Font.Height = -17
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      Visible = False
     end
     object pConInfo: TPanel
-      Visible = False
       Left = 11
       Top = 894
       Width = 300
@@ -53,9 +66,9 @@ object TotalForm: TTotalForm
       Font.Style = [fsBold]
       ParentFont = False
       TabOrder = 0
+      Visible = False
     end
     object GroupBox7: TGroupBox
-      Visible = False
       Left = 10
       Top = 266
       Width = 600
@@ -67,6 +80,7 @@ object TotalForm: TTotalForm
       Font.Style = [fsBold]
       ParentFont = False
       TabOrder = 1
+      Visible = False
       object Panel20: TPanel
         Left = 7
         Top = 4
@@ -236,194 +250,7 @@ object TotalForm: TTotalForm
         TabOrder = 9
       end
     end
-    object flowChart: TPanel
-      Visible = False
-      Left = 10
-      Top = 48
-      Width = 600
-      Height = 110
-      BevelInner = bvRaised
-      BiDiMode = bdLeftToRight
-      BorderStyle = bsSingle
-      Color = clWhite
-      ParentBiDiMode = False
-      ParentBackground = False
-      TabOrder = 2
-      object lblProcessInfo: TLabel
-        Left = 6
-        Top = 2
-        Width = 143
-        Height = 16
-        Caption = 'IR/OCV PROCESS Info.'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -13
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold, fsUnderline]
-        ParentFont = False
-      end
-      object lblRemeasureAlarmCheck: TLabel
-        Left = 264
-        Top = 7
-        Width = 145
-        Height = 13
-        Caption = 'Check Remeasure Alarm !'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clRed
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentFont = False
-        Visible = False
-      end
-      object pReady: TPanel
-        Left = 29
-        Top = 24
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'READY'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 0
-        OnClick = pReadyClick
-      end
-      object pTrayIn: TPanel
-        Left = 133
-        Top = 24
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'TRAY IN'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 1
-      end
-      object pBarcode: TPanel
-        Left = 237
-        Top = 24
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'BARCODE'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 2
-      end
-      object pMeasure: TPanel
-        Left = 29
-        Top = 63
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'MEASURE'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 3
-      end
-      object pFinish: TPanel
-        Left = 133
-        Top = 63
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'FINISH'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 4
-      end
-      object pProbeOpen: TPanel
-        Left = 237
-        Top = 64
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'PROBE OPEN'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 5
-      end
-      object pTrayOut: TPanel
-        Left = 341
-        Top = 64
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'TRAY OUT'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 6
-      end
-      object pProbeDown: TPanel
-        Left = 341
-        Top = 24
-        Width = 98
-        Height = 36
-        BevelKind = bkFlat
-        BevelOuter = bvNone
-        Caption = 'PROBE DOWN'
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentBackground = False
-        ParentFont = False
-        TabOrder = 7
-      end
-    end
     object pBase: TPanel
-      Visible = False
       Left = 10
       Top = 331
       Width = 451
@@ -432,9 +259,9 @@ object TotalForm: TTotalForm
       Color = clBlack
       ParentBackground = False
       TabOrder = 3
+      Visible = False
     end
     object Panel1: TPanel
-      Visible = False
       Left = 467
       Top = 331
       Width = 143
@@ -452,6 +279,7 @@ object TotalForm: TTotalForm
       ParentBiDiMode = False
       ParentBackground = False
       TabOrder = 4
+      Visible = False
       object cl_line: TPanel
         AlignWithMargins = True
         Left = 7
@@ -661,7 +489,6 @@ object TotalForm: TTotalForm
       end
     end
     object pnlTrayIn: TAdvSmoothPanel
-      Visible = False
       Left = 194
       Top = 9
       Width = 54
@@ -699,11 +526,11 @@ object TotalForm: TTotalForm
       Fill.ShadowOffset = 0
       Fill.Glow = gmNone
       Version = '1.5.2.1'
+      Visible = False
       TabOrder = 5
       TMSStyle = 0
     end
     object pnlTrayOut: TAdvSmoothPanel
-      Visible = False
       Left = 248
       Top = 9
       Width = 54
@@ -738,11 +565,11 @@ object TotalForm: TTotalForm
       Fill.ShadowOffset = 0
       Fill.Glow = gmNone
       Version = '1.5.2.1'
+      Visible = False
       TabOrder = 6
       TMSStyle = 0
     end
     object pnlProbeOpen: TAdvSmoothPanel
-      Visible = False
       Left = 194
       Top = 25
       Width = 54
@@ -777,11 +604,11 @@ object TotalForm: TTotalForm
       Fill.ShadowOffset = 0
       Fill.Glow = gmNone
       Version = '1.5.2.1'
+      Visible = False
       TabOrder = 7
       TMSStyle = 0
     end
     object pnlProbeClose: TAdvSmoothPanel
-      Visible = False
       Left = 248
       Top = 25
       Width = 54
@@ -816,25 +643,11 @@ object TotalForm: TTotalForm
       Fill.ShadowOffset = 0
       Fill.Glow = gmNone
       Version = '1.5.2.1'
+      Visible = False
       TabOrder = 8
       TMSStyle = 0
     end
-    object lblTrayInfo: TLabel
-      Visible = False
-      Left = 6
-      Top = 5
-      Width = 84
-      Height = 21
-      Caption = 'Tray Info.'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = 16744448
-      Font.Height = -17
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
     object Panel3: TPanel
-      Visible = False
       Left = 6
       Top = 67
       Width = 100
@@ -853,9 +666,9 @@ object TotalForm: TTotalForm
       ParentShowHint = False
       ShowHint = False
       TabOrder = 9
+      Visible = False
     end
     object Panel_State: TPanel
-      Visible = False
       Left = 107
       Top = 67
       Width = 482
@@ -874,9 +687,9 @@ object TotalForm: TTotalForm
       ParentShowHint = False
       ShowHint = False
       TabOrder = 10
+      Visible = False
     end
     object GrpMain: TGroupBox
-      Visible = False
       Left = 10
       Top = 656
       Width = 600
@@ -889,6 +702,7 @@ object TotalForm: TTotalForm
       Font.Style = [fsBold]
       ParentFont = False
       TabOrder = 11
+      Visible = False
       object StatusImage: TImage
         Left = 70
         Top = 28
@@ -2065,6 +1879,22 @@ object TotalForm: TTotalForm
     Version = '1.5.2.1'
     TabOrder = 2
     TMSStyle = 0
+    object lblTitle: TLabel
+      Left = 9
+      Top = 10
+      Width = 66
+      Height = 24
+      Caption = 'STAGE'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 13204573
+      Font.Height = -20
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = False
+      Transparent = True
+    end
     object pnlOperationPcMode: TPanel
       Left = 10
       Top = 49
@@ -2078,8 +1908,8 @@ object TotalForm: TTotalForm
       Font.Height = -13
       Font.Name = 'Segoe UI'
       Font.Style = [fsBold]
-      ParentFont = False
       ParentBackground = False
+      ParentFont = False
       TabOrder = 14
     end
     object pnlOperationPlcMode: TPanel
@@ -2095,8 +1925,8 @@ object TotalForm: TTotalForm
       Font.Height = -13
       Font.Name = 'Segoe UI'
       Font.Style = [fsBold]
-      ParentFont = False
       ParentBackground = False
+      ParentFont = False
       TabOrder = 15
     end
     object grpOperationProcess: TGroupBox
@@ -2105,519 +1935,14 @@ object TotalForm: TTotalForm
       Width = 600
       Height = 151
       Caption = 'PROCESS INFO'
-      Color = clWhite
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'Segoe UI'
       Font.Style = []
-      ParentFont = False
       ParentBackground = False
+      ParentFont = False
       TabOrder = 0
-      object pOpReady: TPanel
-        Left = 9
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clLime
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 0
-        object lblOpReady: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'READY'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpTrayIn: TPanel
-        Left = 92
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 1
-        object lblOpTrayIn: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'TRAY IN'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpTrayId: TPanel
-        Left = 175
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 2
-        object lblOpTrayId: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'TRAY ID'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpCellData: TPanel
-        Left = 258
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 3
-        object lblOpCellData: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'CELL DATA'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpCloseRequest: TPanel
-        Left = 341
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 4
-        object lblOpCloseRequest: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'DOWN REQ'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpCloseConfirmed: TPanel
-        Left = 424
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 5
-        object lblOpCloseConfirmed: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'DOWN OK'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpMeasure: TPanel
-        Left = 507
-        Top = 21
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 6
-        object lblOpMeasure: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'MEASURE'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpFileSave: TPanel
-        Left = 9
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 7
-        object lblOpFileSave: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'SAVE FILE'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpResultTransmit: TPanel
-        Left = 92
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 8
-        object lblOpResultTransmit: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'RESULT TX'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpComplete: TPanel
-        Left = 175
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 9
-        object lblOpComplete: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'COMPLETE'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpOpenRequest: TPanel
-        Left = 258
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 10
-        object lblOpOpenRequest: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'OPEN REQ'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpOpenConfirmed: TPanel
-        Left = 341
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 11
-        object lblOpOpenConfirmed: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'OPEN OK'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpOutRequest: TPanel
-        Left = 424
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 12
-        object lblOpOutRequest: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'OUT REQ'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
-      object pOpOutConfirmed: TPanel
-        Left = 507
-        Top = 69
-        Width = 79
-        Height = 44
-        BevelOuter = bvNone
-        Color = clSilver
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
-        ParentBackground = False
-        ShowHint = True
-        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
-        TabOrder = 13
-        object lblOpOutConfirmed: TLabel
-          Left = 0
-          Top = 0
-          Width = 79
-          Height = 44
-          AutoSize = False
-          Caption = 'OUT OK'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          WordWrap = True
-          Align = alClient
-          Alignment = taCenter
-          Layout = tlCenter
-        end
-      end
       object lblOperationSerial: TLabel
         Left = 10
         Top = 121
@@ -2633,21 +1958,540 @@ object TotalForm: TTotalForm
         ParentFont = False
         WordWrap = True
       end
+      object pOpReady: TPanel
+        Left = 9
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clLime
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        object lblOpReady: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'READY'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpTrayIn: TPanel
+        Left = 92
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        object lblOpTrayIn: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'TRAY IN'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpTrayId: TPanel
+        Left = 175
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        object lblOpTrayId: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'TRAY ID'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpCellData: TPanel
+        Left = 258
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
+        object lblOpCellData: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'CELL DATA'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpCloseRequest: TPanel
+        Left = 341
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 4
+        object lblOpCloseRequest: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'DOWN REQ'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpCloseConfirmed: TPanel
+        Left = 424
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 5
+        object lblOpCloseConfirmed: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'DOWN OK'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpMeasure: TPanel
+        Left = 507
+        Top = 21
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 6
+        object lblOpMeasure: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'MEASURE'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpFileSave: TPanel
+        Left = 9
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 7
+        object lblOpFileSave: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'SAVE FILE'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpResultTransmit: TPanel
+        Left = 92
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 8
+        object lblOpResultTransmit: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'RESULT TX'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpComplete: TPanel
+        Left = 175
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 9
+        object lblOpComplete: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'COMPLETE'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpOpenRequest: TPanel
+        Left = 258
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 10
+        object lblOpOpenRequest: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'OPEN REQ'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpOpenConfirmed: TPanel
+        Left = 341
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 11
+        object lblOpOpenConfirmed: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'OPEN OK'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpOutRequest: TPanel
+        Left = 424
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 12
+        object lblOpOutRequest: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'OUT REQ'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
+      object pOpOutConfirmed: TPanel
+        Left = 507
+        Top = 69
+        Width = 79
+        Height = 44
+        Hint = 'Display only. REQ = PC output setting; OK = PLC input condition.'
+        BevelOuter = bvNone
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Segoe UI'
+        Font.Style = []
+        ParentBackground = False
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 13
+        object lblOpOutConfirmed: TLabel
+          Left = 0
+          Top = 0
+          Width = 79
+          Height = 44
+          Align = alClient
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'OUT OK'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+          Layout = tlCenter
+          WordWrap = True
+        end
+      end
     end
     object grpOperationCurrent: TGroupBox
       Left = 10
       Top = 303
       Width = 600
-      Height = 182
+      Height = 158
       Caption = 'CURRENT OPERATION'
-      Color = clWhite
+      Color = clMenu
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'Segoe UI'
       Font.Style = []
-      ParentFont = False
       ParentBackground = False
+      ParentColor = False
+      ParentFont = False
       TabOrder = 1
       object lblOperationTitle: TLabel
         Left = 10
@@ -2669,6 +2513,7 @@ object TotalForm: TTotalForm
         Top = 25
         Width = 106
         Height = 23
+        Alignment = taRightJustify
         AutoSize = False
         Caption = 'Elapsed 0.0 s'
         Font.Charset = DEFAULT_CHARSET
@@ -2678,13 +2523,12 @@ object TotalForm: TTotalForm
         Font.Style = []
         ParentFont = False
         WordWrap = True
-        Alignment = taRightJustify
       end
       object lblOperationDetail: TLabel
         Left = 10
         Top = 56
         Width = 578
-        Height = 113
+        Height = 89
         AutoSize = False
         Caption = 'Current operation, PLC signals and expected values appear here.'
         Font.Charset = DEFAULT_CHARSET
@@ -2698,73 +2542,48 @@ object TotalForm: TTotalForm
     end
     object grpOperationLog: TGroupBox
       Left = 10
-      Top = 492
+      Top = 468
       Width = 600
-      Height = 360
+      Height = 434
       Caption = 'OPERATION LOG'
-      Color = clWhite
+      Color = clMenu
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'Segoe UI'
       Font.Style = []
-      ParentFont = False
       ParentBackground = False
+      ParentColor = False
+      ParentFont = False
       TabOrder = 2
-      object chkOperationFollow: TCheckBox
-        Left = 352
-        Top = 15
-        Width = 136
-        Height = 25
-        Caption = 'Follow latest'
-        Checked = True
-        State = cbChecked
-        TabOrder = 0
-      end
       object btnOperationLogFile: TButton
         Left = 496
         Top = 15
         Width = 92
         Height = 25
-        Caption = 'LOG FILE'
-        ShowHint = True
         Hint = 'Open operation log in Notepad++'
-        TabOrder = 1
+        Caption = 'LOG FILE'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
       end
       object memoOperationLog: TMemo
         Left = 10
         Top = 45
         Width = 578
-        Height = 303
-        ReadOnly = True
-        ScrollBars = ssVertical
-        WordWrap = True
+        Height = 377
+        Color = 16579063
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
         Font.Name = 'Consolas'
         Font.Style = []
-        ParentFont = False
-        Color = 16579063
         HideSelection = False
-        TabOrder = 2
+        ParentFont = False
+        ReadOnly = True
+        ScrollBars = ssVertical
+        TabOrder = 1
       end
-    end
-    object lblTitle: TLabel
-      Left = 9
-      Top = 10
-      Width = 66
-      Height = 24
-      Caption = 'STAGE'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = 13204573
-      Font.Height = -20
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = False
-      Transparent = True
     end
     object btnConfig: TAdvSmoothButton
       Left = 306
@@ -3062,50 +2881,11 @@ object TotalForm: TTotalForm
       OnClick = btnRemeasureInfoClick
       TMSStyle = 8
     end
-    object localTest: TAdvSmoothButton
-      Visible = False
-      Left = 10
-      Top = 859
-      Width = 130
-      Height = 34
-      Appearance.Font.Charset = DEFAULT_CHARSET
-      Appearance.Font.Color = clWindowText
-      Appearance.Font.Height = -11
-      Appearance.Font.Name = 'Tahoma'
-      Appearance.Font.Style = [fsBold]
-      Appearance.Spacing = 0
-      Appearance.Rounding = 3
-      Appearance.WordWrapping = False
-      Status.Caption = '0'
-      Status.Appearance.Fill.Color = clRed
-      Status.Appearance.Fill.ColorMirror = clNone
-      Status.Appearance.Fill.ColorMirrorTo = clNone
-      Status.Appearance.Fill.GradientType = gtSolid
-      Status.Appearance.Fill.GradientMirrorType = gtSolid
-      Status.Appearance.Fill.BorderColor = clGray
-      Status.Appearance.Fill.Rounding = 0
-      Status.Appearance.Fill.ShadowOffset = 0
-      Status.Appearance.Fill.Glow = gmNone
-      Status.Appearance.Font.Charset = DEFAULT_CHARSET
-      Status.Appearance.Font.Color = clWhite
-      Status.Appearance.Font.Height = -11
-      Status.Appearance.Font.Name = 'Tahoma'
-      Status.Appearance.Font.Style = []
-      BevelColor = clMedGray
-      Caption = 'MSA'
-      Color = clWhite
-      ParentFont = False
-      TabOrder = 10
-      Version = '2.1.1.5'
-      OnClick = localTestClick
-      TMSStyle = 8
-    end
     object localCali: TAdvSmoothButton
-      Visible = False
-      Left = 146
-      Top = 859
-      Width = 180
-      Height = 34
+      Left = 194
+      Top = 6
+      Width = 104
+      Height = 40
       Appearance.GlowPercentage = 50
       Appearance.PictureAlignment = taCenter
       Appearance.Font.Charset = DEFAULT_CHARSET
@@ -3136,6 +2916,7 @@ object TotalForm: TTotalForm
       Color = clWhite
       ParentFont = False
       TabOrder = 11
+      Visible = False
       Version = '2.1.1.5'
       OnClick = localCaliClick
       TMSStyle = 8
