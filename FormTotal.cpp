@@ -190,7 +190,7 @@ void __fastcall TTotalForm::AlarmConfirmBtnClick(TObject *Sender)
 
 void __fastcall TTotalForm::btnTrayOutClick(TObject *Sender)
 {
-	if(MessageBox(Handle, L"Are you sure you want to eject the tray?", L"", MB_YESNO|MB_ICONQUESTION) == ID_YES){
+	if(MessageBox(Handle, UiText(L"Are you sure you want to eject the tray?").c_str(), UiText(L"").c_str(), MB_YESNO|MB_ICONQUESTION) == ID_YES){
         ProcessManualTrayOut();
 	}
 }
@@ -267,7 +267,7 @@ void __fastcall TTotalForm::editTrayIdKeyDown(TObject *Sender, WORD &Key,
 //===========================================================================
 void __fastcall TTotalForm::btnResetClick(TObject *Sender)
 {
-	if(MessageBox(Handle, L"Are you sure you want to reset?", L"RESET", MB_YESNO|MB_ICONQUESTION) == ID_YES){
+	if(MessageBox(Handle, UiText(L"Are you sure you want to reset?").c_str(), UiText(L"RESET").c_str(), MB_YESNO|MB_ICONQUESTION) == ID_YES){
 		this->CmdReset();
 		send.time_out = 0;
 		OldSenCmd = "NONE";
@@ -313,7 +313,7 @@ void __fastcall TTotalForm::chkBypassMouseUp(TObject *Sender,
       TMouseButton Button, TShiftState Shift, int X, int Y)
 {
 	if(chkBypass->Checked && Button == mbLeft){
-		if(MessageBox(Handle, L"Do yoy want change BYPASS mode?", L"BYPASS", MB_YESNO|MB_ICONQUESTION) == ID_NO){
+		if(MessageBox(Handle, UiText(L"Do yoy want change BYPASS mode?").c_str(), UiText(L"BYPASS").c_str(), MB_YESNO|MB_ICONQUESTION) == ID_NO){
 			chkBypass->Checked = false;
 		}
 	}

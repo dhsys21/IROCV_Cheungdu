@@ -190,7 +190,7 @@ void __fastcall TCaliForm::btnLoadClick(TObject *Sender)
 				}
 			}
 		catch(...){
-			MessageBox(Handle, L"Is the wrong type of file.", L"", MB_OK|MB_ICONERROR);
+			MessageBox(Handle, UiText(L"Is the wrong type of file.").c_str(), UiText(L"").c_str(), MB_OK|MB_ICONERROR);
 		}
 	}
 }
@@ -244,7 +244,7 @@ void __fastcall TCaliForm::ConfigBtn1Click(TObject *Sender)
 		BaseForm->WriteDefaultOffset();
 	}
 	catch(...){
-		MessageBox(Handle, L"Please check the offset value.",L"", MB_OK|MB_ICONWARNING);
+		MessageBox(Handle, UiText(L"Please check the offset value.").c_str(), UiText(L"").c_str(), MB_OK|MB_ICONWARNING);
 	}
 }
 //---------------------------------------------------------------------------

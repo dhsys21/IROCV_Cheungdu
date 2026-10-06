@@ -15,6 +15,8 @@
 //---------------------------------------------------------------------------
 #include "define.h"
 #include "AutoInspectionSequence.h"
+#include "MeasurementClock.h"
+#include "EquipmentFrames.h"
 #include "FormMeasureInfo.h"
 #include "FormRemeasure.h"
 #include <Menus.hpp>
@@ -330,6 +332,7 @@ __published:	// IDE-managed Components
     TPanel *pnlOperationPcMode;
     TPanel *pnlOperationPlcMode;
     TLabel *lblOperationSerial;
+    TLabel *lblOperationMeasureTime;
     TLabel *lblOperationTitle;
     TLabel *lblOperationDetail;
     TLabel *lblOperationElapsed;
@@ -492,7 +495,8 @@ private:
     // 현재 연결된 장비 소켓.
     TCustomWinSocket *sock;
     // 프레임 경계에 걸친 미처리 수신 문자열.
-    AnsiString remainMsg;
+    std::string remainMsg;
+    TMeasurementClock measurementClock;
     TColor clNoCell;
     TColor clBadIr;
     TColor clCellError;
@@ -623,7 +627,7 @@ private:
     void __fastcall ApplyConnectionSettings(bool equipment, bool plc);
     void __fastcall ReadCellInfo();
     bool __fastcall WriteResultFile(); // 파일 쓰기 1회. 실패 시 false, 재시도 정책은 호출부.
-    void __fastcall WriteErrorLog();
+    void __fastcall WriteErrorLog(AnsiString title, AnsiString detail1, AnsiString detail2);
     void __fastcall ReadCalibrationOffsets();
 
 public:

@@ -12,6 +12,7 @@ struct AnsiString {
     int ToIntDef(int d)const{char*end;long n=strtol(s.c_str(),&end,10);return end==s.c_str()||*end?d:(int)n;}
 };
 bool operator!=(const AnsiString&a,const AnsiString&b){return a.s!=b.s;}
+inline AnsiString UiText(const AnsiString &text){return text;}
 bool operator==(const AnsiString&a,const AnsiString&b){return a.s==b.s;}
 struct TObject {};
 struct Timer{bool Enabled;Timer():Enabled(false){}};
@@ -40,6 +41,7 @@ struct Font{int Color;};
 struct Panel{AnsiString Caption;struct Font font,*Font;Panel():Font(&font){}};
 int warnings=0;
 void ShowMessage(const char*){++warnings;}
+void ShowMessage(const AnsiString&){++warnings;}
 class TMod_PLC:public TObject {
 public:
     TPlcAutoModeState plcAutoMode;

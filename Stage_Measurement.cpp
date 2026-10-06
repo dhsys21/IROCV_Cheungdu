@@ -13,6 +13,7 @@
 // 수동 측정 초기화: 내부 값은 0으로 지우고 화면은 수신 전까지 공란으로 표시한다.
 void __fastcall TTotalForm::ResetMeasurementData()
 {
+    measurementClock.Reset();
     CancelResultSave(); // [CELL SERIAL 공통] 운영자 초기화 이후 지연 저장 방지.
     resultSaveStep = RESULT_IDLE;
     showStartupChannelNumbers = false;
@@ -36,6 +37,7 @@ void __fastcall TTotalForm::CmdStartMeasurement()
     InitializeCellDisplay();
     tray.ams = false;
     tray.amf = false;
+    measurementClock.Prepare(); // Starts only when a valid AMS response is received.
     MakeData(3, "AMS");
     RecordOperationMeasurementStart();
 }
@@ -334,6 +336,7 @@ void __fastcall TTotalForm::ExecuteRemeasure()
 void __fastcall TTotalForm::FinishMeasurement()
 {
     if(IsAutoInspectionBlocked()) return;
+    measurementClock.Stop(GetTickCount());
     // 같은 AMF/정지 통지가 반복되어도 저장/집계를 다시 실행하지 않는다.
     if(resultSaveStep != RESULT_IDLE) return;
     SetRemeasureListAfter();
@@ -378,7 +381,7 @@ void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
     resultSaveStartTime = GetTickCount();
     resultSaveStep = RESULT_WAIT_PLC_SEND;
     Timer_ResultSave->Enabled = true;
-    Panel_State->Caption = " Waiting to send final PLC results ... ";
+    Panel_State->Caption = UiText(" Waiting to send final PLC results ... ");
 }
 
 //---------------------------------------------------------------------------
@@ -423,7 +426,7 @@ void __fastcall TTotalForm::StartResultCellSerialRead()
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     Mod_PLC->StartCellSerialRead();
     Timer_ResultSave->Enabled = true;
-    Panel_State->Caption = " Reading CELL SERIAL before result save ... ";
+    Panel_State->Caption = UiText(" Reading CELL SERIAL before result save ... ");
     WritePlcLog("CELL SERIAL", "Request fresh complete serial data for result save");
 }
 

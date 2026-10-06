@@ -23,9 +23,9 @@ void __fastcall TForm_NgCountError::DisplayErrorMessage(AnsiString title, WideSt
 
 		// PLC 오류 출력은 검사 처리에서 담당한다. 이 함수는 화면만 표시한다.
 
-		Label_Title->Caption = title;
-		Label_Msg1->Caption = msg1;
-		Label_Msg2->Caption = msg2;
+		Label_Title->Caption = UiText(title);
+		Label_Msg1->Caption = UiText(UnicodeString(msg1));
+		Label_Msg2->Caption = UiText(UnicodeString(msg2));
 
         // 크기/글꼴/줄바꿈/버튼 위치는 DFM에서 함께 관리한다.
 
@@ -40,7 +40,7 @@ void __fastcall TForm_NgCountError::DisplayErrorMessage(AnsiString title, WideSt
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::DisplayErrorMessage(WideString msg1, WideString btn_trayout, WideString btn_restart)
 {
-	Label_Msg1->Caption = msg1;
+	Label_Msg1->Caption = UiText(UnicodeString(msg1));
 	btnTrayOut->Caption = btn_trayout;
     btnOK->Caption = btn_restart;
 }

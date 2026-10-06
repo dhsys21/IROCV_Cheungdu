@@ -11,12 +11,12 @@
 void __fastcall TTotalForm::ProcessError(AnsiString err1, AnsiString err2,AnsiString err3,AnsiString err4)
 {
 	if(GrpError->Visible == false){
-		error1->Caption = err1 + " " + err2;
+		error1->Caption = UiText(err1 + " " + err2);
 	//	error2->Caption = err2;
-		error3->Caption = err3;
-		error4->Caption = err4;
+		error3->Caption = UiText(err3);
+		error4->Caption = UiText(err4);
 		ErrorTime->Caption = Now().FormatString("hh : nn : ss");
-		WriteErrorLog();
+		WriteErrorLog(err1 + " " + err2, err3, err4);
 		//ShowPanelGroup(GrpError);
 	}
 }
@@ -38,7 +38,7 @@ void __fastcall TTotalForm::DisplayProcess(AnsiString Status_Step, AnsiString ms
 
 void __fastcall TTotalForm::DisplayError(AnsiString msg, bool bError)
 {
-    Panel_State->Caption = msg;
+    Panel_State->Caption = UiText(msg);
 
 	if(bError == true)
 	{
@@ -189,12 +189,12 @@ void __fastcall TTotalForm::DisplayStageError(int err)
 	}
 	stage.err = err;
 	if(GrpError->Visible == false){
-		error1->Caption = err1 +" " +  err2;
+		error1->Caption = UiText(err1 +" " +  err2);
 //		error2->Caption = err2;
-		error3->Caption = err3;
-		error4->Caption = err4;
+		error3->Caption = UiText(err3);
+		error4->Caption = UiText(err4);
 		ErrorTime->Caption = Now().FormatString("hh : nn : ss");
-		WriteErrorLog();
+		WriteErrorLog(err1 + " " + err2, err3, err4);
 		//* 2023 06 14 ¼³ºñ°¡ ¸ØÃèÀ» °æ¿ì ¿¡·¯
         DisplayProcess(err1, err3, true);
 		//Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 1);

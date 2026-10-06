@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "MeasurementClock.h"
+#include "EquipmentFrames.h"
+int checks=0;
+#define CHECK(x) do {++checks;if(!(x)){printf("FAIL %d: %s\n",__LINE__,#x);exit(1);}}while(0)
+int main()
+{
+    TMeasurementClock clock;
+    CHECK(clock.Elapsed(5000)==0);
+    clock.Start(50); CHECK(!clock.IsRunning()); // Unrequested/late AMS.
+    clock.Prepare();
+    clock.Start(100); CHECK(clock.Elapsed(1234)==1134);
+    clock.Start(500); CHECK(clock.Elapsed(1500)==1400); // Duplicate AMS.
+    clock.Stop(2000); CHECK(!clock.IsRunning() && clock.Elapsed(9000)==1900);
+    clock.Stop(9500); CHECK(clock.Elapsed(9999)==1900); // Duplicate AMF.
+    clock.Start(10000); CHECK(!clock.IsRunning() && clock.Elapsed(11000)==1900);
+    clock.Reset(); CHECK(clock.Elapsed(9000)==0);
+    clock.Prepare(); clock.Start(0xfffffff0UL); CHECK(clock.Elapsed(0x10UL)==32);
+    clock.Stop(0x20UL); CHECK(clock.Elapsed(0x100UL)==48);
+    clock.Prepare(); clock.Stop(10); clock.Start(20); CHECK(clock.Elapsed(50)==0);
+    clock.Prepare(); clock.Start(100); clock.Stop(500); // Socket receipt timestamps.
+    clock.Start(2000); clock.Stop(9000); CHECK(clock.Elapsed(10000)==400); // Delayed queued AMS/AMF cannot alter receipt time.
+    const std::string ams="\x02" "AMSE1\x03", amf="\x02" "AMFED\x03";
+    const std::string data=ams+"\x02" "IR*001+000001.002A\x03"+amf;
+    for(unsigned int split=0;split<=data.size();++split)
+    {
+        std::string buffer;std::queue<std::string> frames;
+        AppendEquipmentFrames(buffer,data.substr(0,split),frames);
+        AppendEquipmentFrames(buffer,data.substr(split),frames);
+        CHECK(buffer.empty());CHECK(frames.size()==3);
+        CHECK(frames.front()==ams);frames.pop();frames.pop();CHECK(frames.front()==amf);
+    }
+    std::string buffer;std::queue<std::string> frames;
+    for(unsigned int i=0;i<data.size();++i) AppendEquipmentFrames(buffer,data.substr(i,1),frames);
+    CHECK(frames.size()==3 && buffer.empty()); // More than two TCP fragments.
+    frames=std::queue<std::string>();buffer.clear();
+    AppendEquipmentFrames(buffer,"noise\x02" "truncated"+ams+amf.substr(0,3),frames);
+    CHECK(frames.size()==1 && frames.front()==ams);
+    AppendEquipmentFrames(buffer,amf.substr(3),frames);CHECK(frames.size()==2);
+    frames=std::queue<std::string>();buffer.clear();
+    AppendEquipmentFrames(buffer,std::string("\x02")+std::string(5000,'x'),frames);
+    CHECK(buffer.empty() && frames.empty());
+    AppendEquipmentFrames(buffer,amf,frames);CHECK(frames.front()==amf);
+    printf("PASS: %d elapsed-clock / TCP-fragmentation checks\n",checks);
+}

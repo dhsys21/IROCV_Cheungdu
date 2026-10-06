@@ -10,6 +10,7 @@
 const int PLC_D_IROCV_AUTO_MANUAL=1;
 #include "ChannelLayout.h"
 #include "CellJudgment.h"
+#include "MeasurementClock.h"
 typedef unsigned long DWORD;
 struct TObject {};
 struct AnsiString {
@@ -25,6 +26,7 @@ struct AnsiString {
     AnsiString &operator+=(const AnsiString &v){s+=v.s;return *this;}
 };
 AnsiString operator+(const AnsiString&a,const AnsiString&b){return a.s+b.s;}
+inline AnsiString UiText(const AnsiString &text){return text;}
 bool operator==(const AnsiString&a,const AnsiString&b){return a.s==b.s;}
 AnsiString FormatFloat(const char *,int n){char b[32];sprintf(b,"%03d",n);return b;}
 AnsiString IntToStr(int n){char b[32];sprintf(b,"%d",n);return b;}
@@ -100,6 +102,7 @@ struct ErrorForm {
 ErrorForm *Form_CellIdError=&errorForm;
 class TTotalForm {
 public:
+    TMeasurementClock measurementClock;
     bool IsAutoInspectionBlocked(){return false;} // Mode interlock has its own production-method tests.
     struct { int arl; } stage;
     struct TestSequence {

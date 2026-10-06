@@ -230,8 +230,10 @@ void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	pConInfo->Font->Color = clrConInfo->Color;
-	pConInfo->Caption = "IR/OCV is connected";
+	pConInfo->Caption = UiText("IR/OCV is connected");
 	sock = Socket;
+    remainMsg.clear();
+    while(!rxq.empty()) rxq.pop(); // Never join bytes from different connections.
 
 	send.tx_mode = 0;  	// 초기화
 	send.time_out = 0;
@@ -253,7 +255,7 @@ void __fastcall TTotalForm::ProcessEquipmentConnecting(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	pConInfo->Font->Color = clRed;
-	pConInfo->Caption = "Connection...";
+	pConInfo->Caption = UiText("Connection...");
 	RefreshStageStatusImage();
 }
 
@@ -279,9 +281,12 @@ void __fastcall TTotalForm::ProcessEquipmentDisconnected(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
 	pConInfo->Font->Color = clRed;
-	pConInfo->Caption = "Connection failed.";
+	pConInfo->Caption = UiText("Connection failed.");
 	ReContactTimer->Enabled = config.recontact;
 	sock = NULL;
+    measurementClock.Stop(GetTickCount());
+    remainMsg.clear();
+    while(!rxq.empty()) rxq.pop();
 	RefreshStageStatusImage();
 }
 
@@ -298,7 +303,7 @@ void __fastcall TTotalForm::ProcessEquipmentReconnect(TObject *Sender)
     }
     catch(...)
     {
-        pConInfo->Caption = "Connection failed.";
+        pConInfo->Caption = UiText("Connection failed.");
         pConInfo->Font->Color = clRed;
         ReContactTimer->Enabled = config.recontact;
     }
@@ -308,31 +313,36 @@ void __fastcall TTotalForm::ProcessEquipmentReconnect(TObject *Sender)
 // 장비 소켓에서 받은 문자열을 수신 큐에 넣는다. 명령별 처리는 ProcessEquipmentMessage에서 한다.
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 ClientRead. 측정장비 수신 프레임 분리는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessEquipmentSocketRead(TObject *Sender,
-	  TCustomWinSocket *Socket)
+      TCustomWinSocket *Socket)
 {
-	AnsiString msg;
-	AnsiString queue_msg;
-
-	msg = Socket->ReceiveText();
-	int stx =  msg.Pos((char)0x02);
-	int etx = msg.Pos((char)0x03);
-
-	if(etx > 0){
-		while(etx > 0){
-			if(stx == 1)queue_msg = msg.SubString(1, etx);
-			else queue_msg = remainMsg + msg.SubString(1, etx);
-			rxq.push(queue_msg.c_str());
-			msg.Delete(1, etx);
-
-			stx =  msg.Pos((char)0x02);
-			etx =  msg.Pos((char)0x03);
-
-			if(etx > 0)remainMsg = "";
-			else remainMsg = msg;
-		}
-	}else{
-		remainMsg = msg;
-	}
+    const unsigned long receivedTick = GetTickCount();
+    AnsiString bytes = Socket->ReceiveText();
+    std::queue<std::string> frames;
+    AppendEquipmentFrames(remainMsg, std::string(bytes.c_str(), bytes.Length()), frames);
+    while(!frames.empty())
+    {
+        const std::string &frame = frames.front();
+        rxq.push(frame); // Preserve the original production-dispatch order.
+        if(frame.size() >= 7)
+        {
+            const std::string command = frame.substr(1, 3);
+            if(command == "AMS" || command == "AMF" || command == "STP" ||
+                command == "EMS" || command == "ERR" || command == "RST")
+            {
+                // Display only: reuse BCC validation, without dispatching commands
+                // or touching tray/results. Queue/UI backlog must not lengthen time.
+                AnsiString parameter;
+                const int response = ParseEquipmentMessage(AnsiString(frame.c_str()), parameter);
+                const bool allowed = !(stage.arl == nAuto && !bLocal &&
+                    (autoInspectionBlockedByPlc || autoInspection.GetStep() != STEP_WAIT_MEASURE_COMPLETE));
+                if(allowed && response == AMS) measurementClock.Start(receivedTick);
+                else if(allowed && response == AMF) measurementClock.Stop(receivedTick);
+                else if(response == STP || response == EMS || response == ERR || response == RST)
+                    measurementClock.Stop(receivedTick);
+            }
+        }
+        frames.pop();
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -498,6 +508,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				DisplayStatus(nREADY);
 				break;        // BATT 사이즈 정보
 			case AMS:
+                measurementClock.Start(GetTickCount());
 				pb->Position = 0;
 				send.tx_mode = 200;
 				tray.ams = true;
@@ -506,6 +517,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				break;
 			case AMF:        // 검사종료 알림
                 if(tray.amf) break; // Ignore a duplicate completion for this measurement.
+                measurementClock.Stop(GetTickCount());
 				send.tx_mode = 0;
 				tray.ams = false;
 				tray.amf = true;
@@ -520,6 +532,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				ProcessOcv(param);
 				break;
 			case STP:        // 강제 검사 종료
+                measurementClock.Stop(GetTickCount());
 				send.tx_mode = 0;
 				DisplayStatus(nEND);
 				break;
@@ -531,7 +544,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 			// 검사장치 송신에 대한 PC응답 메세지 처리
 			case MAN: send.tx_mode = 0; break;
 			case REM: send.tx_mode = 0; break;
-			case EMS: send.tx_mode = 0; break;
+			case EMS: measurementClock.Stop(GetTickCount()); send.tx_mode = 0; break;
 			case SEN:        // 센서정보
 				ProcessSensorInput(param);
 				break;
@@ -539,6 +552,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				ProcessSensorOutput(param);
 				break;
 			case ERR:        // 검사장치 에러 발생
+                measurementClock.Stop(GetTickCount());
 				ResponseError(param);
 				OldSenCmd = "NONE";
 				send.tx_mode = 0;
@@ -749,7 +763,7 @@ bool __fastcall TTotalForm::ValidateConnectionSettings(bool equipment, bool plc)
        (plc && (plcHost.IsEmpty() || pcPort < 1 || pcPort > 65535 ||
                 plcPort < 1 || plcPort > 65535)))
     {
-        ShowMessage("Check the connection IP address and port (1-65535).");
+        ShowMessage(UiText("Check the connection IP address and port (1-65535)."));
         return false;
     }
     const bool changed =
@@ -765,7 +779,7 @@ bool __fastcall TTotalForm::ValidateConnectionSettings(bool equipment, bool plc)
         (autoInspection.GetStep() != STEP_WAIT_TRAY_IN &&
          autoInspection.GetStep() != STEP_ERROR_STOP)))
     {
-        ShowMessage("Stop the inspection and finish result saving before changing connection settings.");
+        ShowMessage(UiText("Stop the inspection and finish result saving before changing connection settings."));
         return false;
     }
     return true;

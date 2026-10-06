@@ -7,21 +7,24 @@
 #include <Vcl.Controls.hpp>
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
-#include <Vcl.Grids.hpp>
-#include <Vcl.ValEdit.hpp>
+#include <map>
+#include <vector>
 //---------------------------------------------------------------------------
 class TForm_Language : public TForm
 {
 __published:	// IDE-managed Components
-	TValueListEditor *VLE_KOREAN;
-	TValueListEditor *VLE_ENGLISH;
-	TStringGrid *sGridLanguage;
-	TValueListEditor *VLE_CHINESE;
 private:	// User declarations
-    void __fastcall SetLanguage();
+    TStringList *LangDict, *English;
+    std::vector<std::pair<UnicodeString, UnicodeString> > phrases;
+    std::map<UnicodeString, UnicodeString> translatedText, displayCache;
+    void __fastcall LocalizeFormCaptions(TCustomForm *form);
 public:		// User declarations
 	__fastcall TForm_Language(TComponent* Owner);
-    UnicodeString __fastcall GetTranslation(AnsiString name, int LangIndex);
+    __fastcall ~TForm_Language();
+    UnicodeString CurrentLanguage;
+    void __fastcall ReadLanguage(const UnicodeString &language);
+    UnicodeString __fastcall GetLangStr(const UnicodeString &key);
+    UnicodeString __fastcall Translate(const UnicodeString &text);
     void __fastcall LanguageChange(int LangIndex);
 
     //* Message º¯¼ö
@@ -33,5 +36,6 @@ public:		// User declarations
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm_Language *Form_Language;
+UnicodeString UiText(const UnicodeString &text);
 //---------------------------------------------------------------------------
 #endif

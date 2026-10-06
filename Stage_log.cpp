@@ -117,7 +117,7 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	irEdit1->Text = config.ir_min;
 	irEdit2->Text = config.ir_max;
 
-    pnlIRSpec->Caption = "IR : " + FormatFloat("0.0", config.ir_min)  + " ~ " + FormatFloat("0.0", config.ir_max);
+    pnlIRSpec->Caption = UiText("IR : " + FormatFloat("0.0", config.ir_min)  + " ~ " + FormatFloat("0.0", config.ir_max));
 
 	config.ocv_min = ini->ReadFloat("MAIN", "OCV1", DEFAULT_OCV_MIN);
 	config.ocv_max = ini->ReadFloat("MAIN", "OCV2", DEFAULT_OCV_MAX);
@@ -125,7 +125,7 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	ocvEdit1->Text = config.ocv_min;
 	ocvEdit2->Text = config.ocv_max;
 
-    pnlOCVSpec->Caption = "OCV : " + FormatFloat("0.0", config.ocv_min) + " ~ " + FormatFloat("0.0", config.ocv_max);
+    pnlOCVSpec->Caption = UiText("OCV : " + FormatFloat("0.0", config.ocv_min) + " ~ " + FormatFloat("0.0", config.ocv_max));
 
 	editPLCIPAddress->Text = ini->ReadString("IROCV_PLC", "IP", "17.91.80.220");
 	editPLCPortPC->Text = ini->ReadString("IROCV_PLC", "PORT1", "5007");
@@ -392,7 +392,7 @@ bool __fastcall TTotalForm::WriteResultFile()
     }
 }
 
-void __fastcall TTotalForm::WriteErrorLog()
+void __fastcall TTotalForm::WriteErrorLog(AnsiString title, AnsiString detail1, AnsiString detail2)
 {
 	AnsiString str, dir;
 	int file_handle;
@@ -410,7 +410,8 @@ void __fastcall TTotalForm::WriteErrorLog()
 
 	FileSeek(file_handle, 0, 2);
 
-	str = Now().FormatString("yyyy-mm-dd hh:nn:ss ") + error1->Caption + ", " + error3->Caption + ", " + error4->Caption + "\n";
+    // Keep diagnostic text independent of translated operator captions.
+	str = Now().FormatString("yyyy-mm-dd hh:nn:ss ") + title + ", " + detail1 + ", " + detail2 + "\n";
 	FileWrite(file_handle, str.c_str(), str.Length());
 
 	FileClose(file_handle);

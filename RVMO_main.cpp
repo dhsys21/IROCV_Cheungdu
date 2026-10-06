@@ -80,7 +80,7 @@ void __fastcall TBaseForm::MakePanel()
 		nForm[i]->Left = nx;
 		nForm[i]->Top = ny;
 		nForm[i]->Position = poDesigned;
-		nForm[i]->lblTitle->Caption = "STAGE" + IntToStr(i + 1);
+		nForm[i]->lblTitle->Caption = UiText("STAGE" + IntToStr(i + 1));
 		nForm[i]->Tag = i;
 		nForm[i]->Visible = true; 		// WM_SHOW 이벤트 발생
 
@@ -321,7 +321,7 @@ void __fastcall TBaseForm::PasswordBtnClick(TObject *Sender)
 		Application->Terminate();
 	}
 	else{
-		MessageBox(Handle, L"Are you sure you’re spelling your password correctly?", L"ERROR", MB_OK|MB_ICONERROR);
+		MessageBox(Handle, UiText(L"Are you sure you’re spelling your password correctly?").c_str(), UiText(L"ERROR").c_str(), MB_OK|MB_ICONERROR);
 	}
 }
 //---------------------------------------------------------------------------

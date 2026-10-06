@@ -1,0 +1,58 @@
+#include <vcl.h>
+#include <map>
+#include <vector>
+#include <memory>
+#include <stdio.h>
+#include <stdlib.h>
+class TForm_Language
+{
+public:
+    TStringList *LangDict, *English;
+    std::vector<std::pair<UnicodeString, UnicodeString> > phrases;
+    std::map<UnicodeString, UnicodeString> translatedText, displayCache;
+    UnicodeString CurrentLanguage;
+    TForm_Language() : LangDict(new TStringList()), English(new TStringList()) {}
+    ~TForm_Language() { delete LangDict; delete English; }
+    void __fastcall ReadLanguage(const UnicodeString &language);
+    UnicodeString __fastcall GetLangStr(const UnicodeString &key);
+    UnicodeString __fastcall Translate(const UnicodeString &text);
+};
+@@METHODS@@
+int checks = 0;
+#define CHECK(x) do { ++checks; if(!(x)) { printf("FAIL %d: %s\n",__LINE__,#x); exit(1); } } while(0)
+int main()
+{
+    try
+    {
+        TForm_Language language;
+        language.ReadLanguage(L"EN");
+        CHECK(language.Translate(L"PROCESS INFO") == L"PROCESS INFO");
+        CHECK(language.Translate(L"Unknown diagnostic") == L"Unknown diagnostic");
+        for(int cycle=0; cycle<3; ++cycle)
+        {
+            language.ReadLanguage(L"KO");
+            CHECK(language.Translate(L"PROCESS INFO") == L"\xC9C4\xD589 \xC815\xBCF4");
+            CHECK(language.Translate(L"PC: AUTO") == L"PC: \xC790\xB3D9");
+            CHECK(language.Translate(L"PLC_D_IROCV_TRAY_IN") == L"PLC_D_IROCV_TRAY_IN");
+            CHECK(language.Translate(L"PC_SET PROBE_CLOSE (D5): 0 -> 1") == L"PC_SET PROBE_CLOSE (D5): 0 -> 1");
+            UnicodeString caption=language.Translate(L"CELL SERIAL: BEFORE MEASURE");
+            CHECK(caption.Pos(L"BEFORE MEASURE")==0);
+            CHECK(language.Translate(L"CELL SERIAL: BEFORE MEASURE")==caption); // cached
+            CHECK(!language.GetLangStr(L"msgCellIdError1").IsEmpty());
+            language.ReadLanguage(L"ZH");
+            CHECK(language.Translate(L"PROCESS INFO") == L"\x6D41\x7A0B\x4FE1\x606F");
+            CHECK(language.GetLangStr(L"CANCEL") == L"\x53D6\x6D88");
+            CHECK(language.Translate(L"SEN RUN / 12.3 / 60 s") == L"SEN RUN / 12.3 / 60 s");
+            CHECK(language.Translate(L"PLC: MANUAL").Pos(L"\x624B\x52A8")>0);
+            CHECK(language.Translate(L"Waiting for PROBE DOWN") == L"\x7B49\x5F85\x63A2\x9488\x95ED\x5408");
+            CHECK(language.Translate(L"Unregistered diagnostic text") == L"Unregistered diagnostic text");
+            language.LangDict->Values[L"TEXT_PROCESS_INFO"]=language.English->Values[L"TEXT_PROCESS_INFO"]; // overlay fallback
+            CHECK(language.GetLangStr(L"TEXT_PROCESS_INFO")==L"PROCESS INFO");
+            language.ReadLanguage(L"EN");
+            CHECK(language.Translate(L"PC: AUTO")==L"PC: AUTO");
+        }
+        printf("PASS: %d real language resource / Unicode / fallback / switch checks\n",checks);
+        return 0;
+    }
+    catch(const Exception &e) { printf("ERROR: %s\n",AnsiString(e.Message).c_str()); return 1; }
+}

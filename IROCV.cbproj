@@ -159,6 +159,8 @@
             <DependentOn>FormError.h</DependentOn>
             <BuildOrder>15</BuildOrder>
         </CppCompile>
+        <ResourceCompile Include="Languages.rc" />
+        <CppCompile Include="LanguageSupport.cpp" />
         <CppCompile Include="FormLanguage.cpp">
             <Form>Form_Language</Form>
             <FormType>dfm</FormType>

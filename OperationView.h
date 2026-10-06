@@ -37,7 +37,7 @@ class TOperationView : public TComponent
     void BeginCommand(TAutoInspectionCommand command);
     void BeginRemeasureTimeline();
     void ObserveSignals(bool valid);
-    void SetCurrent(AnsiString title, AnsiString detail, bool error);
+    void SetCurrent(UnicodeString title, UnicodeString detail, bool error);
     void FinishCycle();
     bool WriteOperationLog(const UnicodeString &line);
 public:

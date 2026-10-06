@@ -3,6 +3,7 @@
 #include <vcl.h>
 #pragma hdrstop
 #include <tchar.h>
+#include "FormLanguage.h"
 //---------------------------------------------------------------------------
 USEFORM("RVMO_main.cpp", BaseForm);
 USEFORM("Modplc.cpp", Mod_PLC); /* TDataModule: File Type */
@@ -27,7 +28,7 @@ int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 			Mutex = CreateMutexA(NULL, true, ProgMutex);
 		else
 		{
-			ShowMessage("The program is already running.");
+			ShowMessage(UiText("The program is already running."));
 			return 0;
 		}
 

@@ -191,7 +191,7 @@ void __fastcall TMeasureInfoForm::btnSaveClick(TObject *Sender)
 	if(SaveDialog->Execute()){
 		FileName = SaveDialog->FileName;
 		if(FileExists(FileName)){
-			if(MessageBox(Handle, L"Would you like to overwrite files?", L"SAVE", MB_YESNO|MB_ICONQUESTION) == ID_NO){
+			if(MessageBox(Handle, UiText(L"Would you like to overwrite files?").c_str(), UiText(L"SAVE").c_str(), MB_YESNO|MB_ICONQUESTION) == ID_NO){
 				return;
 			}
 			else{
@@ -274,7 +274,7 @@ void __fastcall TMeasureInfoForm::ChInfoMouseEnter(TObject *Sender)
 	int index;
 	index = pnl->Tag;
 	pch->Caption = index + 1;
-//	ppos->Caption = IntToStr((index%16)+1) + "-" + IntToStr((index+16)/16);
+//	ppos->Caption = UiText(IntToStr((index%16)+1) + "-" + IntToStr((index+16)/16));
 	ppos->Caption = IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index));
 }
 //---------------------------------------------------------------------------
@@ -366,7 +366,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 					BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA COMPLETE");
 					msaTimer->Enabled = false;
 
-					ShowMessage("MSA COMPLETE");
+					ShowMessage(UiText("MSA COMPLETE"));
 					MSA_COUNT_CHECK->Caption = "";
 				}else
 				{
@@ -387,7 +387,7 @@ void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 	msaCount = 0;
 //	msaFN = Now().FormatString("yymmddhhnnss");
 //	BaseForm->nForm[stage]->InitializeInspection();
-	MSA_COUNT_CHECK->Caption = "1/"+ Edit1->Text;
+	MSA_COUNT_CHECK->Caption = UiText("1/"+ Edit1->Text);
 	//msaTimer->Enabled = true;
 
     // msa 저장 파일 설정

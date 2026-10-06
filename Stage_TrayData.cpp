@@ -12,6 +12,7 @@
 // 새 트레이 검사 데이터 초기화: 문자열/숫자/배열과 수신 표시를 지운다. 투입 이후 화면은 공란이다.
 void __fastcall TTotalForm::InitializeTrayData()
 {
+    measurementClock.Reset();
     // [CELL SERIAL 공통] 이전 결과 저장 대기를 취소하고 이번 트레이의 수신 방식을 확정한다.
     CancelResultSave();
     ApplyCellSerialReadMode();

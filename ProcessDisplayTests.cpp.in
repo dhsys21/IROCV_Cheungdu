@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 typedef std::string AnsiString;
+inline AnsiString UiText(const AnsiString &text) { return text; } // English-only fake UI; resources tested separately.
 enum { clRed=1, clWhite=2, clBlack=3 };
 struct TestFont { int Color; };
 struct TestPanel { AnsiString Caption; int Color; TestFont *Font; };

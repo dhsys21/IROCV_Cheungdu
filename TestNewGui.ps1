@@ -84,7 +84,7 @@ if(!$view.Contains('FILE_APPEND_DATA') -or !$view.Contains('FILE_SHARE_READ | FI
 if(!$view.Contains('cycleClock.Start(GetTickCount())') -or !$view.Contains('cycleClock.Elapsed(GetTickCount())') -or $view.Contains('waitStarted')){throw 'Elapsed must time tray cycle, not each state'}
 if(!$view.Contains('tiles[i]->Color = i == active ? clLime : clSilver;')){throw 'Active-only process colors'}
 if(!$view.Contains('pcModePanel->Color = local ? clRed : clLime;') -or !$view.Contains('valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed')){throw 'AUTO/non-AUTO colors'}
-if(!$view.Contains('currentDetail->Caption = OperatorSignalText(detail)')){throw 'Operator-friendly signal text missing'}
+if(!$view.Contains('currentDetail->Caption = UiText(OperatorSignalText(detail))')){throw 'Localized operator-friendly signal text missing'}
 foreach($token in @('AnsiString phase = TOperationViewState::TileName(phaseTile);',
  'AnsiString key = "[" + phase + "] " + source + " " + message.Trim();',
  'UnicodeString line = Now().FormatString("hh:nn:ss.zzz ") + key;',

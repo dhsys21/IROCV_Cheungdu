@@ -8,7 +8,7 @@ object BaseForm: TBaseForm
   VertScrollBar.Range = 300
   VertScrollBar.Visible = False
   BorderIcons = [biSystemMenu, biMinimize]
-  Caption = 'IR/OCV (Ver.260918 001)'
+  Caption = 'IR/OCV (Ver.261006 002)'
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -5800,7 +5800,7 @@ object BaseForm: TBaseForm
     Caption = 'INIT.'
     Color = 4342527
     ParentFont = False
-    TabOrder = 6
+    TabOrder = 5
     Version = '2.1.1.5'
     OnClick = btnInitClick
     TMSStyle = 8
@@ -5812,7 +5812,6 @@ object BaseForm: TBaseForm
     Height = 26
     Cursor = crHandPoint
     Hint = 'Open PLC interface'
-    ShowHint = True
     Caption.Text = 'PLC OFF'
     Caption.Location = plCenterCenter
     Caption.HTMLFont.Charset = DEFAULT_CHARSET
@@ -5842,8 +5841,9 @@ object BaseForm: TBaseForm
     Fill.ShadowOffset = 0
     Fill.Glow = gmNone
     Version = '1.5.2.1'
-    TabOrder = 7
     OnClick = advPLCInterfaceShowClick
+    ShowHint = True
+    TabOrder = 7
     TMSStyle = 0
   end
   object AdvSmoothPanel_IROCV: TAdvSmoothPanel
@@ -5851,8 +5851,14 @@ object BaseForm: TBaseForm
     Top = 35
     Width = 80
     Height = 26
+    Cursor = crDefault
     Caption.Text = 'IR/OCV OFF'
     Caption.Location = plCenterCenter
+    Caption.HTMLFont.Charset = DEFAULT_CHARSET
+    Caption.HTMLFont.Color = clWindowText
+    Caption.HTMLFont.Height = -11
+    Caption.HTMLFont.Name = 'Tahoma'
+    Caption.HTMLFont.Style = []
     Caption.Font.Charset = DEFAULT_CHARSET
     Caption.Font.Color = clWindowText
     Caption.Font.Height = -12
@@ -5864,11 +5870,14 @@ object BaseForm: TBaseForm
     Fill.ColorTo = clRed
     Fill.ColorMirror = clRed
     Fill.ColorMirrorTo = clRed
+    Fill.GradientType = gtVertical
+    Fill.GradientMirrorType = gtSolid
     Fill.BorderColor = 14922381
     Fill.Rounding = 5
     Fill.ShadowOffset = 0
+    Fill.Glow = gmNone
     Version = '1.5.2.1'
-    TabOrder = 13
+    TabOrder = 6
     TMSStyle = 0
   end
   object Memo1: TMemo

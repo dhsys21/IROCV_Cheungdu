@@ -7,6 +7,7 @@
 #include "PlcAutoMode.h"
 #include "AutoInspectionSequence.h"
 #include "SiteConfig.h"
+#include "MeasurementClock.h"
 struct TObject {};
 const int nAuto=0,nLocal=2;
 struct Timer {bool Enabled;Timer():Enabled(false){}};
@@ -21,6 +22,7 @@ struct TMod_PLC {
 } plc,*Mod_PLC=&plc;
 struct Sequence {int step;Sequence():step(STEP_WAIT_TRAY_IN){}int GetStep(){return step;}};
 struct TTotalForm {
+    TMeasurementClock measurementClock;
     Timer automatic,finish;
     Timer *Timer_AutoInspection,*Timer_FinishCharging;
     struct {int arl;}stage;
@@ -123,4 +125,3 @@ int main(){
     printf("PASS: %d PLC manual/reset/auto-resume checks\n",checks);
     return 0;
 }
-

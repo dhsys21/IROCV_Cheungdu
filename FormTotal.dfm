@@ -1946,7 +1946,7 @@ object TotalForm: TTotalForm
       object lblOperationSerial: TLabel
         Left = 10
         Top = 121
-        Width = 580
+        Width = 390
         Height = 23
         AutoSize = False
         Caption = 'CELL SERIAL: waiting for configuration'
@@ -1957,6 +1957,22 @@ object TotalForm: TTotalForm
         Font.Style = []
         ParentFont = False
         WordWrap = True
+      end
+      object lblOperationMeasureTime: TLabel
+        Left = 405
+        Top = 121
+        Width = 185
+        Height = 23
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'AMS: 0.0 s'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -14
+        Font.Name = 'Segoe UI'
+        Font.Style = [fsBold]
+        ParentFont = False
+        ShowHint = True
       end
       object pOpReady: TPanel
         Left = 9

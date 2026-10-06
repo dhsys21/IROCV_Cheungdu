@@ -106,6 +106,7 @@ void __fastcall TTotalForm::ResetAutoInspectionForPlcMode()
     ResetAutoInspection();
     InitializePlcData();
     autoInspectionTrayId = "";
+    measurementClock.Reset();
     tray.ams = false;
     tray.amf = false;
     // Discard commands and remeasure state belonging to the cancelled automatic cycle.
@@ -545,6 +546,7 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
     resultSaveStep = RESULT_IDLE;
     tray.ams = false;
     tray.amf = false;
+    measurementClock.Reset();
     measurementNgCount = 0;
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);

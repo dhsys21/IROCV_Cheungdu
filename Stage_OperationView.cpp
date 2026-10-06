@@ -48,7 +48,7 @@ UnicodeString FindNotepadPlusPlus()
     return FileExists(portable) ? portable : UnicodeString();
 }
 
-AnsiString OperatorSignalText(AnsiString text)
+UnicodeString OperatorSignalText(UnicodeString text)
 {
     text = StringReplace(text, "PLC_D_IROCV_", "", TReplaceFlags() << rfReplaceAll);
     text = StringReplace(text, "PC_D_IROCV_", "", TReplaceFlags() << rfReplaceAll);
@@ -145,18 +145,18 @@ void __fastcall TOperationView::OpenLogFile(TObject *)
     Append("UI", "Open operation log file.");
     if(logWriteFailed || operationLogFile.IsEmpty() || !FileExists(operationLogFile))
     {
-        ShowMessage("Cannot write/open the operation log. Check the log folder and disk space.");
+        ShowMessage(UiText("Cannot write/open the operation log. Check the log folder and disk space."));
         return;
     }
     UnicodeString editor = FindNotepadPlusPlus();
     if(editor.IsEmpty())
     {
-        ShowMessage(UnicodeString(L"Notepad++ was not found. Install it or place notepad++.exe beside IROCV.exe.\r\nLog: ") + operationLogFile);
+        ShowMessage(UiText(UnicodeString(L"Notepad++ was not found. Install it or place notepad++.exe beside IROCV.exe.\r\nLog: ") + operationLogFile));
         return;
     }
     UnicodeString args = L"-ro \"" + operationLogFile + L"\"";
     if((INT_PTR)ShellExecuteW(stageForm->Handle, L"open", editor.c_str(), args.c_str(), NULL, SW_SHOWNORMAL) <= 32)
-        ShowMessage("Cannot start Notepad++.");
+        ShowMessage(UiText("Cannot start Notepad++."));
 }
 TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoInspectionCommand command)
     : view(owner->operationView), previous(-1)
@@ -209,7 +209,7 @@ void TOperationView::Append(AnsiString source, AnsiString message, int processTi
     lastLog = key;
     UnicodeString line = Now().FormatString("hh:nn:ss.zzz ") + key;
     try { logWriteFailed = !WriteOperationLog(line); } catch(...) { logWriteFailed = true; }
-    stageForm->btnOperationLogFile->Caption = logWriteFailed ? "LOG ERROR" : "LOG FILE";
+    stageForm->btnOperationLogFile->Caption = UiText(logWriteFailed ? "LOG ERROR" : "LOG FILE");
     stageForm->btnOperationLogFile->Hint = logWriteFailed ? UnicodeString(L"Log write failed: check folder/disk space.") : operationLogFile;
     logMemo->Lines->BeginUpdate();
     try
@@ -230,7 +230,7 @@ void TOperationView::Reset()
 {
     progress.Reset();
     cycleClock.Reset();
-    elapsedLabel->Caption = "Elapsed 0.0 s";
+    elapsedLabel->Caption = UiText("Elapsed 0.0 s");
     previousCloseRequest = 0;
     lastWaitKey = "";
     timeline.Reset();
@@ -256,7 +256,7 @@ void TOperationView::FinishCycle()
     timeline.Advance(TOperationViewState::OutConfirmed);
     unsigned long elapsed = cycleClock.Finish(GetTickCount());
     Append("CYCLE", "TRAY IN -> TRAY OUT complete: " + FormatFloat("0.0", elapsed / 1000.0) + " s", TOperationViewState::OutConfirmed);
-    elapsedLabel->Caption = "Elapsed 0.0 s";
+    elapsedLabel->Caption = UiText("Elapsed 0.0 s");
 }
 void TOperationView::FileSaved(bool saved)
 {
@@ -330,7 +330,7 @@ void TOperationView::DrawTiles()
         stageForm->Panel_State->Color == clRed) active = -1;
     for(int i = 0; i < TOperationViewState::Count; ++i)
     {
-        tileLabels[i]->Caption = TOperationViewState::TileName(i);
+        tileLabels[i]->Caption = UiText(TOperationViewState::TileName(i));
         tiles[i]->Color = i == active ? clLime : clSilver;
     }
 }
@@ -375,7 +375,7 @@ void TOperationView::ObserveSignals(bool valid)
     if(valid && progress.state[TOperationViewState::OutConfirmed] == TOperationViewState::Done)
         FinishCycle();
 }
-void TOperationView::SetCurrent(AnsiString title, AnsiString detail, bool error)
+void TOperationView::SetCurrent(UnicodeString title, UnicodeString detail, bool error)
 {
     AnsiString key = title;
     if(key != lastWaitKey)
@@ -383,10 +383,10 @@ void TOperationView::SetCurrent(AnsiString title, AnsiString detail, bool error)
         lastWaitKey = key;
         Append(error ? "ATTENTION" : "STATE", title);
     }
-    currentTitle->Caption = OperatorSignalText(title);
+    currentTitle->Caption = UiText(OperatorSignalText(title));
     currentTitle->Font->Color = error ? clRed : (TColor)RGB(18, 77, 124);
-    currentDetail->Caption = OperatorSignalText(detail);
-    elapsedLabel->Caption = "Elapsed " + FormatFloat("0.0", cycleClock.Elapsed(GetTickCount()) / 1000.0) + " s";
+    currentDetail->Caption = UiText(OperatorSignalText(detail));
+    elapsedLabel->Caption = UiText("Elapsed " + FormatFloat("0.0", cycleClock.Elapsed(GetTickCount()) / 1000.0) + " s");
 }
 void TOperationView::Refresh()
 {
@@ -395,9 +395,9 @@ void TOperationView::Refresh()
     const bool valid = plcConnected && Mod_PLC->plcAutoMode.IsValid();
     const bool local = f->bLocal || f->stage.arl == nLocal;
     ObserveSignals(valid);
-    pcModePanel->Caption = local ? "PC: MANUAL" : "PC: AUTO";
+    pcModePanel->Caption = UiText(local ? "PC: MANUAL" : "PC: AUTO");
     pcModePanel->Color = local ? clRed : clLime;
-    plcModePanel->Caption = !valid ? "PLC: UNKNOWN" : Mod_PLC->IsPlcAutoMode() ? "PLC: AUTO" : "PLC: MANUAL";
+    plcModePanel->Caption = UiText(!valid ? "PLC: UNKNOWN" : Mod_PLC->IsPlcAutoMode() ? "PLC: AUTO" : "PLC: MANUAL");
     plcModePanel->Color = valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed;
     f->localCali->Visible = local;
     const TAutoInspectionStep step = f->autoInspection.GetStep();
@@ -406,9 +406,13 @@ void TOperationView::Refresh()
     int chunks = Mod_PLC->CellSerialReadRequested ? 0 :
         Mod_PLC->IsCellSerialReadComplete() ? PLC_D_CELL_SERIAL_READCOUNT : Mod_PLC->CellSerialIndex;
     AnsiString serialText = AnsiString("CELL SERIAL: ") + (f->cellSerialContinuousReadForTray ? "AT RESULT SAVE" : "BEFORE MEASURE");
-    if(serialWaiting) serialText += "   RECEIVED " + IntToStr(chunks) + "/" + IntToStr(PLC_D_CELL_SERIAL_READCOUNT) + " BLOCKS";
-    serialLabel->Caption = serialText;
-    AnsiString title, detail;
+    serialLabel->Caption = UiText(serialText);
+    serialLabel->Hint = serialWaiting ? UiText(AnsiString("RECEIVED ") + IntToStr(chunks) + "/" + IntToStr(PLC_D_CELL_SERIAL_READCOUNT) + " BLOCKS") : UnicodeString();
+    serialLabel->ShowHint = serialWaiting;
+    // Independent of the tray cycle clock: AMS receipt -> AMF receipt only.
+    f->lblOperationMeasureTime->Caption = UiText("AMS: " + FormatFloat("0.0", f->measurementClock.Elapsed(GetTickCount()) / 1000.0) + " s");
+    f->lblOperationMeasureTime->Hint = UiText("Time from received AMS to received AMF; freezes on stop/disconnection.");
+    UnicodeString title, detail;
     bool error = false;
     if(!Connected(f->Client)) { title = "IR/OCV disconnected"; detail = "Waiting for the measurement equipment connection."; error = true; }
     else if(f->stage.alarm_status == nEmergency) { title = "Equipment emergency"; detail = "Equipment reports EMERGENCY. Check the equipment before restarting."; error = true; }
@@ -419,7 +423,6 @@ void TOperationView::Refresh()
     else if(Mod_PLC->GetPlcValue(PLC_D_IROCV_ERROR) != 0) { title = "PLC error"; detail = "PLC_D_IROCV_ERROR is nonzero. Check the PLC interface and equipment."; error = true; }
     else if(step == STEP_WAIT_CELL_SERIAL_ERROR) { title = "CELL SERIAL verification error"; detail = "Waiting for SAVE (accept) / CANCEL (read again) in CELL ID ERROR.\r\nCELL DATA: " + IntToStr(f->tray.cell_count) + " cells."; error = true; }
     else if(step == STEP_WAIT_NG_ERROR) { title = "NG - operator decision required"; detail = "Waiting for TRAY OUT / RESTART in the NG error window."; error = true; }
-    else if(f->Panel_State->Color == clRed && !f->Panel_State->Caption.IsEmpty()) { title = "Inspection warning / error"; detail = f->Panel_State->Caption; error = true; }
     else if(f->resultSaveStep == RESULT_WAIT_SERIAL) { title = "Reading CELL SERIAL for result save"; detail = "Waiting for all serial blocks. No partial/previous read is used.\r\nProgress: " + IntToStr(chunks) + "/" + IntToStr(PLC_D_CELL_SERIAL_READCOUNT) + " blocks."; }
     else if(f->resultSaveStep == RESULT_WAIT_PLC_SEND)
     {
@@ -475,7 +478,7 @@ void TOperationView::Refresh()
 void __fastcall TOperationView::TimerTick(TObject *)
 {
     // A display failure must never change an inspection state, PLC output or timer.
-    try { Refresh(); } catch(...) { currentTitle->Caption = "Display refresh error - check logs"; }
+    try { Refresh(); } catch(...) { currentTitle->Caption = UiText("Display refresh error - check logs"); }
 }
 
 void __fastcall TTotalForm::CreateOperationView()

@@ -203,7 +203,7 @@ void __fastcall TRemeasureForm::AccInitBtnClick(TObject *Sender)
             acc_totaluse[i] = 0;
         }
 		BaseForm->nForm[stage]->UpdateRemeasureAlarm(0);
-		pAccDate->Caption = Now().FormatString("yyyy. m. d. hh:nn");
+		pAccDate->Caption = UiText(Now().FormatString("yyyy. m. d. hh:nn"));
 		//pAccCnt->Caption = 0;
 		*acc_cnt = 0;
 		*acc_init = pAccDate->Caption;
@@ -228,7 +228,7 @@ void __fastcall TRemeasureForm::ChInfoMouseClick(TObject *Sender)
 	int index;
 	index = pnl->Tag;
 	pChannel->Caption = index + 1;
-    pPos->Caption = IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index));
-    pNgTotalUse->Caption = IntToStr(acc_remeasure[index]) + " / " + IntToStr(acc_totaluse[index]);
+    pPos->Caption = UiText(IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index)));
+    pNgTotalUse->Caption = UiText(IntToStr(acc_remeasure[index]) + " / " + IntToStr(acc_totaluse[index]));
 }
 //---------------------------------------------------------------------------

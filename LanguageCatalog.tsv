@@ -1,0 +1,318 @@
+# key|English|Korean|Chinese
+TEXT_IR_CONNECTION_FAIL|IR/OCV Connection Fail.|IR/OCV 연결 실패.|IR/OCV 连接失败。
+TEXT_IR_CONNECTED|IR/OCV is connected|IR/OCV 연결됨|IR/OCV 已连接
+TEXT_CONNECTING_DOTS|Connection...|연결 중...|正在连接...
+TEXT_RESET_CONFIRM|Are you sure you want to reset?|초기화하시겠습니까?|是否复位？
+TEXT_BYPASS_CONFIRM|Do yoy want change BYPASS mode?|바이패스 모드를 변경하시겠습니까?|是否更改旁路模式？
+TEXT_MSA_DONE|MSA COMPLETE|MSA 완료|MSA 完成
+TEXT_CELL_INFO_DOT|CELL INFO.|셀 정보|电芯信息
+TEXT_INPUT_ERROR_IROCV|INPUT ERROR|입력 오류|输入错误
+TEXT_VALID_RANGE|valid 1-|유효 범위 1-|有效范围 1-
+TEXT_APPLIED_IROCV|APPLIED|적용됨|已应用
+TEXT_WRONG_FILE|Is the wrong type of file.|올바르지 않은 파일 형식입니다.|文件类型不正确。
+TEXT_OFFSET_CHECK|Please check the offset value.|오프셋 값을 확인해 주세요.|请检查偏移值。
+TEXT_PASSWORD_CHECK|Are you sure you’re spelling your password correctly?|비밀번호를 확인해 주세요.|请检查密码是否正确。
+TEXT_MEASURE_ALARM|Equipment emergency|설비 비상정지|设备急停
+TEXT_MEASURE_EMERGENCY|Equipment reports EMERGENCY. Check the equipment before restarting.|설비 비상정지 신호가 수신되었습니다. 재시작 전에 설비를 확인해 주세요.|收到设备急停信号。重新启动前请检查设备。
+TEXT_PLC_PENDING|Waiting for both PLC connections and a complete interface response.|PLC 연결 두 개와 전체 인터페이스 응답을 기다립니다.|等待两路 PLC 连接及完整的接口响应。
+TEXT_INPUT_NOT_CURRENT|Input values must not be treated as current until reception completes.|전체 수신이 끝나기 전에는 입력값을 현재 상태로 판단하지 않습니다.|接收完成前，输入值不能作为当前状态。
+TEXT_NO_PARTIAL_SERIAL|Waiting for all serial blocks. No partial/previous read is used.|모든 시리얼 블록 수신을 기다립니다. 일부/이전 수신값은 사용하지 않습니다.|等待全部序列号数据块。不使用部分或上次读取的数据。
+TEXT_RESULT_DELAY_DESC|Result blocks transmitted; waiting for the configured COMPLETE delay.|결과 블록 송신 후 설정된 완료 지연을 기다립니다.|结果数据块已发送，等待设置的完成延时。
+TEXT_NO_APP_ACK|Transmission completion is not a PLC application ACK.|송신 완료는 PLC 프로그램의 수신 확인이 아닙니다.|发送完成并不代表 PLC 程序已确认接收。
+TEXT_NO_COMPLETE_EARLY|PC COMPLETE remains zero until the existing completion conditions pass.|기존 완료 조건을 충족하기 전에는 PC COMPLETE를 0으로 유지합니다.|满足原有完成条件前 PC COMPLETE 保持为 0。
+TEXT_MANUAL_CONTROLS|Manual measurement controls remain in the right-hand measurement screen.|수동 측정 조작은 오른쪽 측정 화면에 있습니다.|手动测量操作位于右侧测量画面。
+TEXT_OVERWRITE_IROCV|Would you like to overwrite files?|파일을 덮어쓰시겠습니까?|是否覆盖文件？
+TEXT_NOTEPAD_MISSING_IROCV|Notepad++ was not found. Install it or place notepad++.exe beside IROCV.exe.|Notepad++가 없습니다. 설치하거나 IROCV.exe 옆에 notepad++.exe를 배치해 주세요.|未找到 Notepad++。请安装或将 notepad++.exe 放在 IROCV.exe 旁。
+TEXT_PROBE_CLOSE_DISPLAY|PROBE CLOSE|프로브 닫기|探针闭合
+TEXT_STEP|STEP|단계|步骤
+UI_TCALIFORM_CAPTION|Calibration|교정|校准
+UI_TMEASUREINFOFORM_CAPTION|Measurement information|측정 정보|测量信息
+TEXT_MEASUREMENT_TIME|AMS:|AMS:|AMS:
+TEXT_READING_TRAY_ID|Reading TRAY ID|트레이 ID 읽는 중|正在读取托盘 ID
+TEXT_READING_CELL_DATA|Reading CELL DATA|셀 데이터 읽는 중|正在读取电芯数据
+TEXT_MEASUREMENT_START_DELAY|Measurement start delay|측정 시작 대기|测量启动延时
+TEXT_WAITING_CELL_DATA|Waiting for CELL DATA|셀 데이터 대기|等待电芯数据
+TEXT_READ_VERIFY_SERIAL|Reading and verifying CELL SERIAL|셀 시리얼 읽기 및 검증 중|正在读取并校验电芯序列号
+TEXT_MANUAL_MEASURING|Manual measurement in progress|수동 측정 중|手动测量中
+TEXT_MEASURING|Measurement in progress|측정 중|测量中
+TEXT_REMEASURING|Remeasurement in progress|재측정 중|复测中
+TEXT_IROCV_DISCONNECTED|IR/OCV disconnected|IR/OCV 연결 끊김|IR/OCV 连接断开
+TEXT_WAIT_EQUIPMENT|Waiting for the measurement equipment connection.|측정 설비 연결을 기다리고 있습니다.|正在等待测量设备连接。
+TEXT_OPBOX_ALARM|Equipment OP BOX alarm|설비 OP BOX 알람|设备操作盒报警
+TEXT_CHECK_OPBOX|Check the equipment operation box and alarm status.|설비 조작 박스와 알람 상태를 확인해 주세요.|请检查设备操作盒及报警状态。
+TEXT_INSPECTION_STOPPED|Inspection stopped|검사 정지|检测停止
+TEXT_SERIAL_VERIFY_ERROR|CELL SERIAL verification error|셀 시리얼 검증 오류|电芯序列号校验错误
+TEXT_SERIAL_ACCEPT|Waiting for SAVE (accept) / CANCEL (read again) in CELL ID ERROR.|CELL ID ERROR 창에서 저장(허용) / 취소(다시 읽기)를 기다립니다.|等待 CELL ID ERROR 窗口中的保存（接受）/取消（重新读取）。
+TEXT_NG_DECISION_IROCV|NG - operator decision required|불량 - 작업자 선택 필요|不良 - 需要操作员选择
+TEXT_NG_WAIT|Waiting for TRAY OUT / RESTART in the NG error window.|NG 오류 창에서 트레이 배출 / 재시작 선택을 기다립니다.|等待不良窗口中的托盘排出/重新启动选择。
+TEXT_SAVE_SERIAL|Reading CELL SERIAL for result save|결과 저장용 셀 시리얼 읽는 중|正在读取结果保存用电芯序列号
+TEXT_RESULT_BLOCKS|Waiting for result-code, IR and OCV blocks to be transmitted.|결과 코드, IR 및 OCV 블록 송신을 기다립니다.|等待发送结果代码、IR 和 OCV 数据块。
+TEXT_CELL_OCCUPANCY|Reading channel occupancy from PLC CELL DATA.|PLC 셀 데이터에서 채널별 셀 유무를 읽습니다.|正在从 PLC 电芯数据读取各通道有无电芯。
+TEXT_WAIT_VALID_TRAY|Waiting for a valid tray ID in the PLC interface data.|PLC 데이터의 유효한 트레이 ID를 기다립니다.|等待 PLC 数据中的有效托盘 ID。
+TEXT_WAIT_SERIAL_COMPARE|Waiting for all serial blocks, then comparing serial count with CELL DATA.|모든 시리얼 블록 수신 후 셀 데이터와 시리얼 개수를 비교합니다.|等待全部序列号数据块，然后与电芯数据比较数量。
+TEXT_WAIT_MEASURE_RESPONSES|Waiting for measurement responses / result processing.|측정 응답 / 결과 처리를 기다립니다.|等待测量响应/结果处理。
+TEXT_WAIT_TRAY_IN_HOLD|TRAY IN must also remain 1.|TRAY IN도 1을 유지해야 합니다.|TRAY IN 必须同时保持为 1。
+TEXT_EXPECTED_IROCV|expected|기대값|预期值
+TEXT_OUTPUT_SETTING_IROCV|output setting|출력 설정|输出设置
+TEXT_RECEIVED_IR|Received IR:|수신 IR:|已接收 IR:
+TEXT_START_DELAY|Start delay:|시작 지연:|启动延时:
+TEXT_PROGRESS_IROCV|Progress:|진행:|进度:
+TEXT_CELLS_IROCV|cells.|개 셀.|个电芯。
+TEXT_CHANNELS|channels|채널|通道
+TEXT_TIMER_TICKS|timer ticks.|타이머 횟수.|定时器次数。
+TEXT_BLOCKS_SMALL|blocks.|블록.|数据块。
+TEXT_TIME_HINT|Time from received AMS to received AMF; freezes on stop/disconnection.|AMS 수신부터 AMF 수신까지 경과시간. 정지/연결 끊김 시 멈춥니다.|从收到 AMS 到收到 AMF 的经过时间；停止或断开时冻结。
+TEXT_DEVICE_ERROR|Device Error|설비 오류|设备错误
+TEXT_CONFIGURATION2|Configuration 2|설정 2|设置 2
+TEXT_MEASURE_INFO|Measure Info|측정 정보|测量信息
+TEXT_CELL_MODEL|CELL MODEL|셀 모델|电芯型号
+TEXT_LOT_NUMBER|LOT NUMBER|로트 번호|批次号
+TEXT_SPEED_MODE|SPEED MODE|측정 속도|测量速度
+TEXT_FAST|FAST|빠름|快
+TEXT_MED|MED|보통|中
+TEXT_SLOW|SLOW|느림|慢
+TEXT_CLOSED_REMEASURE|PROBE CLOSED: REMEASURE IF NG <= (0 = OFF)|프로브 닫힘: 불량 개수 이하 재측정 (0 = 사용 안 함)|探针闭合：不良数不超过阈值时复测（0 = 关闭）
+TEXT_OPEN_REMEASURE|PROBE OPEN/CLOSE REMEASURE COUNT (0 = OFF)|프로브 열기/닫기 재측정 횟수 (0 = 사용 안 함)|探针开合复测次数（0 = 关闭）
+TEXT_NG_ALARM_COUNT|     NG ALARM COUNT|     불량 알람 개수|     不良报警数量
+TEXT_REMEASURE_ALARM_COUNT|     REMEASURE ALARM COUNT|     재측정 알람 개수|     复测报警数量
+TEXT_IR_SPEC|IR SPEC (mΩ)|IR 기준 (mΩ)|IR 规格 (mΩ)
+TEXT_OCV_SPEC|OCV SPEC (mV)|OCV 기준 (mV)|OCV 规格 (mV)
+TEXT_MAX|Max.|최대|最大
+TEXT_MIN|Min.|최소|最小
+TEXT_PASSWORD_IROCV|Password|비밀번호|密码
+TEXT_MANUAL_INPUT|Manual Input|수동 입력|手动输入
+TEXT_SAVING_FILE|SAVE FILE|파일 저장|保存文件
+TEXT_NG_INFO_DOT|NG Info.|불량 정보|不良信息
+TEXT_REMEASURE_INFORMATION|REMEASURE INFORMATION|재측정 정보|复测信息
+TEXT_IROCV_NG|IROCV NG Channels|IR/OCV 불량 채널|IR/OCV 不良通道
+TEXT_FINAL_NG|Final NG|최종 불량|最终不良
+TEXT_FINAL_NG_COUNT|FINAL NG COUNT|최종 불량 개수|最终不良数量
+TEXT_TOTAL_TRAY|Total Tray|전체 트레이|托盘总数
+TEXT_TRAY_OUT_TITLE|Tray Out|트레이 배출|托盘排出
+TEXT_REMEASURE_ALL|Remeasure All|전체 재측정|全部复测
+TEXT_REMEASURE_IROCV|Remeasure|재측정|复测
+TEXT_MEASURE_CHANNEL|Channel|채널|通道
+TEXT_EACH_CHANNEL|Each Channel|개별 채널|单通道
+TEXT_ONE_CHANNEL|1 Channel|1개 채널|单通道
+TEXT_COUNT|Count|횟수|次数
+TEXT_TYPE|Type|종류|类型
+TEXT_MSA_COUNT|MSA Count|MSA 횟수|MSA 次数
+TEXT_CALIB_START|Calib Start|교정 시작|开始校准
+TEXT_CALIB_SETTING|Calibration setting|교정 설정|校准设置
+TEXT_ALL_OFFSET|ALL_OFFSET|전체 오프셋|全部偏移
+TEXT_OFFSET|Offset|오프셋|偏移
+TEXT_LOWER_OFFSET|Lower Offset (15)|하한 오프셋 (15)|下限偏移 (15)
+TEXT_STANDARD|STANDARD|표준|标准
+TEXT_APPLY_IROCV|Apply|적용|应用
+TEXT_OPEN_CASE|Open|열기|打开
+TEXT_START_CASE|Start|시작|启动
+TEXT_IRFAIL_CASE|IR Fail|IR 불량|IR 不良
+TEXT_OCVFAIL_CASE|OCV Fail|OCV 불량|OCV 不良
+TEXT_IR_BASE_VALUE|IR Base Value|IR 기준값|IR 基准值
+TEXT_OCV_BASE_VALUE|OCV Base Value|OCV 기준값|OCV 基准值
+TEXT_DOUBLE_CLICK_INIT|※ Double click the channel to initialize.|※ 채널을 두 번 클릭하면 초기화됩니다.|※ 双击通道可初始化。
+TEXT_COLOR_INFO|※ Color information defines|※ 색상 정보 안내|※ 颜色说明
+TEXT_ENTIRE_OFFSET|Sets the offset of the entire channel.|전체 채널의 오프셋을 설정합니다.|设置所有通道的偏移。
+TEXT_SHOW_ALL|Show all|전체 표시|显示全部
+TEXT_MEASURE_WORKING|The equipment is working.|설비가 동작 중입니다.|设备正在运行。
+TEXT_IROCV_OFF|IR/OCV OFF|IR/OCV 미연결|IR/OCV 未连接
+TEXT_RESULT_400|IR / OCV Result Data (400 CH)|IR / OCV 결과 데이터 (400 CH)|IR / OCV 结果数据 (400 CH)
+TEXT_PLC_PC_INTERFACE|PLC - PC INTERFACE|PLC - PC 인터페이스|PLC - PC 接口
+TEXT_PROCESS_INFO|PROCESS INFO|진행 정보|流程信息
+TEXT_CURRENT_OPERATION|CURRENT OPERATION|현재 작업|当前操作
+TEXT_OPERATION_LOG|OPERATION LOG|작업 로그|操作日志
+TEXT_LOG_FILE|LOG FILE|로그 파일|日志文件
+TEXT_CELL_SERIAL|CELL SERIAL|셀 시리얼|电芯序列号
+TEXT_BEFORE_MEASURE|BEFORE MEASURE|측정 전|测量前
+TEXT_AT_RESULT_SAVE|AT RESULT SAVE|결과 저장 시|保存结果时
+TEXT_RECEIVED|RECEIVED|수신|已接收
+TEXT_ELAPSED|Elapsed|경과|已用时间
+TEXT_MANUAL|MANUAL|수동|手动
+TEXT_AUTO|AUTO|자동|自动
+TEXT_UNKNOWN|UNKNOWN|미확인|未知
+TEXT_TRAY_IN|TRAY IN|트레이 투입|托盘进入
+TEXT_TRAY_ID|TRAY ID|트레이 ID|托盘ID
+TEXT_CELL_DATA|CELL DATA|셀 데이터|电芯数据
+TEXT_DOWN_REQ|DOWN REQ|닫기 요청|闭合请求
+TEXT_DOWN_OK|DOWN OK|닫기 완료|闭合完成
+TEXT_CHARGE|CHARGE|충전|充电
+TEXT_RESULT_SAVE|RESULT SAVE|결과 저장|保存结果
+TEXT_RESULT_TX|RESULT TX|결과 송신|发送结果
+TEXT_OPEN_REQ|OPEN REQ|열기 요청|打开请求
+TEXT_OPEN_OK|OPEN OK|열기 완료|打开完成
+TEXT_OUT_REQ|OUT REQ|배출 요청|排出请求
+TEXT_OUT_OK|OUT OK|배출 완료|排出完成
+TEXT_CONFIG|Config|설정|配置
+TEXT_CONFIG_UPPER|CONFIG|설정|配置
+TEXT_RESET|RESET|리셋|复位
+TEXT_TRAY_OUT|TRAY OUT|트레이 배출|托盘排出
+TEXT_CONFIGURATION|Configuration|설정|配置
+TEXT_READY|READY|대기|就绪
+TEXT_TEST_MODE|TEST MODE|테스트 모드|测试模式
+TEXT_BYPASS|BYPASS|바이패스|旁路
+TEXT_SAVE|SAVE|저장|保存
+TEXT_CANCEL|CANCEL|취소|取消
+TEXT_CONNECT|Connect|연결|连接
+TEXT_DISCONNECT|Disconnect|연결 해제|断开连接
+TEXT_DISCONNECT2|DisConnect|연결 해제|断开连接
+TEXT_OPEN|OPEN|열기|打开
+TEXT_CLOSE|CLOSE|닫기|关闭
+TEXT_START|START|시작|启动
+TEXT_STOP|STOP|정지|停止
+TEXT_SET|SET|설정 적용|应用设置
+TEXT_INIT|INIT|초기화|初始化
+TEXT_LOG|LOG|로그|日志
+TEXT_DATA|DATA|데이터|数据
+TEXT_IP|IP ADDRESS|IP 주소|IP地址
+TEXT_PORT|PORT|포트|端口
+TEXT_PORT_PC|PORT - PC|PC 포트|PC端口
+TEXT_PORT_PLC|PORT - PLC|PLC 포트|PLC端口
+TEXT_ETC|ETC|기타|其他
+TEXT_PLC_CONNECTION|PLC CONNECTION|PLC 연결|PLC连接
+TEXT_SERIAL_MODE|CELL SERIAL MODE|셀 시리얼 모드|电芯序列号模式
+TEXT_SERIAL_CONT|Continuous read (PLC keeps data until TRAY OUT)|상시 수신 (PLC는 트레이 배출까지 데이터 유지)|持续读取（PLC保留数据至托盘排出）
+TEXT_NG_COUNT|NG ALARM COUNT|불량 알람 개수|不良报警数量
+TEXT_REMEASURE_COUNT|REMEASURE ALARM COUNT|재측정 알람 개수|复测报警数量
+TEXT_MODEL|MODEL NAME|모델명|型号
+TEXT_NO_CELL|NO CELL|셀 없음|无电芯
+TEXT_FAIL|FAIL|불량|不良
+TEXT_OUTFLOW|OUTFLOW|셀 유출|电芯溢出
+TEXT_COMPLETE|COMPLETE|완료|完成
+TEXT_CHARGING|CHARGING|충전 중|充电中
+TEXT_CHANNEL|CHANNEL|채널|通道
+TEXT_PROBE|PROBE|프로브|探针
+TEXT_GRAPH|GRAPH|그래프|曲线图
+TEXT_PROBE_DOWN|PROBE DOWN|프로브 닫기|探针闭合
+TEXT_PROBE_OPEN|PROBE OPEN|프로브 열기|探针打开
+TEXT_MEASURE|MEASURE|측정|测量
+TEXT_PLC_UNAVAILABLE|PLC data unavailable|PLC 데이터 미수신|PLC数据不可用
+TEXT_WAIT_PLC|Waiting for both PLC connections and a complete interface response.|PLC 연결 및 전체 인터페이스 수신 대기 중입니다.|等待PLC连接及完整的接口响应。
+TEXT_INVALID_INPUT|Input values must not be treated as current until reception completes.|전체 수신 전에는 입력값을 현재값으로 사용하지 않습니다.|完整接收前不可将输入值作为当前值。
+TEXT_PLC_MANUAL|PLC MANUAL - automatic cycle reset|PLC 수동 - 자동 사이클 초기화|PLC手动 - 自动周期已复位
+TEXT_PLC_MANUAL_DETAIL|Automatic inspection is disabled. Next PLC AUTO starts from TRAY IN.|자동 측정이 중지되었습니다. PLC 자동 전환 시 트레이 투입부터 시작합니다.|自动检测已禁用。PLC转为自动后从托盘进入开始。
+TEXT_STOPPED|Inspection stopped|측정 정지|检测已停止
+TEXT_PLC_ERROR|PLC error|PLC 오류|PLC错误
+TEXT_SERIAL_ERROR|CELL SERIAL verification error|셀 시리얼 검증 오류|电芯序列号校验错误
+TEXT_SERIAL_ERROR_DETAIL|Waiting for SAVE (accept) / CANCEL (read again) in CELL ID ERROR.|셀 ID 오류 창에서 저장(승인) / 취소(재수신) 선택을 기다립니다.|等待在电芯ID错误窗口中选择保存（接受）或取消（重读）。
+TEXT_NG_DECISION|NG - operator decision required|불량 - 작업자 선택 필요|不良 - 需要操作员确认
+TEXT_NG_DECISION_DETAIL|Waiting for TRAY OUT / RESTART in the NG error window.|불량 오류 창에서 트레이 배출 / 재시작 선택을 기다립니다.|等待在不良窗口中选择托盘排出或重新启动。
+TEXT_RESULT_SERIAL|Reading CELL SERIAL for result save|결과 저장용 셀 시리얼 수신 중|正在读取用于保存结果的电芯序列号
+TEXT_RESULT_SERIAL_DETAIL|Waiting for all serial blocks. No partial/previous read is used.|시리얼 전체 블록을 기다립니다. 부분/이전 수신본은 사용하지 않습니다.|等待所有序列号数据块。不使用部分或之前的数据。
+TEXT_PROGRESS|Progress|진행|进度
+TEXT_BLOCKS|blocks.|블록.|数据块。
+TEXT_CELLS|cells.|셀.|电芯。
+TEXT_COMPLETE_DELAY|Waiting for COMPLETE delay|완료 지연 대기|等待完成延时
+TEXT_SEND_RESULT|Sending PLC result data|PLC 결과 데이터 송신 중|正在向PLC发送结果数据
+TEXT_SENT_RESULT|Result blocks transmitted; waiting for the configured COMPLETE delay.|결과 블록 송신 완료. 설정된 완료 지연을 기다립니다.|结果块已发送；等待设定的完成延时。
+TEXT_NOT_ACK|Transmission completion is not a PLC application ACK.|송신 완료는 PLC 처리 완료 응답이 아닙니다.|发送完成不代表PLC应用确认。
+TEXT_PC_COMPLETE_ZERO|PC COMPLETE remains zero until the existing completion conditions pass.|기존 완료 조건 충족 전까지 PC COMPLETE는 0입니다.|满足现有完成条件前PC COMPLETE保持为0。
+TEXT_MANUAL_MODE|Manual mode|수동 모드|手动模式
+TEXT_AUTO_DISABLED|Automatic inspection is disabled.|자동 측정이 중지되었습니다.|自动检测已禁用。
+TEXT_WAIT_TRAY|Waiting for TRAY IN|트레이 투입 대기|等待托盘进入
+TEXT_EXPECTED|expected|대기값|期望值
+TEXT_READ_TRAY|Reading TRAY ID|트레이 ID 수신 중|正在读取托盘ID
+TEXT_READ_TRAY_DETAIL|Waiting for a valid tray ID in the PLC interface data.|PLC 인터페이스의 유효한 트레이 ID를 기다립니다.|等待PLC接口中的有效托盘ID。
+TEXT_READ_CELL|Reading CELL DATA|셀 데이터 수신 중|正在读取电芯数据
+TEXT_READ_CELL_DETAIL|Reading channel occupancy from PLC CELL DATA.|PLC 셀 데이터에서 채널별 셀 유무를 읽습니다.|从PLC电芯数据读取通道占用情况。
+TEXT_VERIFY_SERIAL|Reading and verifying CELL SERIAL|셀 시리얼 수신 및 검증 중|正在读取并校验电芯序列号
+TEXT_VERIFY_SERIAL_DETAIL|Waiting for all serial blocks, then comparing serial count with CELL DATA.|시리얼 전체 수신 후 셀 데이터 개수와 비교합니다.|等待所有序列号数据块，随后与电芯数据数量比较。
+TEXT_WAIT_DOWN|Waiting for PROBE DOWN|프로브 닫힘 대기|等待探针闭合
+TEXT_OUTPUT_SETTING|output setting|출력 설정값|输出设置值
+TEXT_KEEP_TRAY_IN|TRAY IN must also remain 1.|트레이 투입 신호도 1을 유지해야 합니다.|托盘进入信号也必须保持为1。
+TEXT_WAIT_OPEN|Waiting for PROBE OPEN|프로브 열림 대기|等待探针打开
+TEXT_WAIT_OUT|Waiting for TRAY OUT completion|트레이 배출 완료 대기|等待托盘排出完成
+TEXT_WAITING|Waiting|대기 중|等待中
+TEXT_DISPLAY_ERROR|Display refresh error - check logs|화면 갱신 오류 - 로그 확인|画面刷新错误 - 请检查日志
+TEXT_OVERWRITE|Would you like to overwrite files?|파일을 덮어쓰시겠습니까?|是否覆盖文件？
+TEXT_CLOSE_FORM|Close the form?|프로그램을 종료하시겠습니까?|是否关闭程序？
+TEXT_ALREADY_RUN|The program is already running.|프로그램이 이미 실행 중입니다.|程序已在运行。
+TEXT_IP_ERROR|Check the connection IP address and port (1-65535).|연결 IP 주소와 포트(1-65535)를 확인하세요.|请检查连接IP地址和端口（1-65535）。
+TEXT_CONNECTION_STOP|Stop the inspection and finish result saving before changing connection settings.|측정을 중지하고 결과 저장을 완료한 후 연결 설정을 변경하세요.|更改连接设置前请停止检测并完成结果保存。
+TEXT_CONFIRM|Confirm|확인|确认
+TEXT_RESTART|RESTART|재시작|重新启动
+TEXT_STG_ERROR|STAGE ERROR|스테이지 오류|工位错误
+TEXT_STG_ALARM|STAGE ALARM|스테이지 알람|工位报警
+TEXT_OPTION|Option|설정|设置
+TEXT_SAVE_TITLE|Save|저장|保存
+TEXT_CLOSE_TITLE|Close|닫기|关闭
+TEXT_GRAPH_TITLE|Graph|그래프|曲线图
+TEXT_ALARM_COUNT_DESC| the number of alarms| 알람 개수|报警数量
+TEXT_A_COUNT|A COUNT|알람 개수|报警数量
+TEXT_ACOUNT|ACOUNT|알람 개수|报警数量
+TEXT_ADDRESS_AUTO|Address area is detected automatically.|주소 영역은 자동으로 선택됩니다.|自动识别地址区域。
+TEXT_ALL_NG|ALL NG|전체 불량|全部不良
+TEXT_APPLY|APPLY|적용|应用
+TEXT_APPLY400|APPLY 400 CH|400채널 적용|应用到400通道
+TEXT_CANCEL_TITLE|Cancel|취소|取消
+TEXT_CELL_ID_ERROR|CELL ID ERROR|셀 ID 오류|电芯ID错误
+TEXT_CELL_OUTFLOW|CELL Outflow|셀 유출|电芯溢出
+TEXT_CH_INFO3|CHANNEL Info.|채널 정보|通道信息
+TEXT_RANGE_EXAMPLE|Channel or range example : 1,3,5-10,400|채널/범위 예: 1,3,5-10,400|通道/范围示例：1,3,5-10,400
+TEXT_CLEAR_OK|CLEAR (ALL OK)|초기화 (전체 정상)|清除（全部正常）
+TEXT_COMPLETE_TITLE|Complete|완료|完成
+TEXT_DATE|DATE|날짜|日期
+TEXT_DEVICE_ADDRESS|DEVICE ADDRESS|장치 주소|设备地址
+TEXT_FAIL_TITLE|Fail|불량|不良
+TEXT_INCREMENT|Increment each channel|채널별 증가|每通道递增
+TEXT_INITIALIZATION|Initialization|초기화|初始化
+TEXT_INITIALIZE|Initialize|초기화|初始化
+TEXT_LOCAL_MODE|LOCAL MODE|수동 모드|手动模式
+TEXT_NG_COUNT2|NG COUNT|불량 개수|不良数量
+TEXT_NO_CELL_TITLE|No CELL|셀 없음|无电芯
+TEXT_NOT_APPLIED|Not applied|미적용|未应用
+TEXT_P_CLOSE|P. Close|프로브 닫기|探针闭合
+TEXT_P_OPEN|P. Open|프로브 열기|探针打开
+TEXT_PASSWORD|PassWord|비밀번호|密码
+TEXT_PC_PLC_DISCON|PC PLC : DISCONNECTED|PC PLC : 연결 끊김|PC PLC : 已断开
+TEXT_PC_PLC_CON|PC PLC : CONNECTED|PC PLC : 연결됨|PC PLC : 已连接
+TEXT_PC_WORD|PC Word Read / Write|PC 워드 읽기 / 쓰기|PC字读取 / 写入
+TEXT_PLC_INTERFACE|PLC Interface|PLC 인터페이스|PLC接口
+TEXT_PLC_TEST|PLC TEST|PLC 테스트|PLC测试
+TEXT_READ|READ|읽기|读取
+TEXT_READY_TITLE|Ready|대기|就绪
+TEXT_REMEASURE|Remeasure Info|재측정 정보|复测信息
+TEXT_RESTORE|Restore|복원|恢复
+TEXT_RESULT_DATA|Result Data (400 CH)|결과 데이터 (400채널)|结果数据（400通道）
+TEXT_SAVE_SPACE|Save |저장|保存
+TEXT_SELECT_TEST|Select a test item.|테스트 항목을 선택하세요.|请选择测试项目。
+TEXT_T_OUT|T. Out|트레이 배출|托盘排出
+TEXT_TRAY_INFO2|Tray Info.|트레이 정보|托盘信息
+TEXT_WHEN_SAVE|When you click [Save], |[저장] 버튼을 누르면, |点击[保存]时，
+TEXT_WORD_VALUE|WORD VALUE|워드 값|字值
+TEXT_WRITE|WRITE|쓰기|写入
+TEXT_TRAY_EJECT|Are you sure you want to eject the tray?|트레이를 배출하시겠습니까?|是否排出托盘？
+TEXT_NOTEPAD_FAIL|Cannot start Notepad++.|Notepad++를 실행할 수 없습니다.|无法启动Notepad++。
+TEXT_ERROR|ERROR|오류|错误
+TEXT_VOLT|VOLT|전압|电压
+TEXT_CURR|CURR|전류|电流
+TEXT_PLC_PC_FAIL|PLC - PC Connection Fail.|PLC - PC 연결 실패.|PLC - PC连接失败。
+TEXT_PLC_FAIL|PLC - Error!!|PLC 오류!|PLC错误！
+TEXT_CONNECT_FAILED|Connection failed.|연결 실패.|连接失败。
+TEXT_CONNECT_FAILED2|Connection failed|연결 실패|连接失败
+TEXT_LOG_OPEN_FAIL|Cannot write/open the operation log. Check the log folder and disk space.|작업 로그를 기록/열 수 없습니다. 로그 폴더와 디스크 공간을 확인하세요.|无法写入或打开操作日志。请检查日志目录及磁盘空间。
+TEXT_INSPECT_CONFIRM|Are you sure you want inspection?|측정하시겠습니까?|是否开始检测？
+TEXT_CHANNEL_INIT_CONFIRM|Do you want to initialize the channel|이 채널의 기록을 초기화하시겠습니까? 채널|是否初始化该通道的记录？通道
+TEXT_RECORD|record??|기록|记录
+TEXT_PLC_OFF|PLC OFF|PLC 끊김|PLC已断开
+TEXT_PC_ADDR|PC_Address|PC 주소|PC地址
+TEXT_PC_NAME|PC_Name|PC 신호명|PC信号名
+TEXT_PC_VALUE|PC_Value|PC 값|PC值
+TEXT_PLC_ADDR|PLC_Address|PLC 주소|PLC地址
+TEXT_PLC_NAME|PLC_Name|PLC 신호명|PLC信号名
+TEXT_PLC_VALUE|PLC_Value|PLC 값|PLC值
+TEXT_APPLIED|APPLIED|적용 완료|已应用
+TEXT_INPUT_ERROR|INPUT ERROR|입력 오류|输入错误
+TEXT_VALID|valid|허용|有效
+TEXT_PC_INTERFACE|PC INTERFACE|PC 인터페이스|PC接口
+TEXT_LOG_ERROR|LOG ERROR|로그 오류|日志错误
+TEXT_LOG_DISK|Log write failed: check folder/disk space.|로그 기록 실패: 폴더/디스크 공간을 확인하세요.|日志写入失败：请检查目录及磁盘空间。
+CANCEL|CANCEL|취소|取消
+READY|READY|준비|就绪
+IRCOMPLETE|IR|IR|IR
+OCVCOMPLETE|OCV|OCV|OCV
+IROCV|IR/OCV|IR/OCV|IR/OCV
+OCVFAIL|OCV FAIL|OCV 불량|OCV 不良
+IRFAIL|IR FAIL|IR 불량|IR 不良
+FAIL|FAIL|불량|不良
+OUTFLOW|OUTFLOW|접촉 불량|接触不良
+NOCELL|NO CELL|셀 없음|无电芯

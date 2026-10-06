@@ -179,16 +179,16 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
         int index;
         if(Mod_PLC->ClientSocket_PC->Active)
         {
-            lblConnection->Caption = "PC PLC : CONNECTED";
+            lblConnection->Caption = UiText("PC PLC : CONNECTED");
             lblConnection->Font->Color = clGreen;
         }
         else
         {
-            lblConnection->Caption = "PC PLC : DISCONNECTED";
+            lblConnection->Caption = UiText("PC PLC : DISCONNECTED");
             lblConnection->Font->Color = clRed;
         }
 
-        Label4->Caption = "CELL INFO. : ";
+        Label4->Caption = UiText("CELL INFO. : ");
         if(Mod_PLC->ClientSocket_PLC->Active)    //    PLC ป๓ลย
         {
             // PLC - IR/OCV
@@ -400,7 +400,7 @@ void __fastcall TForm_PLCInterface::btnWriteValueClick(TObject *Sender)
 		return;
 	}
 
-	lblWordArea->Caption = area + " / D" + IntToStr(address);
+	lblWordArea->Caption = UiText(area + " / D" + IntToStr(address));
 	SetTestMessage("WRITE OK : D" + IntToStr(address) + " = " + IntToStr(value), clGreen);
 }
 //---------------------------------------------------------------------------
@@ -418,7 +418,7 @@ void __fastcall TForm_PLCInterface::btnReadValueClick(TObject *Sender)
 	}
 
 	editValue->Text = IntToStr(value);
-	lblWordArea->Caption = area + " / D" + IntToStr(address);
+	lblWordArea->Caption = UiText(area + " / D" + IntToStr(address));
 	SetTestMessage("READ OK : D" + IntToStr(address) + " = " + IntToStr(value), clNavy);
 }
 //---------------------------------------------------------------------------
@@ -472,7 +472,7 @@ bool __fastcall TForm_PLCInterface::ApplyNgChannels(AnsiString channelText)
 
 			if(first < 1 || last > MAXCHANNEL || first > last)
 			{
-				lblNgStatus->Caption = "INPUT ERROR : " + token + "  (valid 1-" + IntToStr(MAXCHANNEL) + ")";
+				lblNgStatus->Caption = UiText("INPUT ERROR : " + token + "  (valid 1-" + IntToStr(MAXCHANNEL) + ")");
 				lblNgStatus->Font->Color = clRed;
 				SetTestMessage("NG DATA NOT CHANGED", clRed);
 				return false;
@@ -505,7 +505,7 @@ bool __fastcall TForm_PLCInterface::ApplyNgChannels(AnsiString channelText)
 	}
 
 	Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_NG_COUNT, ngCount);
-	lblNgStatus->Caption = "APPLIED : " + IntToStr(ngCount) + " NG / " + IntToStr(MAXCHANNEL) + " CH";
+	lblNgStatus->Caption = UiText("APPLIED : " + IntToStr(ngCount) + " NG / " + IntToStr(MAXCHANNEL) + " CH");
 	lblNgStatus->Font->Color = clGreen;
 	SetTestMessage("NG CHANNEL DATA UPDATED", clGreen);
 	return true;
