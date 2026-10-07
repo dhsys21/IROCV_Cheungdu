@@ -156,6 +156,8 @@ void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
     RemeasureForm->Left = 200;
     RemeasureForm->Top = 70;
 	RemeasureForm->Visible = true;
+    // OnShow does not run again when the NG window is already visible.
+    RemeasureForm->BringToFront();
 }
 //---------------------------------------------------------------------------
 

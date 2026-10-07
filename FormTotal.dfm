@@ -2757,7 +2757,7 @@ object TotalForm: TTotalForm
       Height = 32
       Appearance.Font.Charset = DEFAULT_CHARSET
       Appearance.Font.Color = clWindowText
-      Appearance.Font.Height = -16
+      Appearance.Font.Height = -13
       Appearance.Font.Name = 'Tahoma'
       Appearance.Font.Style = [fsBold]
       Appearance.Spacing = 0

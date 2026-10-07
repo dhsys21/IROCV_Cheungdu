@@ -138,6 +138,8 @@ foreach($node in $nodes.Values | Where-Object {$_.Props.ContainsKey('TabOrder')}
 }
 'PASS: design-time controls, 14 tile bindings, legacy event preservation, bounds and tab order'
 $form=Read-Source 'FormTotal.cpp'
+$ngInfo=[regex]::Match($form,'(?ms)^void __fastcall TTotalForm::btnRemeasureInfoClick\(.*?^\}').Value
+if(!$ngInfo.Contains('RemeasureForm->Visible = true;') -or !$ngInfo.Contains('RemeasureForm->BringToFront();') -or $ngInfo.IndexOf('RemeasureForm->BringToFront();') -lt $ngInfo.IndexOf('RemeasureForm->Visible = true;')){throw 'NG INFO must bring its window forward on every click, including when already visible'}
 $manual=[regex]::Match($form,'(?ms)^void __fastcall TTotalForm::btnManualClick\([^;{]*\)\s*\{.*?^\}').Value
 foreach($token in @('MeasureInfoForm->display.arl = nLocal;','InitializeMeasureForm();','MeasureInfoForm->pLocal->Visible = true;','bLocal = true;')){
  if(!$manual.Contains($token)){throw "MANUAL must open manual controls directly: $token"}
