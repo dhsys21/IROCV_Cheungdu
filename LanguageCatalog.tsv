@@ -20,7 +20,6 @@ TEXT_NO_PARTIAL_SERIAL|Waiting for all serial blocks. No partial/previous read i
 TEXT_RESULT_DELAY_DESC|Result blocks transmitted; waiting for the configured COMPLETE delay.|결과 블록 송신 후 설정된 완료 지연을 기다립니다.|结果数据块已发送，等待设置的完成延时。
 TEXT_NO_APP_ACK|Transmission completion is not a PLC application ACK.|송신 완료는 PLC 프로그램의 수신 확인이 아닙니다.|发送完成并不代表 PLC 程序已确认接收。
 TEXT_NO_COMPLETE_EARLY|PC COMPLETE remains zero until the existing completion conditions pass.|기존 완료 조건을 충족하기 전에는 PC COMPLETE를 0으로 유지합니다.|满足原有完成条件前 PC COMPLETE 保持为 0。
-TEXT_MANUAL_CONTROLS|Manual measurement controls remain in the right-hand measurement screen.|수동 측정 조작은 오른쪽 측정 화면에 있습니다.|手动测量操作位于右侧测量画面。
 TEXT_OVERWRITE_IROCV|Would you like to overwrite files?|파일을 덮어쓰시겠습니까?|是否覆盖文件？
 TEXT_NOTEPAD_MISSING_IROCV|Notepad++ was not found. Install it or place notepad++.exe beside IROCV.exe.|Notepad++가 없습니다. 설치하거나 IROCV.exe 옆에 notepad++.exe를 배치해 주세요.|未找到 Notepad++。请安装或将 notepad++.exe 放在 IROCV.exe 旁。
 TEXT_PROBE_CLOSE_DISPLAY|PROBE CLOSE|프로브 닫기|探针闭合
@@ -73,6 +72,7 @@ TEXT_MED|MED|보통|中
 TEXT_SLOW|SLOW|느림|慢
 TEXT_CLOSED_REMEASURE|PROBE CLOSED: REMEASURE IF NG <= (0 = OFF)|프로브 닫힘: 불량 개수 이하 재측정 (0 = 사용 안 함)|探针闭合：不良数不超过阈值时复测（0 = 关闭）
 TEXT_OPEN_REMEASURE|PROBE OPEN/CLOSE REMEASURE COUNT (0 = OFF)|프로브 열기/닫기 재측정 횟수 (0 = 사용 안 함)|探针开合复测次数（0 = 关闭）
+UI_TTOTALFORM_LBLREMEASURESETTINGSHELP|SAVE applies to next tray.|저장한 설정은 다음 트레이부터 적용됩니다.|保存的设置从下一个托盘开始生效。
 TEXT_NG_ALARM_COUNT|     NG ALARM COUNT|     불량 알람 개수|     不良报警数量
 TEXT_REMEASURE_ALARM_COUNT|     REMEASURE ALARM COUNT|     재측정 알람 개수|     复测报警数量
 TEXT_IR_SPEC|IR SPEC (mΩ)|IR 기준 (mΩ)|IR 规格 (mΩ)

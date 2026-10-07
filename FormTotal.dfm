@@ -258,7 +258,7 @@ object TotalForm: TTotalForm
       BevelOuter = bvNone
       Color = clBlack
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 2
       Visible = False
     end
     object Panel1: TPanel
@@ -278,7 +278,7 @@ object TotalForm: TTotalForm
       Padding.Bottom = 1
       ParentBiDiMode = False
       ParentBackground = False
-      TabOrder = 4
+      TabOrder = 3
       Visible = False
       object cl_line: TPanel
         AlignWithMargins = True
@@ -527,7 +527,7 @@ object TotalForm: TTotalForm
       Fill.Glow = gmNone
       Version = '1.5.2.1'
       Visible = False
-      TabOrder = 5
+      TabOrder = 4
       TMSStyle = 0
     end
     object pnlTrayOut: TAdvSmoothPanel
@@ -566,7 +566,7 @@ object TotalForm: TTotalForm
       Fill.Glow = gmNone
       Version = '1.5.2.1'
       Visible = False
-      TabOrder = 6
+      TabOrder = 5
       TMSStyle = 0
     end
     object pnlProbeOpen: TAdvSmoothPanel
@@ -605,7 +605,7 @@ object TotalForm: TTotalForm
       Fill.Glow = gmNone
       Version = '1.5.2.1'
       Visible = False
-      TabOrder = 7
+      TabOrder = 6
       TMSStyle = 0
     end
     object pnlProbeClose: TAdvSmoothPanel
@@ -644,7 +644,7 @@ object TotalForm: TTotalForm
       Fill.Glow = gmNone
       Version = '1.5.2.1'
       Visible = False
-      TabOrder = 8
+      TabOrder = 7
       TMSStyle = 0
     end
     object Panel3: TPanel
@@ -665,7 +665,7 @@ object TotalForm: TTotalForm
       ParentFont = False
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 9
+      TabOrder = 8
       Visible = False
     end
     object Panel_State: TPanel
@@ -686,7 +686,7 @@ object TotalForm: TTotalForm
       ParentFont = False
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 10
+      TabOrder = 9
       Visible = False
     end
     object GrpMain: TGroupBox
@@ -1128,7 +1128,7 @@ object TotalForm: TTotalForm
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
-      TabOrder = 12
+      TabOrder = 10
       Visible = False
       object Image5: TImage
         Left = 70
@@ -1927,7 +1927,7 @@ object TotalForm: TTotalForm
       Font.Style = [fsBold]
       ParentBackground = False
       ParentFont = False
-      TabOrder = 15
+      TabOrder = 13
     end
     object grpOperationProcess: TGroupBox
       Left = 10
@@ -1972,6 +1972,7 @@ object TotalForm: TTotalForm
         Font.Name = 'Segoe UI'
         Font.Style = [fsBold]
         ParentFont = False
+        ParentShowHint = False
         ShowHint = True
       end
       object pOpReady: TPanel
@@ -2931,7 +2932,7 @@ object TotalForm: TTotalForm
       Caption = 'CALIBRATION'
       Color = clWhite
       ParentFont = False
-      TabOrder = 11
+      TabOrder = 10
       Visible = False
       Version = '2.1.1.5'
       OnClick = localCaliClick
@@ -2951,7 +2952,7 @@ object TotalForm: TTotalForm
       ParentFont = False
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 12
+      TabOrder = 11
       Visible = False
       OnMouseUp = chkBypassMouseUp
     end
@@ -2969,7 +2970,7 @@ object TotalForm: TTotalForm
       ParentFont = False
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 13
+      TabOrder = 12
       Visible = False
       OnMouseUp = chkBypassMouseUp
     end
@@ -6030,7 +6031,7 @@ object TotalForm: TTotalForm
     Left = 728
     Top = 34
     Width = 600
-    Height = 644
+    Height = 622
     Cursor = crDefault
     CanMove = True
     Caption.Location = plCenterCenter
@@ -6081,19 +6082,9 @@ object TotalForm: TTotalForm
       Left = 10
       Top = 569
       Width = 580
-      Height = 68
+      Height = 46
       Caption = 'CELL SERIAL'
       TabOrder = 0
-      object lblCellSerialReadMode: TLabel
-        Left = 10
-        Top = 43
-        Width = 558
-        Height = 16
-        AutoSize = False
-        Caption = 
-          'Unchecked: capture at TRAY IN / Checked: refresh before result s' +
-          'ave'
-      end
       object chkCellSerialContinuousRead: TCheckBox
         Left = 10
         Top = 18
@@ -6570,9 +6561,7 @@ object TotalForm: TTotalForm
         Width = 550
         Height = 17
         AutoSize = False
-        Caption = 
-          'Closed: max. NG cells / Open-close: extra cycles. SAVE applies t' +
-          'o next tray.'
+        Caption = 'SAVE applies to next tray.'
       end
       object grpIrSpec: TGroupBox
         Left = 5

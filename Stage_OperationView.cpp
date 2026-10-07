@@ -434,7 +434,7 @@ void TOperationView::Refresh()
     else if(local && step == STEP_WAIT_TRAY_IN)
     {
         title = f->tray.ams && !f->tray.amf ? "Manual measurement in progress" : "Manual mode";
-        detail = "Manual measurement controls remain in the right-hand measurement screen.\r\nAutomatic inspection is disabled.";
+        detail = "Automatic inspection is disabled.";
     }
     else
     {

@@ -194,7 +194,6 @@ __published:	// IDE-managed Components
     TTimer *Timer_ResultSave;
     TGroupBox *grpCellSerialReadMode;
     TCheckBox *chkCellSerialContinuousRead;
-    TLabel *lblCellSerialReadMode;
 	TAdvSmoothButton *localCali;
 	TAdvSmoothButton *btnConfig;
 	TGroupBox *GroupBox3;

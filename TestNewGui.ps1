@@ -48,6 +48,11 @@ function Read-DfmNodes([string]$text){
  return $nodes
 }
 $nodes=Read-DfmNodes $totalDfm
+if($nodes.ContainsKey('lblCellSerialReadMode') -or $header.Contains('lblCellSerialReadMode') -or $totalDfm.Contains('Unchecked: capture at TRAY IN')){throw 'Removed CELL SERIAL help remains'}
+$serialBox=$nodes.grpCellSerialReadMode.Props
+$serialCheck=$nodes.chkCellSerialContinuousRead.Props
+if([int]$serialBox.Height -ne 46 -or [int]$serialCheck.Top+[int]$serialCheck.Height -ge [int]$serialBox.Height){throw 'Compact CELL SERIAL panel clips its checkbox'}
+if([int]$nodes.pnlConfig.Props.Height -ne [int]$serialBox.Top+[int]$serialBox.Height+7){throw 'CONFIG bottom spacing must follow the compact CELL SERIAL panel'}
 $originalText=(& git show '592f738:FormTotal.dfm') -join "`n"
 $original=Read-DfmNodes $originalText
 function Image-Payloads([string]$text){
@@ -55,7 +60,7 @@ function Image-Payloads([string]$text){
 }
 if(Compare-Object (Image-Payloads $originalText) (Image-Payloads $totalDfm)){throw 'Legacy image data changed during DFM migration'}
 $retiredProcessControls=@('flowChart','lblProcessInfo','lblRemeasureAlarmCheck',
- 'pReady','pTrayIn','pBarcode','pMeasure','pFinish','pProbeOpen','pTrayOut','pProbeDown','localTest')
+ 'pReady','pTrayIn','pBarcode','pMeasure','pFinish','pProbeOpen','pTrayOut','pProbeDown','localTest','lblCellSerialReadMode')
 foreach($name in $retiredProcessControls){
  if($nodes.ContainsKey($name)){throw "Retired process component remains: $name"}
 }
