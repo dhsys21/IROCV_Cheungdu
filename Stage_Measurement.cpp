@@ -356,6 +356,29 @@ void __fastcall TTotalForm::FinishMeasurement()
 }
 
 //---------------------------------------------------------------------------
+// MSA 종료는 결과 마감과 구분한다. 트레이 없이도 중단 가능하며 미완료 결과는 저장하지 않는다.
+void __fastcall TTotalForm::StopMsaMeasurement()
+{
+    CancelResultSave();
+    measurementClock.Stop(GetTickCount());
+    send.tx_mode = 0;
+    send.time_out = 0;
+    while(!q_cmd.empty()) q_cmd.pop();
+    while(!q_param.empty()) q_param.pop();
+    retest.waitingChannel = -1;
+    retest.waitingItem = 0;
+    retest.re_excute = false;
+    tray.rem_mode = 0;
+    tray.ams = false;
+    tray.amf = true; // 늦게 도착한 AMF로 저장/다음 회차를 재개하지 않는다.
+    Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
+    Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
+    Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
+    // 송신 타이머의 자동모드 차단/기존 AMS 재시도에 의존하지 않고 즉시 정지 요청.
+    SendData("STP");
+}
+
+//---------------------------------------------------------------------------
 // 자동=모드별 시리얼 확인 후 저장. 수동/상시 수신 타임아웃=ID 없이 저장. PLC 완료 처리는 공통.
 void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
 {

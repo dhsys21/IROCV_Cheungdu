@@ -19,6 +19,8 @@ __fastcall TMeasureInfoForm::TMeasureInfoForm(TComponent* Owner)
 
 	this->Parent = BaseForm;
 	stage = 0;
+    nStep = -1;
+    msaTargetCount = 0;
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -325,7 +327,11 @@ void __fastcall TMeasureInfoForm::Panel35Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 {
-    // [CELL SERIAL 공통] PROBE OPEN이 먼저 와도 최종 시리얼/결과 저장 완료 전에는 다음 회차로 가지 않는다.
+    // MSA는 트레이 유무와 무관한 수동측정이다. 저장/메시지 처리 중 타이머 재진입을 막는다.
+    if(!msaTimer->Enabled) return;
+    msaTimer->Enabled = false;
+    try {
+    try {
     if(BaseForm->nForm[stage]->IsWaitingForResultSave()) return;
 	switch(nStep)
 	{
@@ -341,7 +347,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 		case 1:
 			if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE)){
 				Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
-				BaseForm->nForm[stage]->CmdStartMeasurement();     // ams -> amf -> if cell-error (< 10) then auto-remeasure
+				BaseForm->nForm[stage]->CmdStartMeasurement(); // 수동 경로: 트레이/시리얼 검사 없이 AMS 요청.
 				nStep = 2;
 			}
 			else
@@ -350,18 +356,20 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 			}
 			break;
 		case 2:
-			if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN))
+            // 이전 PROBE OPEN 잔류 신호만으로 완료 처리하지 않는다.
+            if(BaseForm->nForm[stage]->tray.amf &&
+               BaseForm->nForm[stage]->IsMeasurementResultComplete() &&
+               Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN))
 			{
 				Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
 
-				WriteResultFile2(msaFN, msaCount, Edit1->Text.ToIntDef(3));
-				//WriteResultFile(msaFN, msaCount);
+				WriteResultFile2(msaFN, msaCount, msaTargetCount);
 				msaCount++;
-				MSA_COUNT_CHECK->Caption = IntToStr(msaCount+1)+"/"+ Edit1->Text;
+				MSA_COUNT_CHECK->Caption = IntToStr(msaCount)+"/"+ IntToStr(msaTargetCount);
 
-				if(msaCount >= Edit1->Text.ToInt())
+				if(msaCount >= msaTargetCount)
 				{
-					BaseForm->nForm[stage]->FinishMeasurement();
+                    nStep = -1; // 완료 확정 후 보고서/메시지 처리. 중복 저장하지 않는다.
                     MakeReportFile(msaFN, msaReportFN, msaCount);
 					BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA COMPLETE");
 					msaTimer->Enabled = false;
@@ -370,25 +378,40 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 					MSA_COUNT_CHECK->Caption = "";
 				}else
 				{
-					BaseForm->nForm[stage]->FinishMeasurement();
 					BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA Nth-TIME STOP");
 					nStep = 0;
+                    MSA_COUNT_CHECK->Caption = IntToStr(msaCount+1)+"/"+IntToStr(msaTargetCount);
 				}
 			}
 			break;
 		default:
 			break;
 	}
+    }
+    catch(...) {
+        // 파일/통신 예외가 나도 다음 회차를 시작하지 않는다.
+        nStep = -1;
+        BaseForm->nForm[stage]->StopMsaMeasurement();
+        throw;
+    }
+    }
+    __finally {
+        msaTimer->Enabled = nStep >= 0;
+    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 {
-	nStep = 0;
+    if(msaTimer->Enabled) return;
+    // 진행 중인 측정/결과 저장을 새 MSA 시작으로 초기화하지 않는다.
+    if(BaseForm->nForm[stage]->tray.ams ||
+       BaseForm->nForm[stage]->IsWaitingForResultSave()) return;
+    msaTargetCount = Edit1->Text.ToIntDef(3);
+    if(msaTargetCount < 1) msaTargetCount = 1;
+    Edit1->Text = IntToStr(msaTargetCount); // 실행 중 입력 변경은 다음 MSA부터 적용.
+	nStep = -1;
 	msaCount = 0;
-//	msaFN = Now().FormatString("yymmddhhnnss");
-//	BaseForm->nForm[stage]->InitializeInspection();
 	MSA_COUNT_CHECK->Caption = UiText("1/"+ Edit1->Text);
-	//msaTimer->Enabled = true;
 
     // msa 저장 파일 설정
 	AnsiString dir;
@@ -397,18 +420,27 @@ void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 	msaFN = dir + Now().FormatString("yymmddhhnnss") + ".csv";
 	msaReportFN = dir + Now().FormatString("yymmddhhnnss") + "_report.csv";
 
-	BaseForm->nForm[stage]->InitializeInspection();
+    // PC 수동모드로 명시적으로 전환한다. 생산 자동모드의 PLC/트레이 인터록은 수정하지 않는다.
+    BaseForm->nForm[stage]->btnManualClick(Sender);
+    probetimer->Enabled = false; // 프로브 요청 해제는 MSA 타이머가 단독으로 담당.
+    Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
+    Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
+    nStep = 0;
 	msaTimer->Enabled = true;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TMeasureInfoForm::advMSAStopClick(TObject *Sender)
 {
-	BaseForm->nForm[stage]->FinishMeasurement();
+    // 저장 대기/트레이 유무와 관계없이 타이머부터 멈추고 STP/프로브 열림을 요청한다.
+    msaTimer->Enabled = false;
+    nStep = -1;
+    BaseForm->nForm[stage]->StopMsaMeasurement();
 	BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA TIMER STOP BUTTON");
 	msaTimer->Enabled = false;
 
     probetimer->Enabled = true;
+    MSA_COUNT_CHECK->Caption = "";
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::WriteResultFile(AnsiString fn, int msaIndex)

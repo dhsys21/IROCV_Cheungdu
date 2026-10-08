@@ -145,6 +145,7 @@ __published:	// IDE-managed Components
 	void __fastcall FormShow(TObject *Sender);
 
 private:	// User declarations
+    int msaTargetCount; // MSA 시작 때 확정한 반복 횟수.
 	void __fastcall MakePanel();
 	void __fastcall MakeUIPanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);

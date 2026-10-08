@@ -686,6 +686,9 @@ public:
     void __fastcall CmdStartMeasurement();
     // 결과 마감: STP/프로브 열림 요청 → NG·결과 코드·값·파일 작성 → COMPLETE → 자동 단계 완료 통지.
     void __fastcall FinishMeasurement();
+    // MSA 중단: 저장/자동모드 대기와 무관하게 STP와 프로브 열림을 요청한다.
+    void __fastcall StopMsaMeasurement();
+    bool IsMeasurementResultComplete() const { return resultSaveStep == RESULT_COMPLETE; }
     // [CELL SERIAL 공통] 수동/MSA 반복 측정도 이전 결과 저장 대기가 끝난 뒤 다음 측정을 시작한다.
     bool IsWaitingForResultSave() const {
         return resultSaveStep == RESULT_WAIT_SERIAL ||

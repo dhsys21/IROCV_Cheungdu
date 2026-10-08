@@ -1,0 +1,117 @@
+// Actual MSA handlers and stop implementation, without VCL or equipment.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <queue>
+struct TObject {};
+struct AnsiString {
+    std::string s;
+    AnsiString(const char *v=""):s(v){}
+    AnsiString(std::string v):s(v){}
+    int ToIntDef(int fallback) const {char *end;long v=strtol(s.c_str(),&end,10);return end==s.c_str()||*end?fallback:(int)v;}
+};
+AnsiString operator+(AnsiString a,AnsiString b){return a.s+b.s;}
+AnsiString IntToStr(int n){char s[32];sprintf(s,"%d",n);return s;}
+AnsiString UiText(AnsiString s){return s;}
+struct Date {AnsiString FormatString(const char*){return "test";}};
+Date Now(){return Date();}
+void ForceDirectories(AnsiString){}
+void ShowMessage(AnsiString){}
+const char *MSA_PATH="temp";
+const int PC_D_IROCV_PROB_OPEN=0,PC_D_IROCV_PROB_CLOSE=1;
+const int PC_D_IROCV_MEASURING=2;
+const int PLC_D_IROCV_PROB_OPEN=0,PLC_D_IROCV_PROB_CLOSE=1;
+struct Plc {
+    int inputs[2],outputs[3];
+    Plc(){inputs[0]=inputs[1]=outputs[0]=outputs[1]=0;}
+    int GetPlcValue(int a){if(a<0||a>1)abort();return inputs[a];}
+    void SetValue(int a,int v){outputs[a]=v;}
+} plc;
+Plc *Mod_PLC=&plc;
+unsigned long GetTickCount(){return 100;}
+struct Timer{bool Enabled;Timer():Enabled(false){}};
+struct Label{AnsiString Caption;};
+struct Edit{AnsiString Text;};
+class TTotalForm {
+public:
+    bool manual,waiting,complete,autoTimer;
+    int started,stopped,resets,manualCalls;
+    struct Tray {bool ams,amf;int rem_mode;Tray():ams(false),amf(false),rem_mode(0){}}tray;
+    struct Send {int tx_mode,time_out;}send;
+    struct Retest {int waitingChannel,waitingItem;bool re_excute;}retest;
+    std::queue<std::string> q_cmd,q_param;
+    struct Clock {void Stop(unsigned long){}} measurementClock;
+    TTotalForm():manual(false),waiting(false),complete(false),autoTimer(true),started(0),stopped(0),resets(0),manualCalls(0){}
+    bool IsWaitingForResultSave(){return waiting;}
+    bool IsMeasurementResultComplete(){return complete;}
+    void CancelResultSave(){waiting=false;complete=false;}
+    void ResetMeasurementData(){++resets;complete=false;}
+    // Same mode contract as the production manual button: independent of PLC AUTO/TRAY.
+    void btnManualClick(TObject*){manual=true;autoTimer=false;++manualCalls;}
+    void CmdStartMeasurement(){if(manual&&!waiting){++started;tray.ams=false;tray.amf=false;}}
+    void SendData(AnsiString s){if(s.s=="STP")++stopped;}
+    void WriteCommLog(AnsiString,AnsiString){}
+    void __fastcall StopMsaMeasurement();
+} total;
+struct Base {TTotalForm *nForm[1];Base(){nForm[0]=&total;}} base;
+Base *BaseForm=&base;
+class TMeasureInfoForm {
+public:
+    int stage,nStep,msaCount,msaTargetCount,files,reports,lastTotal;
+    bool failWrite;
+    Timer timer,probe;Timer *msaTimer,*probetimer;
+    Label count,stageName;Label *MSA_COUNT_CHECK,*pstage;
+    Edit edit;Edit *Edit1;
+    AnsiString msaFN,msaReportFN;
+    TMeasureInfoForm():stage(0),nStep(-1),msaCount(0),msaTargetCount(0),files(0),reports(0),lastTotal(0),failWrite(false),
+      msaTimer(&timer),probetimer(&probe),MSA_COUNT_CHECK(&count),pstage(&stageName),Edit1(&edit){edit.Text="2";}
+    void WriteResultFile2(AnsiString,int,int n){if(failWrite)throw 1;++files;lastTotal=n;msaTimerTimer(0);}
+    void MakeReportFile(AnsiString,AnsiString,int){++reports;}
+    void __fastcall msaTimerTimer(TObject*);
+    void __fastcall advMSAStartClick(TObject*);
+    void __fastcall advMSAStopClick(TObject*);
+};
+@@METHODS@@
+int checks=0;
+#define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
+int main(){
+    TMeasureInfoForm f;
+    f.advMSAStartClick(0);
+    CHECK(f.msaTimer->Enabled&&total.manual&&!total.autoTimer&&f.nStep==0);
+    CHECK(plc.outputs[0]==1&&plc.outputs[1]==0&&!f.probetimer->Enabled);
+    f.advMSAStartClick(0);CHECK(total.manualCalls==1);
+    f.Edit1->Text="99"; // Active repeat count remains 2.
+    f.msaTimerTimer(0);CHECK(f.nStep==0); // Still require actual probe open.
+    plc.inputs[0]=1;f.msaTimerTimer(0);CHECK(f.nStep==1&&plc.outputs[1]==1);
+    f.msaTimerTimer(0);CHECK(f.nStep==1&&total.started==0);
+    plc.inputs[1]=1;f.msaTimerTimer(0);CHECK(f.nStep==2&&total.started==1);
+    f.msaTimerTimer(0);CHECK(f.files==0); // Stale OPEN must not complete a round.
+    total.tray.amf=true;total.waiting=true;
+    f.msaTimerTimer(0);CHECK(f.files==0&&f.msaTimer->Enabled);
+    total.waiting=false;f.msaTimerTimer(0);CHECK(f.files==0); // Not successfully completed.
+    total.complete=true;f.msaTimerTimer(0);
+    CHECK(f.files==1&&f.nStep==0&&f.lastTotal==2&&f.msaTimer->Enabled);
+    f.msaTimerTimer(0);f.msaTimerTimer(0);
+    CHECK(total.started==2&&f.nStep==2&&!total.tray.amf);
+    total.tray.amf=true;total.complete=true;f.msaTimerTimer(0);
+    CHECK(f.files==2&&f.reports==1&&!f.msaTimer->Enabled&&f.nStep==-1);
+    f.msaTimerTimer(0);CHECK(f.files==2); // Late queued timer.
+    // Stop must work during every MSA step, even with save pending and no probe/tray.
+    for(int step=0;step<3;++step){
+        f.nStep=step;f.timer.Enabled=true;total.waiting=true;total.tray.ams=true;
+        total.send.tx_mode=3;total.q_cmd.push("AMS");total.q_param.push("");
+        plc.inputs[0]=plc.inputs[1]=0;
+        int oldStop=total.stopped;
+        f.advMSAStopClick(0);
+        CHECK(total.stopped==oldStop+1&&!f.timer.Enabled&&f.nStep==-1);
+        CHECK(!total.waiting&&total.tray.amf&&!total.tray.ams&&total.send.tx_mode==0);
+        CHECK(total.q_cmd.empty()&&total.q_param.empty()&&plc.outputs[1]==0&&plc.outputs[0]==1&&plc.outputs[2]==0);
+        f.msaTimerTimer(0);CHECK(f.files==2);
+    }
+    total.tray.ams=false;f.Edit1->Text="0";f.advMSAStartClick(0);CHECK(f.msaTargetCount==1);
+    plc.inputs[0]=plc.inputs[1]=1;f.msaTimerTimer(0);f.msaTimerTimer(0);
+    total.tray.amf=true;total.complete=true;f.failWrite=true;
+    try{f.msaTimerTimer(0);CHECK(false);}catch(...){}
+    CHECK(!f.timer.Enabled&&f.nStep==-1&&total.tray.amf);
+    printf("PASS: %d MSA no-tray/start/stop/repeat/stale-signal/reentry checks\n",checks);
+}
