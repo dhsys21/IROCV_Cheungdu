@@ -4,6 +4,17 @@
 #pragma hdrstop
 #include <tchar.h>
 #include "FormLanguage.h"
+// Keep this entry point ASCII-only and independent of IDE-generated PCH state.
+#include "RVMO_main.h"
+#include "Modplc.h"
+#include "FormCellIdError.h"
+#include "FormError.h"
+#include "FormCalibration.h"
+#include "FormMeasureInfo.h"
+#include "FormTotal.h"
+#include "FormNgCountError.h"
+#include "FormPLCInterface.h"
+#include "FormRemeasure.h"
 //---------------------------------------------------------------------------
 USEFORM("RVMO_main.cpp", BaseForm);
 USEFORM("Modplc.cpp", Mod_PLC); /* TDataModule: File Type */

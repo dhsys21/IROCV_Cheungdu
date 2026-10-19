@@ -1,0 +1,17 @@
+# Normalize line endings without transcoding CP949/UTF-8 source bytes.
+* text=auto
+*.cpp text eol=crlf
+*.h text eol=crlf
+*.dfm text eol=crlf
+*.cbproj text eol=crlf
+*.rc text eol=crlf
+*.ini text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.md text eol=lf
+*.tsv text eol=lf
+*.ico -text
+*.lib -text
+*.dll -text
+*.res -text
+*.xlsx -text

@@ -5,6 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <AppType>Application</AppType>
         <MainSource>IROCV.cpp</MainSource>
+        <PreBuildEvent>powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\TestProjectFiles.ps1"</PreBuildEvent>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -134,6 +135,8 @@
         <AppEnableHighDPI>true</AppEnableHighDPI>
     </PropertyGroup>
     <ItemGroup>
+        <None Include="TestProjectFiles.ps1" />
+        <None Include="ModPLCAscii.cpp" />
         <CppCompile Include="AutoInspectionSequence.cpp">
             <DependentOn>AutoInspectionSequence.h</DependentOn>
             <BuildOrder>19</BuildOrder>
@@ -212,15 +215,15 @@
             <IgnorePath>true</IgnorePath>
         </LibFiles>
         <CppCompile Include="Modplc.cpp">
-            <Form>plc</Form>
+            <Form>Mod_PLC</Form>
             <FormType>dfm</FormType>
             <DesignClass>TDataModule</DesignClass>
             <DependentOn>Modplc.h</DependentOn>
             <BuildOrder>5</BuildOrder>
         </CppCompile>
-        <CppCompile Include="OperationViewStateTests.cpp">
+        <None Include="OperationViewStateTests.cpp">
             <BuildOrder>26</BuildOrder>
-        </CppCompile>
+        </None>
         <CppCompile Include="RVMO_main.cpp">
             <Form>BaseForm</Form>
             <FormType>dfm</FormType>
@@ -279,6 +282,17 @@
             <Key>Cfg_1</Key>
             <CfgParent>Base</CfgParent>
         </BuildConfiguration>
+        <None Include="CellJudgment.h" />
+        <None Include="ChannelLayout.h" />
+        <None Include="EquipmentFrames.h" />
+        <None Include="Lang_En.ini" />
+        <None Include="Lang_Ko.ini" />
+        <None Include="Lang_Zh.ini" />
+        <None Include="MeasurementClock.h" />
+        <None Include="ModPLCAscii.h" />
+        <None Include="OperationView.h" />
+        <None Include="OperationViewState.h" />
+        <None Include="PlcAutoMode.h" />
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>CPlusPlusBuilder.Personality.12</Borland.Personality>

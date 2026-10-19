@@ -1,7 +1,14 @@
-__history  
-__recovery
+__history/
+__recovery/
 Win32/
+Win64/
+Debug/
+Release/
 *.cbproj.local
+*.groupproj.local
+*.deployproj.local
+*.identcache
+*.dsk
 *.stat
 *.obj
 *.exe
@@ -12,6 +19,7 @@ Win32/
 *.ilf
 *.ild
 *.ilc
-*.#00
+*.#*
 *.stat
-*.res 
+*.res
+*.drc
