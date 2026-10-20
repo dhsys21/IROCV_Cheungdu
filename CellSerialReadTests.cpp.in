@@ -37,6 +37,15 @@ DWORD clockTime=0;
 DWORD GetTickCount(){return clockTime;}
 const int nSTANDARD=0,nCELLSERIAL=1,PLC_D_INTERFACE_LEN=100;
 const int PLC_D_CELL_SERIAL_LEN=4010,PLC_D_CELL_SERIAL_READLEN=820,PLC_D_CELL_SERIAL_READCOUNT=5;
+const int PLC_D_CELL_SERIAL_NUM=145000,PLC_D_INTERFACE_START_DEV_NUM=44000;
+struct DiagnosticStage {
+    int count;
+    AnsiString type,detail;
+    DiagnosticStage():count(0){}
+    void WritePlcLog(AnsiString t,AnsiString d){++count;type=t;detail=d;}
+} diagnosticStage;
+struct DiagnosticBase {DiagnosticStage *nForm[1];} diagnosticBase;
+DiagnosticBase *BaseForm=&diagnosticBase;
 const int PC_D_IROCV_COMPLETE=8,PC_D_IROCV_ERROR=2,PC_D_IROCV_MEASURING=6,PC_D_IROCV_PROB_OPEN=4;
 const int nAuto=0, nLocal=2, nEND=10, Line=4, PC_D_IROCV_NG_COUNT=10, PC_D_IROCV_MEASURE_OK_NG=20, PC_D_IROCV_RESULT_CODE=0;
 struct TCustomWinSocket {
@@ -63,6 +72,9 @@ public:
     bool CellSerialReadRequested,CellSerialReadActive,CellSerialReadComplete,cellSerialContinuousRead,plc_ReadFlag;
     unsigned char plc_Interface_Cell_Serial[4010][2],cellSerialReceiveData[4010][2];
     AnsiString plc_Read,plc_Read_Temp;
+    AnsiString lastPlcReadError;
+    DWORD lastPlcReadErrorTick;
+    void __fastcall ReportPlcReadError(AnsiString reason);
     TMod_PLC():cellSerialContinuousRead(false),standardReads(0),plc_ReadFlag(false),plc_ReadCount(0){memset(pc,0,sizeof(pc));memset(pc_Interface_Data,0,sizeof(pc_Interface_Data));connected=true;transmitted=false;ResetCellSerialRead();}
     void __fastcall ResetCellSerialRead();
     void __fastcall StartCellSerialRead();
@@ -212,6 +224,25 @@ void serialRound(TMod_PLC &p,unsigned char marker,bool continuous){
     for(int i=0;i<4010;++i){check(p.plc_Interface_Cell_Serial[i][0]==marker);check(p.plc_Interface_Cell_Serial[i][1]==marker);}
 }
 int main(){
+    diagnosticBase.nForm[0]=&diagnosticStage;
+    TMod_PLC diagnostics;
+    diagnostics.SetCellSerialContinuousRead(true);
+    receive(diagnostics,100,0);
+    receive(diagnostics,0,0,false,0xC051);
+    check(diagnosticStage.count==1);
+    check(diagnosticStage.type=="PLC READ ERROR");
+    check(diagnosticStage.detail=="CELL SERIAL D145000 WORDS=820 END_CODE=0xC051");
+    receive(diagnostics,100,0);receive(diagnostics,0,0,false,0xC051);
+    check(diagnosticStage.count==1); // Repeated retries cannot flood the log.
+    clockTime=30000;
+    receive(diagnostics,100,0);receive(diagnostics,0,0,false,0xC051);
+    check(diagnosticStage.count==2);
+    receive(diagnostics,100,0);receive(diagnostics,820,1);
+    receive(diagnostics,100,0);receive(diagnostics,0,0,false,0xC052);
+    check(diagnosticStage.detail=="CELL SERIAL D145820 WORDS=820 END_CODE=0xC052");
+    receive(diagnostics,100,0);receive(diagnostics,10,0);
+    check(diagnosticStage.detail=="CELL SERIAL D145000 WORDS=820 SHORT RESPONSE BYTES=20");
+    clockTime=0;
     // Manual screen and Local mode must save without serials in either read mode.
     // Missing/mismatched PLC serials, stale tray IDs, file retry and delayed callbacks.
     for(int mode=0;mode<2;++mode) for(int manualKind=0;manualKind<3;++manualKind)

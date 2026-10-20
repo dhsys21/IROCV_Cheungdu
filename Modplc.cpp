@@ -15,8 +15,8 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
     // PLC
 	plc_Data.SubHeader[0] = 0x50;
 	plc_Data.SubHeader[1] = 0x00;
-	plc_Data.NetNum = 0x03;
-	plc_Data.PlcNum = 0x03;
+	plc_Data.NetNum = 0x02;
+	plc_Data.PlcNum = 0x02;
 	plc_Data.ReqIONum[0] = 0xff;
 	plc_Data.ReqIONum[1] = 0x03;
 	plc_Data.ReqOfficeNum = 0x00;
@@ -32,8 +32,8 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	// PC
 	pc_Data.SubHeader[0] = 0x50;
 	pc_Data.SubHeader[1] = 0x00;
-	pc_Data.NetNum = 0x03;
-	pc_Data.PlcNum = 0x03;
+	pc_Data.NetNum = 0x02;
+	pc_Data.PlcNum = 0x02;
 	pc_Data.ReqIONum[0] = 0xff;
 	pc_Data.ReqIONum[1] = 0x03;
 	pc_Data.ReqOfficeNum = 0x00;
@@ -54,6 +54,7 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	memset(pc_Interface_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_LEN1 * 2);
     memset(pc_Interface_Ir_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_IR_LEN * 2);
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
+    lastPlcReadErrorTick = 0;
     resultSentParts = 0;
     cellSerialContinuousRead = false; // [CELL SERIAL 공통] 기존 TRAY IN 수신이 기본값.
     ResetCellSerialRead();
@@ -103,6 +104,7 @@ void __fastcall TMod_PLC::Disconnect()
 void __fastcall TMod_PLC::InitializePlcCommunication()
 {
     plcAutoMode.Invalidate();
+    lastPlcReadError = "";
 	plc_Read = "";
 	plc_ReadCount = 0;
 	plc_ReadFlag = true;
@@ -276,7 +278,7 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
                     case nPCDATA:
                     {
                         //* Heart Beat
-                        if(BaseForm->nForm[0]->Client->Active)
+                        //if(BaseForm->nForm[0]->Client->Active)
                         {
                             bool flag = GetData(pc_Interface_Data, PC_D_HEART_BEAT, 0);
                             SetDouble(pc_Interface_Data, PC_D_HEART_BEAT, (int)!flag);
@@ -405,6 +407,24 @@ void __fastcall TMod_PLC::ClientSocket_PLCError(TObject *Sender, TCustomWinSocke
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TMod_PLC::ReportPlcReadError(AnsiString reason)
+{
+    const bool serial = currentReadTask == nCELLSERIAL;
+    const int address = serial
+        ? PLC_D_CELL_SERIAL_NUM + CellSerialIndex * PLC_D_CELL_SERIAL_READLEN
+        : PLC_D_INTERFACE_START_DEV_NUM;
+    const int words = serial ? GetCellSerialReadWords(CellSerialIndex) : PLC_D_INTERFACE_LEN;
+    const AnsiString detail = AnsiString(serial ? "CELL SERIAL" : "INTERFACE")
+        + " D" + IntToStr(address) + " WORDS=" + IntToStr(words) + " " + reason;
+    const DWORD now = GetTickCount();
+    if(lastPlcReadError == detail && (DWORD)(now - lastPlcReadErrorTick) < 30000) return;
+    if(!BaseForm || !BaseForm->nForm[0]) return;
+    BaseForm->nForm[0]->WritePlcLog("PLC READ ERROR", detail);
+    lastPlcReadError = detail;
+    lastPlcReadErrorTick = now;
+}
+//---------------------------------------------------------------------------
+
 void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket *Socket)
 
 {
@@ -435,6 +455,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
                     ? GetCellSerialReadWords(CellSerialIndex) : PLC_D_INTERFACE_LEN;
                 if(length < 22 + expectedWords * 4)
                 {
+                    ReportPlcReadError("SHORT RESPONSE BYTES=" + IntToStr((length - 22) / 2));
                     plcAutoMode.Invalidate();
                     // 잘못된 길이는 완료로 게시하지 않고 일반 데이터부터 재동기화한다.
                     ResetCellSerialRead();
@@ -463,6 +484,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
 		else
         {
             // [CELL SERIAL 공통] PLC 오류 응답의 이전 완료값을 최종 결과에 사용하지 않는다.
+            ReportPlcReadError("END_CODE=0x" + plc_Read.SubString(21, 2) + plc_Read.SubString(19, 2));
             plcAutoMode.Invalidate();
             ResetCellSerialRead();
             StartCellSerialRead();

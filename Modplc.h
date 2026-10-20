@@ -39,7 +39,7 @@ const int PC_INDEX_INTERFACE					=		11;
 const int PLC_D_INTERFACE_START_DEV_NUM	 			=	44000;
 const int PLC_D_INTERFACE_LEN 						= 	100;
 
-const int PLC_D_CELL_SERIAL_NUM                     =	{95000};
+const int PLC_D_CELL_SERIAL_NUM                     =	{145000};
 // PLC 공간은 실채널 수와 별개다. 256채널 사이트가 400채널 PLC 공간을 쓸 수도 있다.
 const int PLC_D_CELL_SERIAL_CHANNEL_COUNT           =   400;
 typedef char CheckSerialChannelCapacity[(MAXCHANNEL <= PLC_D_CELL_SERIAL_CHANNEL_COUNT) ? 1 : -1];
@@ -211,6 +211,9 @@ private:	// User declarations
     void __fastcall CompleteCellSerialChunk();
     // [CELL SERIAL 공통] 설정은 재접속 후에도 유지하고, 다음 일반 응답부터 적용한다.
     bool cellSerialContinuousRead;
+    void __fastcall ReportPlcReadError(AnsiString reason);
+    AnsiString lastPlcReadError;
+    DWORD lastPlcReadErrorTick;
     // [CELL SERIAL 공통] 수신 중 임시 버퍼와 사용 가능한 완료 버퍼를 분리한다.
     unsigned char cellSerialReceiveData[PLC_D_CELL_SERIAL_LEN][2];
 

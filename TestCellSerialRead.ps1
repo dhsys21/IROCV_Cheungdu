@@ -18,7 +18,7 @@ $plcMethods = Read-TestMethods 'Modplc.cpp' 'TMod_PLC' @(
     'ResetCellSerialRead','StartCellSerialRead','SetCellSerialContinuousRead',
     'BeginCellSerialRead','PrepareCellSerialRead','CompleteCellSerialChunk',
     'IsCellSerialReadComplete','IsCellSerialReadActive','GetCellSerialReadWords',
-    'ReadPlcCellSerialChunk','ClientSocket_PLCRead')
+    'ReadPlcCellSerialChunk','ReportPlcReadError','ClientSocket_PLCRead')
 $formMethods = Read-TestMethods 'Stage_TrayData.cpp' 'TTotalForm' @(
     'ApplyCellSerialReadMode')
 $formMethods += "`r`n" + (Read-TestMethods 'FormTotal.cpp' 'TTotalForm' @('Timer_ResultSaveTimer'))
