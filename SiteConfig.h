@@ -1,7 +1,7 @@
 #ifndef SiteConfigH
 #define SiteConfigH
 
-// PLC AUTO/MANUAL input: confirmed for Chengdu, 0=manual / 1=automatic.
+// 청두 PLC 모드 입력: 0=수동, 1=자동.
 const int PLC_AUTO_MODE_VALUE = 1;
 
 // 사이트 변경 시작점: 실제 트레이 행/열. PLC 주소와 할당 길이는 Modplc.h에서 별도로 확인한다.

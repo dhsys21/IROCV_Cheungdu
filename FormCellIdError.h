@@ -11,7 +11,7 @@
 //---------------------------------------------------------------------------
 class TForm_CellIdError : public TForm
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TLabel *Label_Title;
 	TButton *btnSAVE;
 	TButton *btnCANCEL;
@@ -24,9 +24,9 @@ __published:	// IDE-managed Components
 	void __fastcall timerErrorOffTimer(TObject *Sender);
 	void __fastcall btnSAVEClick(TObject *Sender);
 	void __fastcall btnCANCELClick(TObject *Sender);
-private:	// User declarations
+private:	// 사용자 선언
 
-public:		// User declarations
+public:		// 사용자 선언
 	__fastcall TForm_CellIdError(TComponent* Owner);
     void __fastcall ChangeMessage(UnicodeString msg1, UnicodeString msg2, UnicodeString msg3);
     void __fastcall DisplayErrorMessage(int nStage);

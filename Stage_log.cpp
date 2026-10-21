@@ -410,7 +410,7 @@ void __fastcall TTotalForm::WriteErrorLog(AnsiString title, AnsiString detail1, 
 
 	FileSeek(file_handle, 0, 2);
 
-    // Keep diagnostic text independent of translated operator captions.
+    // 진단 로그는 화면 번역과 별개로 유지한다.
 	str = Now().FormatString("yyyy-mm-dd hh:nn:ss ") + title + ", " + detail1 + ", " + detail2 + "\n";
 	FileWrite(file_handle, str.c_str(), str.Length());
 

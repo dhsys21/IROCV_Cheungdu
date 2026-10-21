@@ -41,7 +41,7 @@ typedef struct{
 
 class TMeasureInfoForm : public TForm
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TSaveDialog *SaveDialog;
 	TPanel *Panel2;
 	TPanel *clir;
@@ -144,7 +144,7 @@ __published:	// IDE-managed Components
 	void __fastcall advRemeasureTrayOutClick(TObject *Sender);
 	void __fastcall FormShow(TObject *Sender);
 
-private:	// User declarations
+private:	// 사용자 선언
     int msaTargetCount; // MSA 시작 때 확정한 반복 횟수.
 	void __fastcall MakePanel();
 	void __fastcall MakeUIPanel();
@@ -155,7 +155,7 @@ private:	// User declarations
 	void __fastcall WriteResultFile(AnsiString fn, int msaIndex);
 	void __fastcall WriteResultFile2(AnsiString fn, int msaIndex, int nTotalCount);
     void __fastcall MakeReportFile(AnsiString fn_data, AnsiString fn_report, int nTotalCount);
-public:		// User declarations
+public:		// 사용자 선언
 	TPanel *pir[MAXCHANNEL];
 	TPanel *pocv[MAXCHANNEL];
     TPanel *pUIx[CELL_COLUMN_COUNT];

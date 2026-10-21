@@ -160,7 +160,7 @@ void __fastcall TMeasureInfoForm::DisplayIrValue(int index, TColor clr, AnsiStri
 	if(index < 0 || index >= MAXCHANNEL) return;
 	pir[index]->Caption = caption;
 
-    // 채널번호를 IR 측정값으로 그래프에 넣지 않는다. 차트도 0-based index.
+    // 그래프에는 채널번호 대신 IR 값을 넣는다. 인덱스는 0부터 시작한다.
     if(index < IrChart->Series[0]->Count())
         IrChart->Series[0]->YValue[index] = measured ? BaseForm->StringToDouble(caption, 0) : 0;
 
@@ -549,7 +549,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 		nRepeat++;
 	}
 
-	//* IR min/max, IR dev,
+	// IR 최솟값·최댓값·편차
 	ir = "Channel";
 	for(int i = 0; i < nTotalCount; i++){
 		ir += ",IR_" + IntToStr(i + 1);
@@ -563,7 +563,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 
 	for(int i = 0; i < MAXCHANNEL; i++){
 		ir += IntToStr(i + 1);
-		//* min/max
+		// 최솟값·최댓값
 		for(int j = 0; j < nTotalCount; j++){
 			ir += "," + irValues[j][i];
 			if(j == 0){
@@ -574,7 +574,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
                 if(irMax[i] < StrToFloat(irValues[j][i])) irMax[i] = StrToFloat(irValues[j][i]);
 			}
 		}
-		//* delta
+		// 편차
         for(int j = 0; j < nTotalCount; j++){
 			ir += "," + FormatFloat("0.00", StrToFloat(irValues[j][i]) - StrToFloat(irValues[0][i])) ;
 		}
@@ -594,7 +594,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 
 	for(int i = 0; i < MAXCHANNEL; i++){
 		ocv += IntToStr(i + 1);
-		//* min/max
+		// 최솟값·최댓값
 		for(int j = 0; j < nTotalCount; j++){
 			ocv += "," + ocvValues[j][i];
 			if(j == 0){
@@ -605,7 +605,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 				if(ocvMax[i] < StrToFloat(ocvValues[j][i])) ocvMax[i] = StrToFloat(ocvValues[j][i]);
 			}
 		}
-		//* delta
+		// 편차
 		for(int j = 0; j < nTotalCount; j++){
 			ocv += "," + FormatFloat("0.00", StrToFloat(ocvValues[j][i]) - StrToFloat(ocvValues[0][i])) ;
 		}
@@ -650,13 +650,13 @@ void __fastcall TMeasureInfoForm::advBtnRemeasureClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::advRemeasureTrayOutClick(TObject *Sender)
 {
-	// tray_out on
+	// 트레이 배출 켜기
 	BaseForm->nForm[0]->ForceTrayOut();
 	this->Close();
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// CHART
+// 차트
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::InitializeChart(int ir_min, int ir_max, int ocv_min, int ocv_max)
 {

@@ -20,7 +20,7 @@ __fastcall TBaseForm::TBaseForm(TComponent* Owner)
 {
 	ErrorCount = 0;
 	FormCnt = 1;
-    nForm[0] = NULL; // Clock timer may run before the stage form is constructed.
+    nForm[0] = NULL; // 단계 폼 생성 전에 시계 타이머가 실행될 수 있다.
 	DeleteDay = 180;
 	DeleteIndex = 0;
 	rem_date = Now();

@@ -12,13 +12,13 @@
 //---------------------------------------------------------------------------
 class TForm_Language : public TForm
 {
-__published:	// IDE-managed Components
-private:	// User declarations
+__published:	// IDE 관리 컴포넌트
+private:	// 사용자 선언
     TStringList *LangDict, *English;
     std::vector<std::pair<UnicodeString, UnicodeString> > phrases;
     std::map<UnicodeString, UnicodeString> translatedText, displayCache;
     void __fastcall LocalizeFormCaptions(TCustomForm *form);
-public:		// User declarations
+public:		// 사용자 선언
 	__fastcall TForm_Language(TComponent* Owner);
     __fastcall ~TForm_Language();
     UnicodeString CurrentLanguage;
@@ -27,7 +27,7 @@ public:		// User declarations
     UnicodeString __fastcall Translate(const UnicodeString &text);
     void __fastcall LanguageChange(int LangIndex);
 
-    //* Message 변수
+    // 메시지 변수
 	UnicodeString msgRst;
     UnicodeString msgRbt;
     UnicodeString msgTooManyNG;

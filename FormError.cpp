@@ -99,7 +99,7 @@ void __fastcall TForm_Error::btnTrayOutClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_Error::btnRestartClick(TObject *Sender)
 {
-    // Close this dialog now; a delayed close timer must not clear a new alarm.
+    // 즉시 닫아 지연된 타이머가 새 알람을 지우지 않게 한다.
     Timer_BringToFront->Enabled = false;
     timerErrorOff->Enabled = false;
     Close();

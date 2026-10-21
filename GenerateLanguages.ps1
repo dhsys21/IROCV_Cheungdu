@@ -1,5 +1,5 @@
-# Mechanical resource generation. Edit LanguageCatalog.tsv, then run this script.
-# The optional legacy DFM imports the previous translations once during migration.
+# LanguageCatalog.tsv 수정 후 실행하여 리소스를 생성한다.
+# 기존 DFM 번역은 전환 시 한 번만 가져온다.
 param([string]$LegacyDfm,[switch]$Inventory)
 $ErrorActionPreference='Stop'
 $utf8=[Text.UTF8Encoding]::new($false)
@@ -38,8 +38,8 @@ foreach($line in [IO.File]::ReadAllLines((Join-Path $PSScriptRoot 'LanguageCatal
  $fields=$line.Split('|')
  if($fields.Count -ne 4){throw "Expected key / EN / KO / ZH: $line"}
  if(!$catalogKeys.Add($fields[0])){throw "Duplicate catalog key: $($fields[0])"}
- # Per-control captions override inferred DFM translations without changing
- # other controls that share the same English text (for example CONFIG SET).
+ # 제어기별 문구는 추론된 DFM 번역보다 우선한다.
+ # 같은 영문을 쓰는 다른 제어기의 문구는 유지한다.
  if($fields[0].StartsWith('UI_')){$captionOverrides+=,$fields;continue}
  for($i=0;$i -lt 3;++$i){$languages[@('EN','KO','ZH')[$i]][$fields[0]]=$fields[$i+1]}
 }
@@ -75,7 +75,7 @@ foreach($file in @('RVMO_main.dfm','FormTotal.dfm','FormMeasureInfo.dfm','FormCa
    $caption=Decode-Dfm $expression
    if($lookup.ContainsKey($caption)){
     $key='UI_'+$class+'_'+$stack[$stack.Count-1].Name.ToUpperInvariant()
-    # Root window caption/version is not an operator label.
+    # 최상위 창 제목·버전은 번역하지 않는다.
     if($stack.Count -eq 1){$key='UI_'+$class+'_CAPTION'}
     if($columnIndex -ge 0){$key+='_COL_'+$columnIndex;++$columnIndex}
     $source=$lookup[$caption]

@@ -22,7 +22,7 @@ void __fastcall TForm_Language::ReadLanguage(const UnicodeString &language)
     std::unique_ptr<TResourceStream> fallback(
         new TResourceStream((NativeUInt)HInstance, L"EN_DATA", RT_RCDATA));
     English->LoadFromStream(fallback.get(), TEncoding::UTF8);
-    LangDict->Assign(English); // Same fallback/overlay method as India IR/OCV.
+    LangDict->Assign(English); // 인도 IR/OCV와 같은 기본값·덮어쓰기 방식.
     if(language != L"EN")
     {
         std::unique_ptr<TStringList> selected(new TStringList());
@@ -56,13 +56,13 @@ UnicodeString __fastcall TForm_Language::GetLangStr(const UnicodeString &key)
 
 UnicodeString __fastcall TForm_Language::Translate(const UnicodeString &text)
 {
-    // Text keys are display-only: never translate protocol, CSV or saved logs.
+    // 화면 문구만 번역한다. 통신·CSV·저장 로그는 제외한다.
     if(CurrentLanguage == L"EN") return text;
     std::map<UnicodeString, UnicodeString>::iterator found = translatedText.find(text);
     if(found != translatedText.end()) return found->second;
     found = displayCache.find(text);
     if(found != displayCache.end()) return found->second;
-    // Dynamic displays compose a translated fixed phrase with numbers/units.
+    // 동적 표시는 번역 문구에 숫자·단위를 붙인다.
     UnicodeString result;
     for(int position = 1; position <= text.Length(); )
     {
@@ -73,7 +73,7 @@ UnicodeString __fastcall TForm_Language::Translate(const UnicodeString &text)
             if(phrase.Length() <= length) continue;
             if(text.SubString(position, phrase.Length()) != phrase) continue;
             const int after = position + phrase.Length();
-            // Do not translate fragments embedded in machine signal identifiers.
+            // 장비 신호 식별자 내부는 번역하지 않는다.
             if(position > 1 && ((text[position - 1] >= L'A' && text[position - 1] <= L'Z') ||
                 (text[position - 1] >= L'a' && text[position - 1] <= L'z') || text[position - 1] == L'_')) continue;
             if(after <= text.Length() && ((text[after] >= L'A' && text[after] <= L'Z') ||
@@ -103,7 +103,7 @@ void __fastcall TForm_Language::LocalizeFormCaptions(TCustomForm *form)
                 UnicodeString columnKey = key + L"_COL_" + IntToStr(column);
                 if(English->IndexOfName(columnKey) >= 0) list->Columns->Items[column]->Caption = GetLangStr(columnKey);
             }
-        // Only registered static captions are touched, never live channel data.
+        // 등록된 고정 문구만 번역하고 실시간 데이터는 유지한다.
         if(English->IndexOfName(key) < 0) continue;
         TAdvSmoothPanel *smooth = dynamic_cast<TAdvSmoothPanel*>(component);
         if(smooth) smooth->Caption->Text = GetLangStr(key);

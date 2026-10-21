@@ -1,4 +1,4 @@
-// Offline tests of actual dialog event bodies. No VCL or equipment connection.
+// 실제 대화창 이벤트의 오프라인 검사. VCL·장비 연결 없음.
 #include <stdio.h>
 #include <stdlib.h>
 struct TObject {};
@@ -7,7 +7,7 @@ int plcError=1, checks=0;
 struct Controller {
     int out, restart, accept, retry;
     Controller():out(0),restart(0),accept(0),retry(0){}
-    // Simulate a new error raised while processing an operator request.
+    // 운영자 요청 처리 중 새 오류 발생을 재현한다.
     void ForceTrayOut(){++out;plcError=7;}
     void RestartAutoInspection(){++restart;plcError=7;}
     void AcceptCellSerialData(){++accept;plcError=7;}
@@ -53,7 +53,7 @@ int main(){
     s.btnSAVEClick(0);check(controller.accept==1&&plcError==7&&!s.visible);
     s.btnCANCELClick(0);check(controller.retry==1&&plcError==7);
     e.timerErrorOffTimer(0);n.timerErrorOffTimer(0);s.timerErrorOffTimer(0);
-    check(plcError==7); // Delayed dialog timers must not clear the new alarm.
+    check(plcError==7); // 지연된 창 타이머가 새 알람을 지우지 않아야 한다.
     printf("PASS: %d error-dialog action/timer checks\n",checks);
     return 0;
 }

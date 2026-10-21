@@ -37,7 +37,7 @@ try {
  if($form -match 'VLE_|TValueListEditor'){throw 'Old editor-based translation remains'}
  'PASS: all three UTF-8 dictionaries share keys; no obsolete translation tables'
  if($BuiltExecutable){
-  # LOAD_LIBRARY_AS_DATAFILE: read resources without executing the production EXE.
+  # 리소스만 읽고 생산 실행 파일은 실행하지 않는다.
   if(!('PrechargerLanguageResources' -as [type])){
    Add-Type @'
 using System;

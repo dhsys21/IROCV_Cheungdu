@@ -1,4 +1,4 @@
-// Standalone regression tests. No VCL, sockets, PLC or production app startup.
+// 독립 회귀 테스트. VCL·소켓·PLC·생산 프로그램 실행 없음.
 #include "AutoInspectionSequence.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +69,7 @@ static void NormalCycle()
 {
     Fixture f;
     f.ToResults();
-    // A stale/early PROBE OPEN must never bypass result publication.
+    // 이전·조기 PROBE OPEN으로 결과 전송을 건너뛰지 않는다.
     f.data.probeOpen = true;
     for(int i = 0; i < 100; ++i) CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
     CHECK(f.seq.SetMeasureComplete());
@@ -102,7 +102,7 @@ static void SerialCountAndTimeout()
 
     Fixture timeout;
     timeout.ToSerial();
-    // A partial buffer with a matching count is NOT complete.
+    // 개수가 맞아도 부분 수신이면 완료가 아니다.
     for(int i = 0; i < 3; ++i) CHECK(timeout.seq.RunAutoStep(timeout.data) == CMD_NONE);
     CHECK(timeout.seq.RunAutoStep(timeout.data) == CMD_CELL_SERIAL_TIMEOUT);
     CHECK(timeout.seq.GetStep() == STEP_WAIT_CELL_SERIAL_ERROR);
@@ -177,7 +177,7 @@ static void BypassAndManual()
     Fixture manual;
     manual.ToResults();
     CHECK(manual.seq.ForceTrayOut() == CMD_TRAY_OUT);
-    CHECK(!manual.seq.SetMeasureComplete()); // Late callback cannot undo tray-out.
+    CHECK(!manual.seq.SetMeasureComplete()); // 지연된 콜백으로 트레이 배출을 되돌리지 않는다.
     CHECK(manual.seq.GetStep() == STEP_WAIT_TRAY_OUT);
 
     Fixture noAuto;
@@ -199,7 +199,7 @@ static void GuardsAndRemeasure()
     CHECK(f.seq.AutomaticTrayOut(0, 400, 10) == CMD_NONE);
     f.ToResults();
     CHECK(!f.seq.StartRemeasure());
-    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE); // No duplicate AMS on a high close bit.
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE); // 닫힘 비트가 유지되어도 AMS를 중복 송신하지 않는다.
     CHECK(f.seq.SetMeasureComplete());
     CHECK(f.seq.StartRemeasure());
     CHECK(f.seq.GetStep() == STEP_WAIT_REMEASURE_PROBE_CLOSE);
@@ -243,7 +243,7 @@ static void DelayAndPause()
     CHECK(f.seq.RunAutoStep(f.data) == CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL);
     CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
     unsigned int before = f.seq.GetWaitCount();
-    // Adapter does not call RunAutoStep while CheckAutoInspectionError blocks (same as production).
+    // 오류로 차단된 동안 RunAutoStep을 호출하지 않는다.
     for(int i = 0; i < 100; ++i) CHECK(f.seq.GetStep() == STEP_WAIT_CELL_SERIAL);
     CHECK(f.seq.GetWaitCount() == before);
     CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
@@ -311,7 +311,7 @@ static void ProbeRemeasureCounts()
     CHECK(exhausted.seq.RunAutoStep(exhausted.data) == CMD_NONE);
 }
 
-// Continuous mode skips only the serial check at tray arrival, not probe interlocks.
+// 상시 수신은 도착 시 시리얼 검사만 생략하며 프로브 인터록은 유지한다.
 static void ContinuousSerialAtResult()
 {
     Fixture f;
@@ -332,7 +332,7 @@ static void ContinuousSerialAtResult()
     CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
     f.data.trayIn = true;
     CHECK(f.seq.RunAutoStep(f.data) == CMD_MEASURE_START);
-    // Measurement and result publication still must complete before tray out.
+    // 측정·결과 전송을 완료한 뒤에만 트레이를 배출한다.
     f.data.probeOpen = true;
     CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
     CHECK(f.seq.SetMeasureComplete());
@@ -341,7 +341,7 @@ static void ContinuousSerialAtResult()
 
 int main()
 {
-    // The two settings are independent and are frozen after TRAY IN.
+    // 두 설정은 독립적이며 TRAY IN 후 고정한다.
     Fixture settings;
     CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 49);
     settings.seq.SetNextTrayRemeasureSettings(50, 2);

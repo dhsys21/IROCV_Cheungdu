@@ -25,8 +25,8 @@ private:
 };
 }
 
-// Site-specific defaults and conversion from existing configuration live here.
-// Keep editMaxDelayTime in its original unit; no configuration migration needed.
+// 현장 기본값과 기존 설정 변환을 여기서 처리한다.
+// editMaxDelayTime의 기존 단위를 유지한다.
 //---------------------------------------------------------------------------
 // 자동측정 대기 설정 읽기: 기존 200ms 타이머 호출 횟수 단위를 유지한다.
 TAutoInspectionSetting __fastcall TTotalForm::GetAutoInspectionSetting()
@@ -68,7 +68,7 @@ void __fastcall TTotalForm::UpdateAutoInspectionMode()
     const unsigned long version = Mod_PLC->plcAutoMode.GetResetVersion();
     if(!(stage.arl == nAuto && !bLocal))
     {
-        // PC manual/local tests retain independent measurement and result-save behavior.
+        // PC 수동·로컬 검사의 독립적인 측정·저장 동작을 유지한다.
         Timer_AutoInspection->Enabled = false;
         lastPlcAutoResetVersion = version;
         autoInspectionBlockedByPlc = true;
@@ -109,14 +109,14 @@ void __fastcall TTotalForm::ResetAutoInspectionForPlcMode()
     measurementClock.Reset();
     tray.ams = false;
     tray.amf = false;
-    // Discard commands and remeasure state belonging to the cancelled automatic cycle.
+    // 취소한 자동 주기의 명령·재측정 상태를 버린다.
     send.tx_mode = 0;
     send.time_out = 0;
     while(!q_cmd.empty()) q_cmd.pop();
     while(!q_param.empty()) q_param.pop();
     memset(&retest, 0, sizeof(retest));
     retest.waitingChannel = -1;
-    // Only a new tray/manual measurement may set RESULT_IDLE and allow saving again.
+    // 새 트레이·수동 측정 시작 때만 RESULT_IDLE로 바꿔 재저장을 허용한다.
     WritePlcLog("PLC MODE", "Automatic cycle reset; next AUTO starts at WAIT_TRAY_IN");
 }
 //---------------------------------------------------------------------------
@@ -255,10 +255,10 @@ void __fastcall TTotalForm::ReadAutoCellData()
 }
 
 //---------------------------------------------------------------------------
-// CELL SERIAL 4,010워드 분할 수신 시작. 별도 START/COMPLETE 핸드셰이크는 사용하지 않는다.
+// 셀 시리얼 4,010워드 분할 수신. 별도 시작·완료 핸드셰이크 없음.
 void __fastcall TTotalForm::StartAutoCellSerialRead()
 {
-    // Uses Modplc's existing 4,010-word chunk reader, WITHOUT START/COMPLETE bits.
+    // 기존 4,010워드 분할 수신을 사용하며 START·COMPLETE 비트는 쓰지 않는다.
     Mod_PLC->StartCellSerialRead();
     WritePlcLog("AutoInspection", "Start reading CELL SERIAL data.");
 }
@@ -366,7 +366,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
                 CmdStartMeasurement();
             break;
         case CMD_NG_ERROR:
-            // Already in STEP_WAIT_NG_ERROR before showing a modeless dialog.
+            // 비모달 창을 열기 전에 NG 오류 대기 단계에 진입한다.
             Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
             Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
             Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 0);
@@ -378,8 +378,8 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             break;
         case CMD_BYPASS_TRAY_OUT:
         case CMD_TRAY_OUT:
-            // Intentionally no NG recheck: automatic decision is made by the
-            // sequence; bypass/manual/operator-approved requests are explicit.
+            // 자동 NG 판정은 시퀀스에서 끝냈으므로 여기서 반복하지 않는다.
+            // 우회·수동·운영자 승인 요청은 명시된 동작으로 처리한다.
             Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
             Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 1);
             DisplayStatus(nFinish);
@@ -475,8 +475,8 @@ void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
     TAutoInspectionStep previous = autoInspection.GetStep();
     autoInspection.StopWithError();
     resultSaveStep = RESULT_ERROR;
-    // This stops PC sequence progression; it is NOT a PLC emergency stop.
-    // Do not issue new probe/tray movements on an exception.
+    // PC 시퀀스만 정지하며 PLC 비상정지를 뜻하지 않는다.
+    // 예외 발생 시 새 프로브·트레이 이동을 요청하지 않는다.
     Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
     Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
     DisplayStatus(nEND);
@@ -494,7 +494,7 @@ void __fastcall TTotalForm::AcceptCellSerialData()
     try
     {
         Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
-        // Preserve the existing explicit SAVE override, including timeout data.
+        // 시간 초과 데이터도 저장하는 기존 SAVE 선택을 유지한다.
         ReadCellSerial();
         SaveTrayInfo(tray.trayid);
         TAutoInspectionStep previous = autoInspection.GetStep();
@@ -558,7 +558,7 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
 void __fastcall TTotalForm::ProcessAutoTrayOut()
 {
     if(IsAutoInspectionBlocked()) return;
-    // Automatic/diagnostic entry: cannot skip result publication or NG waiting.
+    // 자동·진단 진입에서도 결과 전송과 NG 대기를 생략하지 않는다.
     TAutoInspectionStep previous = autoInspection.GetStep();
     TAutoInspectionData data = ReadAutoInspectionData();
     if(!data.autoMode || !data.probeOpen) return;

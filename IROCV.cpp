@@ -4,7 +4,7 @@
 #pragma hdrstop
 #include <tchar.h>
 #include "FormLanguage.h"
-// Keep this entry point ASCII-only and independent of IDE-generated PCH state.
+//
 #include "RVMO_main.h"
 #include "Modplc.h"
 #include "FormCellIdError.h"

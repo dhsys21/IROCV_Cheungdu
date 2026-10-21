@@ -44,7 +44,7 @@ void __fastcall TTotalForm::InitializeMeasureForm()
 	MeasureInfoForm->display.cell = tray.cell;	// cell 정보
 	MeasureInfoForm->display.original_value = tray.original_value;	// 보정전 값 - ir
 	MeasureInfoForm->display.after_value = tray.after_value;		// 보정후 값 - ir
-	MeasureInfoForm->display.ocv_value = tray.ocv_value;			// ocv
+	MeasureInfoForm->display.ocv_value = tray.ocv_value;			// OCV 값
 	MeasureInfoForm->display.measure_result = tray.measure_result;	// ir 결과
 	MeasureInfoForm->pstage->Caption = lblTitle->Caption;
     for(int i = 0; i < MAXCHANNEL; ++i)

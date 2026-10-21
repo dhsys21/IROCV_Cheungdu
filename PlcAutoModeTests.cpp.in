@@ -1,4 +1,4 @@
-// Offline PLC-mode interlock test. Production gate/reset/getter methods are inserted by the runner.
+// 실제 진입·초기화·조회 메서드로 PLC 모드 인터록을 검사한다.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,10 +64,10 @@ int main(){
     CHECK(initial.resets==1);
     plc.plcAutoMode.Observe(true);initial.UpdateAutoInspectionMode();
     CHECK(initial.automatic.Enabled);CHECK(initial.autoInspection.step==STEP_WAIT_TRAY_IN);
-    CHECK(initial.resultSaveStep==RESULT_CANCELLED); // no late COMPLETE until a new cycle
+    CHECK(initial.resultSaveStep==RESULT_CANCELLED); // 새 주기 전에는 지연된 COMPLETE를 출력하지 않는다.
     CHECK(!initial.IsAutoInspectionBlocked());
 
-    // Manual transition from every automatic step, including serial/probe/NG/error waits.
+    // 시리얼·프로브·NG·오류 대기를 포함한 모든 자동 단계의 수동 전환.
     for(int step=STEP_WAIT_TRAY_IN;step<=STEP_ERROR_STOP;++step){
         Online();plc.plcAutoMode.Observe(true);TTotalForm f;f.UpdateAutoInspectionMode();
         f.autoInspection.step=step;f.resultSaveStep=RESULT_WAIT_PLC_SEND;
@@ -91,13 +91,13 @@ int main(){
         CHECK(f.automatic.Enabled);CHECK(f.autoInspection.step==STEP_WAIT_TRAY_IN);CHECK(f.resets==1);
     }
 
-    // Do not lose a short MANUAL -> AUTO transition between status-timer ticks.
+    // 상태 갱신 사이의 짧은 MANUAL → AUTO 전환도 보존한다.
     Online();plc.plcAutoMode.Observe(true);TTotalForm rapid;rapid.UpdateAutoInspectionMode();
     rapid.autoInspection.step=STEP_WAIT_CELL_SERIAL;
     plc.plcAutoMode.Observe(false);plc.plcAutoMode.Observe(true);rapid.UpdateAutoInspectionMode();
     CHECK(rapid.resets==1 && rapid.automatic.Enabled);CHECK(rapid.autoInspection.step==STEP_WAIT_TRAY_IN);
 
-    // A socket reconnect alone must never re-use an old AUTO snapshot.
+    // 소켓 재연결만으로 이전 AUTO 입력을 재사용하지 않는다.
     plc.plcAutoMode.Invalidate();rapid.UpdateAutoInspectionMode();
     CHECK(!rapid.automatic.Enabled && rapid.resets==2);
     rapid.UpdateAutoInspectionMode();CHECK(rapid.resets==2);
@@ -108,7 +108,7 @@ int main(){
     plc.pc.Socket=0;CHECK(!plc.IsPlcAutoMode());plc.pc.Socket=&plc.pc.socket;
     plc.plc.Socket=0;CHECK(!plc.IsPlcAutoMode());plc.plc.Socket=&plc.plc.socket;
 
-    // PLC transitions must not repeatedly cancel a PC manual/local measurement.
+    // PLC 모드 전환으로 PC 수동·로컬 측정을 반복 취소하지 않는다.
     Online();TTotalForm manual;manual.stage.arl=nLocal;manual.resultSaveStep=RESULT_WAIT_SERIAL;
     manual.UpdateAutoInspectionMode();plc.plcAutoMode.Observe(false);manual.UpdateAutoInspectionMode();
     CHECK(!manual.automatic.Enabled && manual.resets==0 && manual.resultSaveStep==RESULT_WAIT_SERIAL);
@@ -118,7 +118,7 @@ int main(){
     manual.stage.arl=nAuto;manual.bLocal=true;plc.plcAutoMode.Observe(false);manual.UpdateAutoInspectionMode();
     CHECK(!manual.IsAutoInspectionBlocked() && manual.resets==0);
 #endif
-    // Entering PC AUTO while PLC is still manual uses the same interlock.
+    // PLC 수동 상태에서 PC AUTO를 선택해도 같은 인터록을 적용한다.
     manual.stage.arl=nAuto;manual.bLocal=false;manual.autoInspectionBlockedByPlc=false;
     plc.plcAutoMode.Observe(false);manual.UpdateAutoInspectionMode();
     CHECK(!manual.automatic.Enabled && manual.resets==1 && manual.resultSaveStep==RESULT_CANCELLED);

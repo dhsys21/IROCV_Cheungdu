@@ -1,4 +1,4 @@
-# Offline regression for the retired eight-panel process display.
+# 폐기된 8개 공정 패널의 회귀 검사.
 param([string]$Compiler='C:\Program Files (x86)\Embarcadero\Studio\18.0\bin\bcc32.exe')
 $ErrorActionPreference='Stop'
 function Read-Source([string]$name) {

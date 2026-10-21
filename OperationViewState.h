@@ -4,8 +4,8 @@
 #include "AutoInspectionSequence.h"
 #include <string.h>
 
-// Display-only history. No PLC writes, timing decisions or production interlocks.
-// Completion is recorded from executed commands / confirmed inputs, not from tile order.
+// 표시용 이력. PLC 출력·시간 판정·인터록에 관여하지 않는다.
+// 완료는 타일 순서가 아닌 실행 명령과 확인된 입력으로 기록한다.
 class TOperationViewState
 {
 public:
@@ -17,8 +17,8 @@ public:
     TState state[Count];
 
     TOperationViewState() { Reset(); }
-    // The sequence updates its next step before executing the current command.
-    // Keep that internal trace in the original PLC file, not the operator timeline.
+    // 시퀀스는 현재 명령 실행 전에 다음 단계를 설정한다.
+    // 이 내부 추적은 운영 이력이 아닌 기존 PLC 로그에 남긴다.
     static bool IsInternalStepTrace(const char *source, const char *message)
     {
         return strcmp(source, "AutoInspection") == 0 &&
@@ -53,8 +53,8 @@ public:
             default: return -1;
         }
     }
-    // The UI may have advanced before its next signal sample. Tag a confirmed
-    // handshake reset by its event, not by the following measurement/READY step.
+    // 입력 수신보다 화면이 앞서갈 수 있으므로 핸드셰이크 초기화는
+    // 후속 측정·준비 단계가 아닌 실제 이벤트로 구분한다.
     int SignalTile(int index, bool on, bool valid, bool closed, bool opened,
         bool trayPresent, int current) const
     {
@@ -72,7 +72,7 @@ public:
         if(index == 6 && on) return Ready;
         return current;
     }
-    // Current step only: completed history must not leave multiple green tiles.
+    // 현재 단계만 표시한다. 완료 이력으로 여러 타일을 켜지 않는다.
     static int ActiveTile(TAutoInspectionStep step, bool valid = false,
         bool closed = false, bool opened = false, bool trayPresent = true)
     {
@@ -86,12 +86,12 @@ public:
             case STEP_WAIT_CELL_SERIAL_ERROR: return CloseRequest;
             case STEP_WAIT_PROBE_CLOSE:
             case STEP_WAIT_REMEASURE_PROBE_CLOSE:
-                // WAIT is the request phase, not proof of PLC completion.
+                // WAIT는 요청 단계이며 PLC 완료를 뜻하지 않는다.
                 return valid && closed && trayPresent ? CloseConfirmed : CloseRequest;
             case STEP_WAIT_MEASURE_COMPLETE: return Measure;
             case STEP_WAIT_PROBE_OPEN: return valid && opened ? OpenConfirmed : OpenRequest;
             case STEP_WAIT_TRAY_OUT: return valid && !trayPresent ? OutConfirmed : OutRequest;
-            default: return -1; // Error/operator-decision state: no running tile.
+            default: return -1; // 오류·운영자 선택 대기 중에는 진행 타일을 끈다.
         }
     }
     void Reset()
@@ -126,7 +126,7 @@ public:
                 state[CloseConfirmed] = Waiting; break;
             case CMD_MEASURE_START:
             case CMD_REMEASURE_START:
-                // The sequence has already checked both TRAY IN and PROBE CLOSED.
+                // 시퀀스가 TRAY IN과 PROBE CLOSED를 모두 확인한 상태다.
                 state[CloseConfirmed] = Done; state[Measure] = Waiting; break;
             case CMD_BYPASS_TRAY_OUT:
                 Reset(); state[Ready] = state[TrayIn] = Done;
@@ -135,7 +135,7 @@ public:
             case CMD_TRAY_OUT:
                 state[OutRequest] = Done; state[OutConfirmed] = Waiting; break;
             case CMD_TRAY_OUT_COMPLETE:
-                // In this PLC contract completion means TRAY IN became zero.
+                // 현재 PLC 규약에서 완료는 TRAY IN=0이다.
                 state[OutConfirmed] = Done; state[Ready] = Waiting; break;
             default: break;
         }
@@ -150,7 +150,7 @@ public:
     }
     void Inputs(bool valid, bool closed, bool opened, bool trayPresent)
     {
-        if(!valid) return; // Never turn a stale/disconnected zero into completion.
+        if(!valid) return; // 오래되거나 단절된 입력의 0을 완료로 처리하지 않는다.
         if(state[CloseRequest] == Done && closed) state[CloseConfirmed] = Done;
         if(state[OpenRequest] == Done && opened) state[OpenConfirmed] = Done;
         if(state[OutRequest] == Done && !trayPresent) state[OutConfirmed] = Done;
@@ -164,9 +164,9 @@ public:
     void ResultSent() { state[ResultTransmit] = Done; }
 };
 
-// One representative phase for the panel AND operator log. Only authoritative
-// sequence/result/command progress advances it; signal event labels never do.
-// Backward movement is explicit: new tray, remeasure attempt, reset or cycle end.
+// 패널과 운영 로그는 같은 대표 단계를 사용한다.
+// 시퀀스·결과·명령 진행만 단계를 바꾸며 신호 이름은 영향을 주지 않는다.
+// 새 트레이·재측정·초기화·주기 종료 때만 이전 단계로 돌아간다.
 class TOperationTimeline
 {
     int phase;
@@ -188,8 +188,8 @@ public:
     }
 };
 
-// Display clock only; unsigned 32-bit subtraction also handles GetTickCount wrap.
-// Start is idempotent, so retry/remeasure cannot restart the tray's total time.
+// 표시용 시간. 부호 없는 32비트 차이로 시간값 순환을 처리한다.
+// 중복 시작을 무시하여 재시도에도 트레이 총시간을 유지한다.
 class TOperationCycleClock
 {
     bool running;

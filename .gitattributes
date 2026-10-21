@@ -1,10 +1,10 @@
-# C++Builder sources: CP949/CRLF locally, UTF-8/LF in Git (Git >= 2.18).
-# Commit this file together with `git add --renormalize -- '*.cpp' '*.h' '*.dfm'`.
+# 소스는 로컬 CP949, Git UTF-8로 관리한다. Git 2.18 이상 필요.
+# 최초 적용 시 소스도 정규화하여 함께 커밋: git add --renormalize -- '*.cpp' '*.h' '*.dfm'
 * text=auto
 *.cpp text eol=crlf working-tree-encoding=CP949
 *.h text eol=crlf working-tree-encoding=CP949
 *.dfm text eol=crlf working-tree-encoding=CP949
-# These existing files are UTF-8 locally; do not reinterpret them as CP949.
+# 기존 UTF-8 파일은 CP949 변환에서 제외한다.
 ChannelLayout.h -working-tree-encoding
 FormCalibration.cpp -working-tree-encoding
 *.cbproj text eol=crlf

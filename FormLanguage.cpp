@@ -19,11 +19,11 @@ __fastcall TForm_Language::TForm_Language(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TForm_Language::LanguageChange(int LangIndex)
 {
-    // Preserve persisted EN=0 / KO=1 / ZH=2 selection indices.
+    // 저장된 언어 선택값 유지: EN=0, KO=1, ZH=2.
     ReadLanguage(LangIndex == 1 ? L"KO" : LangIndex == 2 ? L"ZH" : L"EN");
 
 	//-------------------------------------------------------------------------
-	// 				COMPONENT
+	// 컴포넌트
 	//-------------------------------------------------------------------------
 	for(int i = 0; i < BaseForm->FormCnt; i++){
         BaseForm->nForm[i]->btnSaveConnConfig->Caption = GetLangStr(L"SAVE");
@@ -78,7 +78,7 @@ void __fastcall TForm_Language::LanguageChange(int LangIndex)
     Form_CellIdError->btnCANCEL->Caption = GetLangStr(L"CANCEL");
 
     //-------------------------------------------------------------------------
-	// 				MESSAGE
+	// 메시지
 	//-------------------------------------------------------------------------
     msgSaveConfig = GetLangStr(L"msgSaveConfig");
     msgInputPwd = GetLangStr(L"msgInputPwd");
@@ -90,7 +90,7 @@ void __fastcall TForm_Language::LanguageChange(int LangIndex)
     msgCellIdError2 = GetLangStr(L"msgCellIdError2");
     msgCellIdError3 = GetLangStr(L"msgCellIdError3");
     Form_CellIdError->ChangeMessage(msgCellIdError1, msgCellIdError2, msgCellIdError3);
-    // Static designer captions on every open form use the same dictionary.
+    // 열린 모든 폼의 고정 문구에 같은 사전을 적용한다.
     for(int i = 0; i < Screen->FormCount; ++i) LocalizeFormCaptions(Screen->Forms[i]);
 }
 //---------------------------------------------------------------------------

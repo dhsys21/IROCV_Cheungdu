@@ -8,19 +8,19 @@ int main()
 {
     TMeasurementClock clock;
     CHECK(clock.Elapsed(5000)==0);
-    clock.Start(50); CHECK(!clock.IsRunning()); // Unrequested/late AMS.
+    clock.Start(50); CHECK(!clock.IsRunning()); // 요청하지 않았거나 지연된 AMS.
     clock.Prepare();
     clock.Start(100); CHECK(clock.Elapsed(1234)==1134);
-    clock.Start(500); CHECK(clock.Elapsed(1500)==1400); // Duplicate AMS.
+    clock.Start(500); CHECK(clock.Elapsed(1500)==1400); // 중복 AMS.
     clock.Stop(2000); CHECK(!clock.IsRunning() && clock.Elapsed(9000)==1900);
-    clock.Stop(9500); CHECK(clock.Elapsed(9999)==1900); // Duplicate AMF.
+    clock.Stop(9500); CHECK(clock.Elapsed(9999)==1900); // 중복 AMF.
     clock.Start(10000); CHECK(!clock.IsRunning() && clock.Elapsed(11000)==1900);
     clock.Reset(); CHECK(clock.Elapsed(9000)==0);
     clock.Prepare(); clock.Start(0xfffffff0UL); CHECK(clock.Elapsed(0x10UL)==32);
     clock.Stop(0x20UL); CHECK(clock.Elapsed(0x100UL)==48);
     clock.Prepare(); clock.Stop(10); clock.Start(20); CHECK(clock.Elapsed(50)==0);
-    clock.Prepare(); clock.Start(100); clock.Stop(500); // Socket receipt timestamps.
-    clock.Start(2000); clock.Stop(9000); CHECK(clock.Elapsed(10000)==400); // Delayed queued AMS/AMF cannot alter receipt time.
+    clock.Prepare(); clock.Start(100); clock.Stop(500); // 소켓 수신 시각.
+    clock.Start(2000); clock.Stop(9000); CHECK(clock.Elapsed(10000)==400); // 큐에서 지연된 AMS·AMF로 수신 시각을 바꾸지 않는다.
     const std::string ams="\x02" "AMSE1\x03", amf="\x02" "AMFED\x03";
     const std::string data=ams+"\x02" "IR*001+000001.002A\x03"+amf;
     for(unsigned int split=0;split<=data.size();++split)
@@ -33,7 +33,7 @@ int main()
     }
     std::string buffer;std::queue<std::string> frames;
     for(unsigned int i=0;i<data.size();++i) AppendEquipmentFrames(buffer,data.substr(i,1),frames);
-    CHECK(frames.size()==3 && buffer.empty()); // More than two TCP fragments.
+    CHECK(frames.size()==3 && buffer.empty()); // TCP가 세 조각 이상으로 분할된 경우.
     frames=std::queue<std::string>();buffer.clear();
     AppendEquipmentFrames(buffer,"noise\x02" "truncated"+ams+amf.substr(0,3),frames);
     CHECK(frames.size()==1 && frames.front()==ams);

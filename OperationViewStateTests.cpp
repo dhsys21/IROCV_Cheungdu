@@ -112,7 +112,7 @@ int main()
     Check(!V::IsInternalStepTrace("AutoInspection ERROR", "STEP_WAIT_TRAY_IN: PLC error"),
         "failure diagnostics are not filtered as step traces");
     Check(!V::IsInternalStepTrace("PC_SET", "PROBE_CLOSE (D5): 1 -> 0"), "signal transitions remain visible");
-    // Reported startup regression: future-step traces must not split actual commands.
+    // 시작 시 회귀 검사: 다음 단계 추적으로 현재 명령을 나누지 않는다.
     const char *sources[] = {"PC", "STATE", "AutoInspection", "PLCInitialization",
         "PLC_RX", "STATE", "AutoInspection", "AutoInspection", "STATE"};
     const char *messages[] = {"reset", "Waiting for TRAY IN",
@@ -159,8 +159,8 @@ int main()
         "tray out request reset logs OUT OK");
     Check(view.SignalTile(10, true, true, false, true, true, V::ResultTransmit) == V::Complete,
         "COMPLETE output retains event phase");
-    // Whole-cycle representative timeline, including both serial modes and all
-    // late event phases. Only explicit boundaries may lower the phase index.
+    // 두 시리얼 모드와 지연 이벤트를 포함해 전체 단계 흐름을 검사한다.
+    // 명시된 경계에서만 단계 번호가 낮아질 수 있다.
     TOperationTimeline timeline;
     Check(timeline.Phase() == V::Ready, "timeline starts READY");
     timeline.BeginTray();
@@ -185,8 +185,8 @@ int main()
     timeline.BeginTray();
     Check(timeline.Cycle() == cycle+1, "next tray gets a new cycle number");
     timeline.Advance(V::Measure);
-    // An early PROBE OPEN event is only body text; the authoritative phase is
-    // still MEASURE, then FILE SAVE (including result-time serial), RESULT TX.
+    // 조기 PROBE OPEN은 본문에만 표시하고 대표 단계는 유지한다.
+    // 측정 → 파일 저장(최종 시리얼 포함) → 결과 전송 순서다.
     const int resultCandidates[] = {V::Measure,V::FileSave,V::FileSave,V::ResultTransmit,V::ResultTransmit,V::Complete,V::OpenRequest,V::OpenConfirmed};
     int previousResult = V::Measure;
     for(unsigned int i = 0; i < sizeof(resultCandidates)/sizeof(resultCandidates[0]); ++i)

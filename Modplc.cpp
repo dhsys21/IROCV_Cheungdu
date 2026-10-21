@@ -47,10 +47,10 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	plc_Interface = "";
 	bClose = false;
 
-	//* PLC Data Init
+	// PLC 데이터 초기화
 	memset(plc_Interface_Data, 0, sizeof(unsigned char) * PLC_D_INTERFACE_LEN * 2);
     memset(plc_Interface_Cell_Serial, 0, sizeof(unsigned char) * PLC_D_CELL_SERIAL_LEN * 2);
-    //* PC Data Init
+    // PC 데이터 초기화
 	memset(pc_Interface_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_LEN1 * 2);
     memset(pc_Interface_Ir_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_IR_LEN * 2);
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
@@ -210,7 +210,7 @@ void __fastcall TMod_PLC::InitializePcCommunication()
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//  Client Socket PC
+// PC 클라이언트 소켓
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::ClientSocket_PCConnect(TObject *Sender, TCustomWinSocket *Socket)
 
@@ -277,20 +277,20 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
                 {
                     case nPCDATA:
                     {
-                        //* Heart Beat
+                        // 하트비트
                         //if(BaseForm->nForm[0]->Client->Active)
                         {
                             bool flag = GetData(pc_Interface_Data, PC_D_HEART_BEAT, 0);
                             SetDouble(pc_Interface_Data, PC_D_HEART_BEAT, (int)!flag);
                         }
 
-                        //* write ir, ocv 완료
+                        // IR·OCV 쓰기 완료
                         if(GetPlcValue(PLC_D_IROCV_COMPLETE) == 1)
                             SetValue(PC_D_IROCV_COMPLETE, 0);
 
-                        //* General Data, Result Data, Min/Max Data, IR Data
+                        // 일반·결과·최솟값/최댓값·IR 데이터
                         PC_DataChange(0, PC_D_INTERFACE_START_DEV_NUM1, DEVCODE_D, PC_D_INTERFACE_LEN1);
-                        ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
+                        ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // 에뮬레이터 사용 시 주석 처리
                         ClientSocket_PC->Socket->SendBuf(&pc_Interface_Data, sizeof(pc_Interface_Data));
 
                         // 불량코드(D47000~D47399) 전송 미사용.
@@ -379,7 +379,7 @@ void __fastcall TMod_PLC::PC_DataChange(int subCommand, int address, int devCode
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//  Client Socket PLC
+// PLC 클라이언트 소켓
 //---------------------------------------------------------------------------
 
 void __fastcall TMod_PLC::ClientSocket_PLCConnect(TObject *Sender, TCustomWinSocket *Socket)
@@ -619,10 +619,10 @@ void __fastcall TMod_PLC::SetDouble(unsigned char (*data)[2], int column, double
 //
 //	data[column][1] = temp / 256;
 //	data[column][0] = temp % 256;
-    short temp = static_cast<short>(value); // signed 16-bit 정수로 형변환
+    short temp = static_cast<short>(value); // 부호 있는 16비트 정수로 변환
 
     data[column][0] = temp & 0xFF;         // LSB (저장 순서에 따라 다름)
-    data[column][1] = (temp >> 8) & 0xFF;  // MSB
+    data[column][1] = (temp >> 8) & 0xFF;  // 최상위 바이트(MSB)
 }
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::SetString(unsigned char (*data)[2], int column, AnsiString msg)
@@ -792,7 +792,7 @@ bool __fastcall TMod_PLC::IsResultConnectionReady()
            GetPlcValue(PLC_D_IROCV_ERROR) == 0;
 }
 
-// The PC AUTO READY output is not the PLC mode input. Require fresh reception after reconnect.
+// AUTO READY 출력과 PLC 모드 입력은 별개다. 재접속 후 새 응답이 필요하다.
 bool __fastcall TMod_PLC::IsPlcAutoMode()
 {
     return plcAutoMode.IsAutomatic() &&

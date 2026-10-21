@@ -29,7 +29,7 @@
 
 class TBaseForm : public TForm
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TTimer *ClockTimer;
 	TTimer *FileDeleteTimer;
 	TAdvSmoothButton *AdvSmoothButton1;
@@ -83,7 +83,7 @@ __published:	// IDE-managed Components
 	void __fastcall btnViewDataClick(TObject *Sender);
 
 
-private:	// User declarations
+private:	// 사용자 선언
 
 	int __fastcall GetStageIndex(AnsiString stage);
 
@@ -104,7 +104,7 @@ private:	// User declarations
 
     int nPLCDisconnectTime;
 
-public:		// User declarations
+public:		// 사용자 선언
 
 
 	TTotalForm *nForm[1];

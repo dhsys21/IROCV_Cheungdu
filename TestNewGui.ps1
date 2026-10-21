@@ -1,4 +1,4 @@
-# Offline display-state and layout contract tests. Never launches the application.
+# 프로그램 실행 없이 표시 상태·배치를 검사한다.
 param([string]$Compiler='C:\Program Files (x86)\Embarcadero\Studio\18.0\bin\bcc32.exe')
 $ErrorActionPreference='Stop'
 function Read-Source([string]$name){

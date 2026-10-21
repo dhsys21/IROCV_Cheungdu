@@ -24,8 +24,8 @@ void __fastcall TTotalForm::ProcessError(AnsiString err1, AnsiString err2,AnsiSt
 
 void __fastcall TTotalForm::DisplayProcess(AnsiString Status_Step, AnsiString msg, bool bError)
 {
-    // The current operation view still reads this message/error backing state.
-    // Only the retired eight-panel color display has been removed.
+    // 현재 공정 화면도 이 메시지·오류 상태를 사용한다.
+    // 기존 8개 패널의 색상 표시만 제거했다.
     PLCStatus = msg;
     DisplayError(msg, bError);
 
@@ -54,7 +54,7 @@ void __fastcall TTotalForm::DisplayError(AnsiString msg, bool bError)
 
 void __fastcall TTotalForm::RefreshStageStatusImage()
 {
-    // Connection state overrides only the image, not the production sequence.
+    // 연결 상태는 표시 이미지만 바꾸며 생산 시퀀스는 유지한다.
     int imageStatus = nNoAnswer;
     if(Client->Active && Client->Socket->Connected)
     {
@@ -205,10 +205,10 @@ void __fastcall TTotalForm::DisplayStageError(int err)
 
 //---------------------------------------------------------------------------
 // 상태 이미지·상태 지속 시간·PLC TRAY/PROBE 표시등을 갱신한다. 자동 검사 단계는 변경하지 않는다.
-// 디자이너 이벤트 진입점은 FormTotal.cpp의 StatusTimerTimer. 설비 상태·알람·PLC 표시 갱신는 이 파일에서 유지한다.
+// StatusTimerTimer에서 호출하며 설비 상태·알람·PLC 표시를 갱신한다.
 void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 {
-    // Keep PLC mode monitoring alive while the automatic inspection timer is disabled.
+    // 자동 검사 타이머가 꺼져도 PLC 모드 감시는 유지한다.
     UpdateAutoInspectionMode();
 	RefreshStageStatusImage();
 	if(stage.now_status != stage.alarm_status){
@@ -314,7 +314,7 @@ void __fastcall TTotalForm::ShowPanelGroup(TGroupBox *grp)
         if(CurrentGrp != NULL){
             CurrentGrp->Visible = false;
         }
-        // newGui replaces only the large main/local image. Alarm/error groups stay intact.
+        // 주·로컬 이미지만 교체하고 알람·오류 그룹은 유지한다.
         grp->Visible = !(operationView && (grp == GrpMain || grp == GrpLocal));
         if(operationView && grp->Visible) grp->BringToFront();
         OldGrp = CurrentGrp;

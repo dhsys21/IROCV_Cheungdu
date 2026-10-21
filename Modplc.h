@@ -25,7 +25,7 @@ const int DEVCODE_W			=	0xB4;		//	링크 레지스터
 
 
 //---------------------------------------------------------------------------
-//	Index 구분
+// 인덱스 구분
 //---------------------------------------------------------------------------
 const int PLC_INDEX_INTERFACE[2]				=	{ 1, 2 };
 
@@ -72,7 +72,7 @@ const int PC_D_INTERFACE_IR_RESULT_LEN              =	400;
 typedef char CheckIrCapacity[(MAXCHANNEL * 2 <= PC_D_INTERFACE_IR_LEN) ? 1 : -1];
 typedef char CheckOcvCapacity[(MAXCHANNEL * 2 <= PC_D_INTERFACE_OCV_LEN) ? 1 : -1];
 typedef char CheckResultCapacity[(MAXCHANNEL <= PC_D_INTERFACE_IR_RESULT_LEN) ? 1 : -1];
-//	PLC - PC Interface
+// PLC → PC 인터페이스
 //---------------------------------------------------------------------------
 // PLC - IR/OCV
 const int PLC_D_HEART_BEAT				   			=	0;
@@ -85,14 +85,14 @@ const int PLC_D_IROCV_COMPLETE	    	  	        =   8;
 
 const int PLC_D_IROCV_TRAY_ID   	  		        =   10;
 
-// TRAY INFO     256
+// 트레이 정보: 256
 const int PLC_D_IROCV_TRAY_CELL_DATA                = 	30;
 
-// CELL SERIAL TRAY ID
+// 셀 시리얼의 트레이 ID
 const int PLC_D_IROCV_CELL_SERIAL_TRAYID            =   0;
 const int PLC_D_IROCV_CELL_SERIAL                  	=   10;
 //---------------------------------------------------------------------------
-//	PLC - PC Interface
+// PLC → PC 인터페이스
 //---------------------------------------------------------------------------
 // PC - IR/OCV
 const int PC_D_HEART_BEAT			  				=	0;
@@ -112,10 +112,10 @@ const int PC_D_IROCV_IR_MAX							=   13;
 const int PC_D_IROCV_OCV_MIN						=   15;
 const int PC_D_IROCV_OCV_MAX						=   17;
 
-// OK/NG - D45030
+// 정상/불량 - D45030
 const int PC_D_IROCV_MEASURE_OK_NG			   		=	30;
 
-// NG CODE - D47000
+// 불량코드 - D47000
 const int PC_D_IROCV_RESULT_CODE                    =   0;
 
 const int PC_D_IROCV_IR_VALUE                   	=   0;
@@ -169,7 +169,7 @@ typedef struct
 //---------------------------------------------------------------------------
 class TMod_PLC : public TDataModule
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TTimer *Timer_Read;
 	TClientSocket *ClientSocket_PC;
 	TTimer *Timer_PC_AutoConnect;
@@ -192,7 +192,7 @@ __published:	// IDE-managed Components
 	void __fastcall Timer_PLC_WriteMsgTimer(TObject *Sender);
 	void __fastcall Timer_PLC_AutoConnectTimer(TObject *Sender);
 
-private:	// User declarations
+private:	// 사용자 선언
     bool bClose;
 //---------------------------------------------------------------------------
 //	PLC
@@ -235,12 +235,12 @@ private:	// User declarations
 	int pc_ReadCount, pc_index;
 
 //---------------------------------------------------------------------------
-//	Tray Info
+// 트레이 정보
 //---------------------------------------------------------------------------
 	void __fastcall SaveTrayInfo(AnsiString trayID);
     AnsiString m_trayID;
 	int m_slotNum, m_slotNumTemp;
-public:		// User declarations
+public:		// 사용자 선언
 	__fastcall TMod_PLC(TComponent* Owner);
 
 	void __fastcall Connect(AnsiString ip, int port1, int port2);
@@ -289,7 +289,7 @@ public:		// User declarations
 private:
     unsigned int resultSentParts;
 public:
-    //* PLC DATA
+    // PLC 데이터
     int currentReadTask;
     int CellSerialIndex;
     bool CellSerialReadRequested;
@@ -297,7 +297,7 @@ public:
     bool CellSerialReadComplete;
 	unsigned char plc_Interface_Data[PLC_D_INTERFACE_LEN][2];
     unsigned char plc_Interface_Cell_Serial[PLC_D_CELL_SERIAL_LEN][2];
-    //* PC DATA
+    // PC 데이터
     int currentWriteTask;
 	unsigned char pc_Interface_Data[PC_D_INTERFACE_LEN1][2];
     unsigned char pc_Interface_Result_Code[PC_D_INTERFACE_IR_RESULT_LEN][2];

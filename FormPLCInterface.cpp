@@ -70,13 +70,13 @@ void __fastcall TForm_PLCInterface::SetListViewPLC()
     AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_IROCV_COMPLETE), "READ COMPLETE");
 	AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_IROCV_TRAY_ID), "TRAY ID");
 
-	// CELL INFO => 1 : YES, 0 : NO
+	// 셀 유무: 1=있음, 0=없음
 	for(int i = 0; i < CELL_DATA_WORD_COUNT; i++)
 	{
 		AddListView(ListView_PLC, "D" + IntToStr(PLC_D_INTERFACE_START_DEV_NUM + PLC_D_IROCV_TRAY_CELL_DATA + i), "TRAY CELL DATA #" + IntToStr(i + 1));
 	}
 
-    //* CELL SERIAL DATA
+    // 셀 시리얼 데이터
     AddListView(ListView_PLC, "D" + IntToStr(PLC_D_CELL_SERIAL_NUM + PLC_D_IROCV_CELL_SERIAL_TRAYID), "CELL SERIAL TRAY ID");
 
     // 시리얼은 채널당 10워드. 요약/전체 모드 모두 실제 채널의 주소를 표시한다.
@@ -214,7 +214,7 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
                 Label4->Caption += Mod_PLC->GetDouble(Mod_PLC->plc_Interface_Data, PLC_D_IROCV_TRAY_CELL_DATA + i);
             }
 
-            //* CELL SERIAL
+            // 셀 시리얼
             ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSerialTrayId(PLC_D_IROCV_CELL_SERIAL_TRAYID, 10);
             for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
                 ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSerial(PLC_D_IROCV_CELL_SERIAL, channel, PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
@@ -531,19 +531,19 @@ void __fastcall TForm_PLCInterface::btnWriteIrOcvValueClick(TObject *Sender)
 	int channelIncrement = chkChannelIncrement->Checked
 		? editIncrement->Text.Trim().ToIntDef(1) : 0;
 
-	// ir value 2 Word
-	// 2 Word :  value / (65536 / 2) => 윗 주소에 쓰기, value % (65536 /2 ) => 아래 주소에 쓰기 // herald 2017 11 30
+	// IR 값: 2워드
+	// 2워드 분리: 몫은 상위 주소, 나머지는 하위 주소. 기준값은 65536/2.
 	for(int i = 0; i < MAXCHANNEL; i++)
 	{
 		int32_t ir_int = static_cast<int32_t>(ir_base * 100.0)
-			+ (i * channelIncrement);  // signed 32-bit int
+			+ (i * channelIncrement);  // 부호 있는 32비트 정수
         Mod_PLC->SetIrValue(PC_D_IROCV_IR_VALUE, i, ir_int);
 	}
 
 	for(int i = 0; i < MAXCHANNEL; i++)
 	{
 		int32_t ocv_int = static_cast<int32_t>(ocv_base * 10.0)
-			+ (i * channelIncrement);  // signed 32-bit int
+			+ (i * channelIncrement);  // 부호 있는 32비트 정수
         Mod_PLC->SetOcvValue(PC_D_IROCV_OCV_VALUE, i, ocv_int);
 	}
 

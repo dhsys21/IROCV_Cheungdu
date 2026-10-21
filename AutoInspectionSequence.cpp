@@ -148,7 +148,7 @@ bool TAutoInspectionSequence::RetryCellSerialRead()
 // 재측정 가능한 단계에서 프로브 닫힘 대기로 변경한다. 진행 중 중복 요청은 거절한다.
 bool TAutoInspectionSequence::StartRemeasure()
 {
-    // Existing remeasure buttons are also usable from the idle/manual UI.
+    // 대기·수동 화면에서도 기존 재측정 버튼을 사용할 수 있다.
     if(currentStep != STEP_WAIT_TRAY_IN && currentStep != STEP_WAIT_NG_ERROR && currentStep != STEP_WAIT_PROBE_OPEN)
         return false;
     automaticProbeRemeasure = false; // 작업자가 직접 누른 재측정은 자동 횟수와 구분.
@@ -167,8 +167,8 @@ bool TAutoInspectionSequence::SetMeasureComplete()
 // 존재하는 셀의 NG가 설정값 초과 또는 전량 NG인지 검사한다. 설정값과 같으면 허용한다.
 bool TAutoInspectionSequence::IsNgCountError(int ngCount, int cellCount, int ngLimit)
 {
-    // NgCount is occupied-cell IR/OCV NG, NOT the PLC's lowercase ngCount.
-    // Equality at the configured limit is allowed; all occupied cells NG is not.
+    // NgCount는 실제 셀의 IR/OCV 불량 수이며 PLC의 ngCount와 다르다.
+    // 설정 한계와 같으면 허용하되 전체 셀 불량은 허용하지 않는다.
     return (cellCount > 0 && ngCount == cellCount) || ngCount > ngLimit;
 }
 

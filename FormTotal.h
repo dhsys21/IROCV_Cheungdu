@@ -52,7 +52,7 @@ typedef struct{
 
 typedef struct ExtInput
 {
-	// Board 1
+	// 보드 1
 	// (uint8_t *)&Input
 	uint8_t OP_17: 1;					// 1-I17						
 	uint8_t OP_Remeasure: 1;				// 1-I18
@@ -81,7 +81,7 @@ typedef struct ExtInput
 	uint8_t OP_TrayForward: 1;				// 1-I7
 	uint8_t OP_TrayBackward: 1;				// 1-I8
 	
-	// board2
+	// 보드 2
 	uint8_t IN2_17: 1;						// 2-I17
 	uint8_t IN2_18: 1;		  				// 2-I18	
 	uint8_t IN2_19: 1;				// 2-I19
@@ -112,7 +112,7 @@ typedef struct ExtInput
 	
 } TExtInput;
 
-typedef struct ExtOutput		// Bit Field 이용
+typedef struct ExtOutput		// 비트 필드 사용
 {
 	uint8_t OUT1_9: 1;				// 1-09
 	uint8_t OUT1_10: 1;				// 1-10
@@ -157,7 +157,7 @@ class TOperationView;
 
 class TTotalForm : public TForm
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TGroupBox *GrpMain;
 	TClientSocket *Client;
 	TTimer *ReContactTimer;
@@ -420,7 +420,7 @@ __published:	// IDE-managed Components
 	void __fastcall GroupBox8DblClick(TObject *Sender);
 
 private:
-    // newGui is an observer only; production decisions stay in Stage_* / sequence.
+    // 새 화면은 표시만 담당하며 생산 판정은 기존 단계·시퀀스에서 수행한다.
     friend class TOperationView;
     friend class TOperationCommandLogScope;
     TOperationView *operationView;
@@ -431,9 +431,9 @@ private:
     void __fastcall RecordOperationMeasurementStart();
     void __fastcall AppendOperationLog(AnsiString type, AnsiString message);
     // 디자이너 이벤트 정의는 반드시 FormTotal.cpp에 둔다. 아래는 역할별 파일의 실제 처리 함수.
-    // Stage_AutoInspection.cpp: 자동측정 타이머 처리. Timer_AutoInspectionTimer에서 한 번 호출한다.
+    // Stage_AutoInspection.cpp: 자동측정 타이머에서 한 번 호출한다.
     void __fastcall ProcessAutoInspection(TObject *Sender);
-    // Stage_Measurement.cpp: 시리얼 수신·결과 저장·PLC 완료 대기. Timer_ResultSaveTimer에서 한 번 호출한다.
+    // Stage_Measurement.cpp: 결과 저장 타이머에서 수신·저장·PLC 완료를 처리한다.
     void __fastcall ProcessResultSave(TObject *Sender);
     // Stage_Form.cpp: 설비 상태·알람·PLC 표시 갱신. StatusTimerTimer에서 한 번 호출한다.
     void __fastcall ProcessStageStatus(TObject *Sender);
@@ -541,7 +541,7 @@ private:
     void __fastcall SetAutoReadySignalToPLC();
     // PLC CELL DATA 25워드의 비트맵으로 400셀 유무와 개수를 읽는다. Cycle 모드는 전 채널 사용.
     void __fastcall ReadAutoCellData();
-    // CELL SERIAL 4,010워드 분할 수신 시작. 별도 START/COMPLETE 핸드셰이크는 사용하지 않는다.
+    // 셀 시리얼 4,010워드 분할 수신. 별도 시작·완료 핸드셰이크 없음.
     void __fastcall StartAutoCellSerialRead();
     // PLC 프로브 열림 확인 후 PC의 PROBE OPEN 요청을 0으로 해제한다.
     void __fastcall ClearProbeOpenSignalToPLC();

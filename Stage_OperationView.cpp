@@ -1,5 +1,5 @@
-// newGui: display-only layout, current wait and bounded operator event history.
-// Right-hand FormMeasureInfo and all production decisions remain unchanged.
+// 표시 전용 화면: 현재 대기와 제한된 운영 이력.
+// 우측 측정 창과 생산 판정은 유지한다.
 #include <vcl.h>
 #pragma hdrstop
 #include "OperationView.h"
@@ -23,7 +23,7 @@ bool Connected(TClientSocket *client)
 
 UnicodeString FindNotepadPlusPlus()
 {
-    // Registered installs (both architectures), then standard/portable locations.
+    // 설치 등록 경로를 먼저 찾고 일반·포터블 경로를 확인한다.
     const HKEY roots[] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
     const REGSAM views[] = { KEY_WOW64_64KEY, KEY_WOW64_32KEY };
     for(int r = 0; r < 2; ++r) for(int v = 0; v < 2; ++v)
@@ -65,8 +65,8 @@ __fastcall TOperationView::TOperationView(TTotalForm *owner)
       logWriteFailed(false), signalsKnown(false), plcWasValid(false), previousCloseRequest(0),
       commandLogTile(-1)
 {
-    // Layout belongs to FormTotal.dfm. Never override designer bounds at runtime.
-    // The form owns visual controls; this observer owns only its refresh timer.
+    // 배치는 DFM에서 관리하며 실행 중 디자이너 좌표를 덮어쓰지 않는다.
+    // 폼이 표시 제어기를 소유하고 관찰자는 갱신 타이머만 관리한다.
     pcModePanel = owner->pnlOperationPcMode;
     plcModePanel = owner->pnlOperationPlcMode;
     serialLabel = owner->lblOperationSerial;
@@ -117,8 +117,8 @@ __fastcall TOperationView::TOperationView(TTotalForm *owner)
 
 bool TOperationView::WriteOperationLog(const UnicodeString &line)
 {
-    // Separate operator history: includes state/signal events that are not raw packets.
-    // Close after every append so Notepad++ can read the live file without a lock.
+    // 운영 이력에는 원시 패킷 외 상태·신호 이벤트도 기록한다.
+    // 기록마다 파일을 닫아 Notepad++에서 바로 읽을 수 있게 한다.
     UnicodeString dir = UnicodeString(LOG_PATH) + Now().FormatString("yyyymmdd") + L"\\";
     if(!ForceDirectories(dir)) return false;
     UnicodeString path = dir + L"STAGE" + FormatFloat("000", stageForm->Tag + 1) +
@@ -140,7 +140,7 @@ bool TOperationView::WriteOperationLog(const UnicodeString &line)
 }
 void __fastcall TOperationView::OpenLogFile(TObject *)
 {
-    // Write a fresh row first, including after an hourly/daily file rollover.
+    // 시간·날짜별 파일이 바뀌어도 새 행부터 기록한다.
     lastLog = "";
     Append("UI", "Open operation log file.");
     if(logWriteFailed || operationLogFile.IsEmpty() || !FileExists(operationLogFile))
@@ -164,7 +164,7 @@ TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoIns
     if(!view) return;
     previous = view->commandLogTile;
     try { view->BeginCommand(command); }
-    catch(...) {} // Observer failures never cancel production commands.
+    catch(...) {} // 표시 오류로 생산 명령을 취소하지 않는다.
 }
 void TOperationView::BeginCommand(TAutoInspectionCommand command)
 {
@@ -178,7 +178,7 @@ void TOperationView::BeginCommand(TAutoInspectionCommand command)
     if(tile >= 0) commandLogTile = tile;
     if(command == CMD_REQUEST_PROBE_REMEASURE && timeline.Phase() >= TOperationViewState::Measure)
         BeginRemeasureTimeline();
-    // Confirmation precedes the command's measurement/AMS logs, not follows them.
+    // 확인 로그는 명령의 측정·AMS 로그보다 먼저 남긴다.
     if(command == CMD_MEASURE_START || command == CMD_REMEASURE_START)
     {
         commandLogTile = TOperationViewState::CloseConfirmed;
@@ -196,14 +196,14 @@ void TOperationView::Append(AnsiString source, AnsiString message, int processTi
     message = StringReplace(message, "\r", " ", TReplaceFlags() << rfReplaceAll);
     message = StringReplace(message, "\n", " ", TReplaceFlags() << rfReplaceAll);
     if(message.Length() > 1200) message = message.SubString(1, 1200) + " ...";
-    // Event identity is separate from representative progress. A late/parallel
-    // event stays visible in the body but cannot move the phase heading backward.
+    // 이벤트와 대표 단계는 별개다. 늦거나 병렬인 이벤트는 표시하되
+    // 단계 제목을 이전으로 돌리지 않는다.
     int phaseTile = SynchronizeTimeline();
     if(processTile >= 0 && processTile != phaseTile)
         message += AnsiString(" (event: ") + TOperationViewState::TileName(processTile) + ")";
     source = StringReplace(source, " ", "_", TReplaceFlags() << rfReplaceAll);
     AnsiString phase = TOperationViewState::TileName(phaseTile);
-    // Do not suppress identical text from a different inspection phase.
+    // 다른 검사 단계의 같은 문구는 생략하지 않는다.
     AnsiString key = "[" + phase + "] " + source + " " + message.Trim();
     if(key == lastLog) return;
     lastLog = key;
@@ -214,13 +214,13 @@ void TOperationView::Append(AnsiString source, AnsiString message, int processTi
     logMemo->Lines->BeginUpdate();
     try
     {
-        // Bounded history; a new entry always returns the viewport to the latest line.
+        // 이력 길이를 제한하고 새 항목 입력 시 최신 행을 표시한다.
         while(logMemo->Lines->Count >= 500)
             logMemo->Lines->Delete(0);
         logMemo->Lines->Add(line);
     }
     __finally { logMemo->Lines->EndUpdate(); }
-    // Move the caret/viewport, never keyboard focus from another operator control.
+    // 커서·화면 위치만 이동하고 다른 입력의 포커스는 뺏지 않는다.
     logMemo->SelStart = logMemo->Text.Length();
     logMemo->SelLength = 0;
     logMemo->Perform(EM_SCROLLCARET, 0, 0);
@@ -309,11 +309,11 @@ void TOperationView::BeginRemeasureTimeline()
 }
 int TOperationView::SynchronizeTimeline()
 {
-    // Command scope wins while the sequence already points to its NEXT step.
+    // 시퀀스가 다음 단계여도 실행 중인 명령 단계를 우선한다.
     if(commandLogTile >= 0) return timeline.Advance(commandLogTile);
     TAutoInspectionStep step = stageForm->autoInspection.GetStep();
     if(step == STEP_WAIT_REMEASURE_PROBE_CLOSE && timeline.Phase() >= TOperationViewState::Measure)
-        BeginRemeasureTimeline(); // Operator-requested remeasure, before its first log.
+        BeginRemeasureTimeline(); // 첫 로그 전에 운영자 요청 재측정을 표시한다.
     if(step == STEP_WAIT_TRAY_IN && timeline.Phase() == TOperationViewState::OutConfirmed)
     {
         timeline.FinishTray();
@@ -336,8 +336,8 @@ void TOperationView::DrawTiles()
 }
 void TOperationView::ObserveSignals(bool valid)
 {
-    // Input values are display samples of the last complete PLC response.
-    // Output values are buffer settings, never labelled PLC ACK or device completion.
+    // 입력 표시는 마지막으로 완전히 받은 PLC 응답을 사용한다.
+    // 출력은 버퍼 설정값이며 PLC 응답·장비 완료를 뜻하지 않는다.
     for(int i = 0; i < 12; ++i)
     {
         if(i < 6 && !valid) continue;
@@ -345,7 +345,7 @@ void TOperationView::ObserveSignals(bool valid)
         int value = (int)(i < 6 ? Mod_PLC->GetPlcValue(address) : Mod_PLC->GetValue(address));
         AnsiString text = IntToStr(value);
         if(!signalsKnown || (i < 6 && !plcWasValid))
-            lastSignals[i] = text; // Baseline is not a fabricated 0 -> 1 transition.
+            lastSignals[i] = text; // 초기 기준값을 0 → 1 변화로 기록하지 않는다.
         else if(text != lastSignals[i])
         {
             AnsiString name = i < 6 ? InputNames[i] : OutputNames[i - 6];
@@ -401,7 +401,7 @@ void TOperationView::Refresh()
     plcModePanel->Color = valid && Mod_PLC->IsPlcAutoMode() ? clLime : clRed;
     f->localCali->Visible = local;
     const TAutoInspectionStep step = f->autoInspection.GetStep();
-    if(step == STEP_WAIT_TRAY_IN) cycleClock.Reset(); // READY is always zero, including mode changes.
+    if(step == STEP_WAIT_TRAY_IN) cycleClock.Reset(); // 모드 전환 중에도 READY는 항상 0이다.
     const bool serialWaiting = step == STEP_WAIT_CELL_SERIAL || f->resultSaveStep == RESULT_WAIT_SERIAL;
     int chunks = Mod_PLC->CellSerialReadRequested ? 0 :
         Mod_PLC->IsCellSerialReadComplete() ? PLC_D_CELL_SERIAL_READCOUNT : Mod_PLC->CellSerialIndex;
@@ -409,7 +409,7 @@ void TOperationView::Refresh()
     serialLabel->Caption = UiText(serialText);
     serialLabel->Hint = serialWaiting ? UiText(AnsiString("RECEIVED ") + IntToStr(chunks) + "/" + IntToStr(PLC_D_CELL_SERIAL_READCOUNT) + " BLOCKS") : UnicodeString();
     serialLabel->ShowHint = serialWaiting;
-    // Independent of the tray cycle clock: AMS receipt -> AMF receipt only.
+    // 트레이 총시간과 별개로 AMS 수신부터 AMF 수신까지 측정한다.
     f->lblOperationMeasureTime->Caption = UiText("AMS: " + FormatFloat("0.0", f->measurementClock.Elapsed(GetTickCount()) / 1000.0) + " s");
     f->lblOperationMeasureTime->Hint = UiText("Time from received AMS to received AMF; freezes on stop/disconnection.");
     UnicodeString title, detail;
@@ -477,7 +477,7 @@ void TOperationView::Refresh()
 }
 void __fastcall TOperationView::TimerTick(TObject *)
 {
-    // A display failure must never change an inspection state, PLC output or timer.
+    // 표시 오류로 검사 상태·PLC 출력·타이머를 바꾸지 않는다.
     try { Refresh(); } catch(...) { currentTitle->Caption = UiText("Display refresh error - check logs"); }
 }
 
@@ -508,7 +508,7 @@ void __fastcall TTotalForm::AppendOperationLog(AnsiString type, AnsiString messa
         if(!operationView) return;
         if(TOperationViewState::IsInternalStepTrace(type.c_str(), message.c_str())) return;
         int phase = -1;
-        // Raw IR/OCV samples and polling traffic stay in the original communication file.
+        // IR/OCV 원시값과 폴링은 기존 통신 로그에 남긴다.
         if(type == "RX" || type == "TX")
         {
             if(message.Pos("AMS") == 0 && message.Pos("AMF") == 0 && message.Pos("STP") == 0) return;
@@ -518,5 +518,5 @@ void __fastcall TTotalForm::AppendOperationLog(AnsiString type, AnsiString messa
         if(type == "AutoInspection" && message.Pos("...") != 0) return;
         operationView->Append(type, message, phase);
     }
-    catch(...) {} // UI logging is not part of the production-control contract.
+    catch(...) {} // 화면 로그는 생산 제어에 영향을 주지 않는다.
 }

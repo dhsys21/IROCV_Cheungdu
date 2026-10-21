@@ -17,7 +17,7 @@
 //---------------------------------------------------------------------------
 class TCaliForm : public TForm
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TPanel *pstage;
 	TPanel *Panel20;
 	TPanel *pBase;
@@ -72,12 +72,12 @@ __published:	// IDE-managed Components
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
 	void __fastcall btnProbeCloseClick(TObject *Sender);
 
-private:	// User declarations
+private:	// 사용자 선언
 
 	void __fastcall MakePanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);
 	void __fastcall WriteCaliFile(bool Data);
-public:		// User declarations
+public:		// 사용자 선언
 	__fastcall TCaliForm(TComponent* Owner);
 
 	int stage;

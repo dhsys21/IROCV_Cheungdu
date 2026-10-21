@@ -23,7 +23,7 @@
 
 class TRemeasureForm : public TForm
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TSaveDialog *SaveDialog;
 	TLabel *Label3;
 	TGroupBox *GroupBox2;
@@ -91,7 +91,7 @@ __published:	// IDE-managed Components
 	void __fastcall AccInitBtnClick(TObject *Sender);
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
     void __fastcall ChInfoMouseClick(TObject *Sender);
-private:	// User declarations
+private:	// 사용자 선언
 	void __fastcall MakePanel();
 	void __fastcall MakeUIPanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);
@@ -102,7 +102,7 @@ private:	// User declarations
 	int mode;
 
 
-public:		// User declarations
+public:		// 사용자 선언
 	int *acc_remeasure;
 	AnsiString *acc_init;
 

@@ -1,4 +1,4 @@
-# Verify local encodings and UTF-8 Git index without modifying files or contacting equipment.
+# 파일 변경·장비 연결 없이 로컬 인코딩과 Git의 UTF-8 저장본을 확인한다.
 param([string]$Git = 'git', [switch]$RequireCRLF)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
@@ -9,7 +9,7 @@ if ([version]$Matches[1] -lt [version]'2.18.0') { throw 'Git 2.18 or newer is re
 $utf8 = [Text.UTF8Encoding]::new($false, $true)
 $cp949 = [Text.Encoding]::GetEncoding(949, [Text.EncoderFallback]::ExceptionFallback, [Text.DecoderFallback]::ExceptionFallback)
 function Read-IndexBytes([string]$name) {
-    # Read stdout as bytes; PowerShell text pipes can corrupt legacy encodings.
+    # 인코딩 손실을 막기 위해 표준 출력을 바이트로 읽는다.
     if ($name.Contains('"')) { throw "Unsupported filename: $name" }
     $start = New-Object Diagnostics.ProcessStartInfo
     $start.FileName = $gitPath

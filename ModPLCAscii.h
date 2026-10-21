@@ -23,7 +23,7 @@ const int DEVCODE_W			=	0xB4;		//	링크 레지스터
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-//	Index 구분
+// 인덱스 구분
 //---------------------------------------------------------------------------
 const int PLC_INDEX_INTERFACE[1]				= { 1 };
 const int PC_INDEX_INTERFACE					=		11;
@@ -48,7 +48,7 @@ const int PC_D_INTERFACE_CURRENT_LEN				= 	800;
 
 
 //---------------------------------------------------------------------------
-//	PLC - PC Interface
+// PLC → PC 인터페이스
 //---------------------------------------------------------------------------
 const int PLC_D_HEART_BEAT				   			=	0;
 const int PLC_D_AUTO_MANUAL			   				=	1;
@@ -60,10 +60,10 @@ const int PLC_D_PRE_COMPLETE 		   	  	        =   8;
 
 const int PLC_D_PRE_TRAY_ID    	  			        =   10;
 
-// TRAY INFO
+// 트레이 정보
 const int PLC_D_PRE_TRAY_CELL_DATA				   	=	30;
 //---------------------------------------------------------------------------
-//	PC - PLC Interface
+// PC → PLC 인터페이스
 //---------------------------------------------------------------------------
 const int PC_D_HEART_BEAT			  				=	0;
 const int PC_D_PRE_STAGE_AUTO_READY     	        =   1;
@@ -82,7 +82,7 @@ const int PC_D_PRE_CHARGE_VOLTAGE                   =   13;
 const int PC_D_PRE_CHARGE_CURRENT                   =   15;
 const int PC_D_PRE_CHARGE_TIME                      =   17;
 
-// OK/NG - D41030
+// 정상/불량 - D41030
 const int PC_D_PRE_MEASURE_OK_NG			   		=	30;
 // D41070
 const int PC_D_PRE_VOLTAGE_VALUE                    =   0;
@@ -92,7 +92,7 @@ const int PC_D_PRE_CURRENT_VALUE                    =   0;
 
 class TMod_PLCAscii : public TDataModule
 {
-__published:	// IDE-managed Components
+__published:	// IDE 관리 컴포넌트
 	TTimer *Timer_Read;
 	TClientSocket *ClientSocket_PC;
 	TClientSocket *ClientSocket_PLC;
@@ -115,7 +115,7 @@ __published:	// IDE-managed Components
 	void __fastcall Timer_PC_WriteMsgTimer(TObject *Sender);
 	void __fastcall Timer_PLC_WriteMsgTimer(TObject *Sender);
 
-private:	// User declarations
+private:	// 사용자 선언
     bool bClose;
     //---------------------------------------------------------------------------
     //	PLC
@@ -138,7 +138,7 @@ private:	// User declarations
 
 	bool pc_ReadFlag;
 	int pc_ReadCount, pc_index;
-public:		// User declarations
+public:		// 사용자 선언
 	__fastcall TMod_PLCAscii(TComponent* Owner);
     void __fastcall Connect(AnsiString ip, int port1, int port2);
 	void __fastcall DisConnect();

@@ -1,4 +1,4 @@
-# Offline production-method tests. No application startup or equipment connection.
+# 실제 메서드의 오프라인 검사. 프로그램 실행·장비 연결 없음.
 param([string]$Compiler='C:\Program Files (x86)\Embarcadero\Studio\18.0\bin\bcc32.exe')
 $ErrorActionPreference='Stop'
 function Read-Source([string]$name){

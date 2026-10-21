@@ -1,8 +1,8 @@
 #ifndef PlcAutoModeH
 #define PlcAutoModeH
 
-// Only a complete, successful PLC interface response can permit automatic inspection.
-// Remember manual/disconnect transitions even if AUTO arrives before the UI status tick.
+// 정상 PLC 응답을 끝까지 받아야 자동 검사를 허용한다.
+// 화면 갱신 전에 AUTO로 돌아와도 수동·단절 전환을 기억한다.
 class TPlcAutoModeState
 {
     bool valid;
@@ -23,7 +23,7 @@ public:
         automatic = false;
     }
     bool IsAutomatic() const { return valid && automatic; }
-    bool IsValid() const { return valid; } // Read-only UI indication; not an interlock change.
+    bool IsValid() const { return valid; } // 읽기 전용 표시 상태. 인터록 변경 없음.
     unsigned long GetResetVersion() const { return resetVersion; }
 };
 

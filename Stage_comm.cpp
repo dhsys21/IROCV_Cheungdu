@@ -58,7 +58,7 @@ void __fastcall TTotalForm::CmdSetManualMode(bool Set)
     else if(rbSpeedFast->Checked) CmdSetSpeed(2);
 
     InitializePlcData();
-	if(Set){ //* Manual
+	if(Set){ // 수동
         Mod_PLC->SetValue(PC_D_IROCV_STAGE_AUTO_READY, 0);
 		SendData("MAN", "O");
 		this->InitializeTrayData();
@@ -68,14 +68,14 @@ void __fastcall TTotalForm::CmdSetManualMode(bool Set)
 		if(Timer_AutoInspection->Enabled == true)
 			Timer_AutoInspection->Enabled = false;
 	}
-	else{    //* Auto
+	else{    // 자동
         Mod_PLC->SetValue(PC_D_IROCV_STAGE_AUTO_READY, 1);
 		SendData("MAN", "X");
 		this->InitializeTrayData();
 
         DisplayStatus(nVacancy);
         ResetAutoInspection();
-        // Selecting PC AUTO must not bypass the PLC mode interlock.
+        // PC AUTO 선택으로 PLC 모드 인터록을 우회하지 않는다.
         autoInspectionBlockedByPlc = false;
         UpdateAutoInspectionMode();
 
@@ -233,7 +233,7 @@ void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
 	pConInfo->Caption = UiText("IR/OCV is connected");
 	sock = Socket;
     remainMsg.clear();
-    while(!rxq.empty()) rxq.pop(); // Never join bytes from different connections.
+    while(!rxq.empty()) rxq.pop(); // 서로 다른 연결에서 받은 바이트를 합치지 않는다.
 
 	send.tx_mode = 0;  	// 초기화
 	send.time_out = 0;
@@ -322,15 +322,15 @@ void __fastcall TTotalForm::ProcessEquipmentSocketRead(TObject *Sender,
     while(!frames.empty())
     {
         const std::string &frame = frames.front();
-        rxq.push(frame); // Preserve the original production-dispatch order.
+        rxq.push(frame); // 기존 생산 명령 처리 순서를 유지한다.
         if(frame.size() >= 7)
         {
             const std::string command = frame.substr(1, 3);
             if(command == "AMS" || command == "AMF" || command == "STP" ||
                 command == "EMS" || command == "ERR" || command == "RST")
             {
-                // Display only: reuse BCC validation, without dispatching commands
-                // or touching tray/results. Queue/UI backlog must not lengthen time.
+                // 표시용 BCC 검사만 수행하며 명령·트레이·결과를 변경하지 않는다.
+                // 큐·화면 지연은 측정시간에 포함하지 않는다.
                 AnsiString parameter;
                 const int response = ParseEquipmentMessage(AnsiString(frame.c_str()), parameter);
                 const bool allowed = !(stage.arl == nAuto && !bLocal &&
@@ -366,7 +366,7 @@ void __fastcall TTotalForm::ProcessEquipmentReceiveQueue(TObject *Sender)
 // 디자이너 이벤트 진입점은 FormTotal.cpp의 SendTimerTimer. 측정장비 송신 큐 처리는 이 파일에서 유지한다.
 void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 {
-    // Cancelled automatic commands must not be sent after PLC manual/reset.
+    // PLC 수동·초기화 후 취소된 자동 명령을 보내지 않는다.
     if(IsAutoInspectionBlocked()) return;
 	if(q_cmd.empty() == false){
 		SendTimer->Interval = 700;
@@ -434,7 +434,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 		cmd = ParseEquipmentMessage(*msg, param); 	// cmd , check sum 확인
 
         const bool blocked = IsAutoInspectionBlocked();
-        // Ignore delayed measurement replies outside an active automatic measurement.
+        // 자동 측정 중이 아니면 지연된 측정 응답을 무시한다.
         if(stage.arl == nAuto && !bLocal &&
            (blocked || autoInspection.GetStep() != STEP_WAIT_MEASURE_COMPLETE) &&
            (cmd == AMS || cmd == AMF || cmd == IR || cmd == OCV))
@@ -516,7 +516,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				DisplayStatus(nRUN);
 				break;
 			case AMF:        // 검사종료 알림
-                if(tray.amf) break; // Ignore a duplicate completion for this measurement.
+                if(tray.amf) break; // 현재 측정의 중복 완료 응답을 무시한다.
                 measurementClock.Stop(GetTickCount());
 				send.tx_mode = 0;
 				tray.ams = false;

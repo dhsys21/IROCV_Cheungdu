@@ -8,7 +8,7 @@
 
 class TTotalForm;
 
-// Owned by the stage form. Borrows DFM controls; owns only the refresh timer.
+// 폼의 표시 제어기를 참조하며 새로고침 타이머만 소유한다.
 class TOperationView : public TComponent
 {
     friend class TOperationCommandLogScope;
@@ -49,8 +49,8 @@ public:
     void Reset();
 };
 
-// Logs written inside a command retain that command's phase even though the
-// automatic sequence has already advanced its step. Restore on exceptions too.
+// 시퀀스가 다음 단계여도 명령 내부 로그는 현재 명령 단계로 남긴다.
+// 예외 발생 시에도 이전 단계를 복원한다.
 class TOperationCommandLogScope
 {
     TOperationView *view;

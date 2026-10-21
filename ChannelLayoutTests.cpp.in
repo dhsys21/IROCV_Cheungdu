@@ -1,4 +1,4 @@
-// Actual panel builders are inserted by TestChannelLayout.ps1; no VCL/equipment I/O.
+// TestChannelLayout.ps1이 실제 패널 생성 코드를 삽입한다. 장비 통신 없음.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -67,7 +67,7 @@ public:
 int checks=0;
 #define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
 void MathematicalCases(){
-    // All 8 layouts, rectangular grids, one row/column and odd dimensions.
+    // 8개 배치와 직사각형·단일 행/열·홀수 크기를 검사한다.
     const int sizes[][2]={{20,20},{16,16},{3,5},{5,3},{1,7},{7,1},{1,1}};
     for(int k=0;k<7;++k) for(int corner=0;corner<4;++corner) for(int dir=0;dir<2;++dir){
         int rows=sizes[k][0],cols=sizes[k][1];bool seen[400]={false};
@@ -77,7 +77,7 @@ void MathematicalCases(){
             CHECK(!seen[p.row*cols+p.column]);seen[p.row*cols+p.column]=true;
             int stepRow=dir==CHANNEL_HORIZONTAL?i/cols:i%rows;
             int stepCol=dir==CHANNEL_HORIZONTAL?i%cols:i/rows;
-            // Independent corner-to-screen expectations.
+            // 각 모서리의 화면 좌표를 별도로 검증한다.
             int r=(corner==0||corner==2)?rows-1-stepRow:stepRow;
             int c=(corner==0||corner==1)?cols-1-stepCol:stepCol;
             CHECK(p.row==r && p.column==c);
@@ -96,7 +96,7 @@ void MathematicalCases(){
                     CHECK(x.left==b.left && x.width==b.width && y.top==b.top && y.height==b.height);
                     CHECK(x.height>0 && y.width>0 && x.top>=2 && x.top+x.height<=321);
                     CHECK(y.left>=2 && y.left+y.width<=449);
-                    // Independent side checks: right origins 0/1, bottom origins 0/2.
+                    // 오른쪽 원점 0/1, 아래쪽 원점 0/2를 검증한다.
                     if(corner==0||corner==1) CHECK(y.left>b.left+b.width);
                     else CHECK(y.left+y.width<b.left);
                     if(corner==0||corner==2) CHECK(x.top>b.top+b.height);

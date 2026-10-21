@@ -1,5 +1,5 @@
-// Offline tests: production methods are inserted by TestCellSerialRead.ps1.
-// No VCL windows, files, sockets or equipment are opened.
+// TestCellSerialRead.ps1이 실제 메서드를 삽입하는 오프라인 검사.
+// 창·파일·소켓·장비를 열지 않는다.
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,14 +108,14 @@ struct ErrorForm {
     Timer bring,off;Timer *Timer_BringToFront,*timerErrorOff;
     ErrorForm():stage(0),shown(0),Timer_BringToFront(&bring),timerErrorOff(&off){}
     void ChangeMessage(AnsiString,AnsiString,AnsiString){}
-    void DisplayErrorMessage(int n){stage=n;++shown;} // Display must not control PLC.
+    void DisplayErrorMessage(int n){stage=n;++shown;} // 표시 로직에서 PLC를 제어하지 않는다.
     void Close(){}
 } errorForm;
 ErrorForm *Form_CellIdError=&errorForm;
 class TTotalForm {
 public:
     TMeasurementClock measurementClock;
-    bool IsAutoInspectionBlocked(){return false;} // Mode interlock has its own production-method tests.
+    bool IsAutoInspectionBlocked(){return false;} // 모드 인터록은 별도 테스트로 검증한다.
     struct { int arl; } stage;
     struct TestSequence {
         struct Setting { int closedProbeRemeasureMaxNgCount; } setting;
@@ -166,7 +166,7 @@ public:
     void __fastcall CancelResultSave();
     void __fastcall FinishMeasurement();
     void __fastcall WriteMeasurementResults(bool saveWithoutCellSerial=false);
-    void RecordOperationFileSave(bool) {} // Display-only observer; no production side effect.
+    void RecordOperationFileSave(bool) {} // 표시 전용 관찰자. 생산 동작에 영향 없음.
     void __fastcall SetRemeasureListAfter();
     void __fastcall SetRemeasureList();
     int __fastcall JudgeCellResult(int index);
@@ -207,7 +207,7 @@ void receive(TMod_PLC &p,int words,unsigned char marker,bool split=false,int err
     TCustomWinSocket socket;std::string bytes=response(words,marker,error);p.plc_ReadFlag=false;
     if(split){
         socket.data=bytes.substr(0,bytes.size()/2);p.ClientSocket_PLCRead(0,&socket);
-        check(!p.plc_ReadFlag); // No next request until the whole TCP response arrives.
+        check(!p.plc_ReadFlag); // TCP 응답 전체 수신 전에는 다음 요청을 보내지 않는다.
         socket.data=bytes.substr(bytes.size()/2);
     } else socket.data=bytes;
     p.ClientSocket_PLCRead(0,&socket);check(p.plc_ReadFlag);
@@ -233,7 +233,7 @@ int main(){
     check(diagnosticStage.type=="PLC READ ERROR");
     check(diagnosticStage.detail=="CELL SERIAL D145000 WORDS=820 END_CODE=0xC051");
     receive(diagnostics,100,0);receive(diagnostics,0,0,false,0xC051);
-    check(diagnosticStage.count==1); // Repeated retries cannot flood the log.
+    check(diagnosticStage.count==1); // 반복 재시도로 로그가 폭증하지 않아야 한다.
     clockTime=30000;
     receive(diagnostics,100,0);receive(diagnostics,0,0,false,0xC051);
     check(diagnosticStage.count==2);
@@ -243,8 +243,8 @@ int main(){
     receive(diagnostics,100,0);receive(diagnostics,10,0);
     check(diagnosticStage.detail=="CELL SERIAL D145000 WORDS=820 SHORT RESPONSE BYTES=20");
     clockTime=0;
-    // Manual screen and Local mode must save without serials in either read mode.
-    // Missing/mismatched PLC serials, stale tray IDs, file retry and delayed callbacks.
+    // 수동·로컬 모드는 시리얼 수신 방식과 무관하게 저장한다.
+    // 누락·불일치 시리얼, 이전 트레이 ID, 파일 재시도·지연 콜백 검사.
     for(int mode=0;mode<2;++mode) for(int manualKind=0;manualKind<3;++manualKind)
     for(int serialCase=0;serialCase<2;++serialCase) {
         TTotalForm manualSave;
@@ -270,7 +270,7 @@ int main(){
         check(manualSave.fileAttempts==2);
     }
     plc.connected=true;
-    // Execute the actual production SetRemeasureList at all configured boundaries.
+    // 모든 설정 경계에서 실제 SetRemeasureList를 실행한다.
     const int limits[]={0,1,49,50,MAXCHANNEL};
     for(int n=0;n<5;++n) for(int ng=0;ng<=MAXCHANNEL;++ng) {
         TTotalForm f;
@@ -292,32 +292,32 @@ int main(){
     p.SetCellSerialContinuousRead(true);
     receive(p,100,0);receive(p,820,22,true);
     check(p.IsCellSerialReadComplete());check(p.plc_Interface_Cell_Serial[0][0]==17);
-    check(p.plc_Interface_Cell_Serial[4009][0]==17); // Partial new round must not leak.
+    check(p.plc_Interface_Cell_Serial[4009][0]==17); // 새 주기의 부분 데이터가 노출되지 않아야 한다.
     p.StartCellSerialRead();check(!p.IsCellSerialReadComplete());
     serialRound(p,33,true);
     receive(p,100,0);check(p.currentReadTask==nCELLSERIAL);
-    p.StartCellSerialRead();receive(p,820,99); // Discard the old in-flight chunk.
+    p.StartCellSerialRead();receive(p,820,99); // 진행 중인 이전 조각을 버린다.
     check(!p.IsCellSerialReadComplete());check(p.CellSerialIndex==0);
     serialRound(p,44,true);
     p.ResetCellSerialRead();check(p.cellSerialContinuousRead&&!p.IsCellSerialReadComplete());
-    serialRound(p,55,true); // Reconnect retains continuous mode.
-    receive(p,100,0);receive(p,10,77); // Short response must not become a complete snapshot.
+    serialRound(p,55,true); // 재접속 후에도 상시 수신 모드를 유지한다.
+    receive(p,100,0);receive(p,10,77); // 짧은 응답을 수신 완료로 처리하지 않는다.
     check(!p.IsCellSerialReadComplete()&&p.CellSerialReadRequested);
     serialRound(p,66,true);
     receive(p,100,0);receive(p,0,0,false,0xC051);
     check(!p.IsCellSerialReadComplete());
     serialRound(p,77,true);
     p.SetCellSerialContinuousRead(false);receive(p,100,0);
-    check(p.currentReadTask==nSTANDARD); // No unsolicited new round in capture mode.
+    check(p.currentReadTask==nSTANDARD); // 단일 수신 모드는 요청 없이 새 주기를 시작하지 않는다.
 
     TTotalForm f;
     clockTime=0;
     f.FinishMeasurement();check(f.filesSaved==1&&f.resultSaveStep==RESULT_WAIT_PLC_SEND);
     f.FinishMeasurement();check(f.fileAttempts==1&&f.acc_totaltray==1);
-    clockTime=1000;f.Timer_ResultSaveTimer(0);check(plc.pc[PC_D_IROCV_COMPLETE]==0); // Not sent yet.
+    clockTime=1000;f.Timer_ResultSaveTimer(0);check(plc.pc[PC_D_IROCV_COMPLETE]==0); // 아직 송신하지 않음.
     plc.transmitted=true;clockTime=999;f.Timer_ResultSaveTimer(0);check(plc.pc[PC_D_IROCV_COMPLETE]==0);
     clockTime=1000;f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_COMPLETE&&f.completeNotifications==1);
-    f.FinishMeasurement();check(f.filesSaved==1); // Duplicate after completion also ignored.
+    f.FinishMeasurement();check(f.filesSaved==1); // 완료 후 중복 응답도 무시한다.
     f.Timer_ResultSaveTimer(0);check(f.completeNotifications==1);
     f.resultSaveStep=RESULT_IDLE;
     const int cacheLoadsBeforeContinuous=f.trayFileLoads;
@@ -338,8 +338,8 @@ int main(){
     check(errorForm.shown==previousErrors&&plc.pc[PC_D_IROCV_ERROR]==0);
     check(f.fileContainedSerial&&f.tray.cell_serial[0].s=="CURRENT-ID");
     check(f.tray.cell_serial[399].IsEmpty()&&f.trayFileLoads==cacheLoadsBeforeContinuous);
-    f.CompleteResultCellSerialRead();check(f.filesSaved==3); // Duplicate cannot save twice.
-    // At timeout no old/partial ID or .Tray cache may enter the result.
+    f.CompleteResultCellSerialRead();check(f.filesSaved==3); // 중복 요청으로 두 번 저장하지 않는다.
+    // 시간 초과 시 이전·부분 ID나 .Tray 캐시를 결과에 쓰지 않는다.
     for(int c=0;c<MAXCHANNEL;++c)f.tray.cell_serial[c]="OLD-ID";
     f.StartResultCellSerialRead();clockTime+=10001;f.Timer_ResultSaveTimer(0);
     check(f.resultSaveStep==RESULT_WAIT_PLC_SEND&&f.filesSaved==4&&f.serialWarnings==2);
@@ -353,7 +353,7 @@ int main(){
     f.Timer_ResultSaveTimer(0);check(f.filesSaved==5);
     clockTime=0xFFFFFF00UL;f.StartResultCellSerialRead();clockTime=0x00002700UL;
     f.Timer_ResultSaveTimer(0);check(f.resultSaveStep==RESULT_WAIT_PLC_SEND&&f.filesSaved==6);
-    // Completion at the timeout boundary wins. Do not clear errors from another cause.
+    // 시간 경계에서는 완료를 우선하되 다른 원인의 오류는 유지한다.
     f.StartResultCellSerialRead();clockTime+=RESULT_SERIAL_TIMEOUT_MS;plc.CellSerialReadComplete=true;
     plc.pc[PC_D_IROCV_ERROR]=1;
     f.Timer_ResultSaveTimer(0);check(f.filesSaved==7&&f.fileContainedSerial);
@@ -385,7 +385,7 @@ int main(){
     check(judge.measurementNgCount==1&&plc.pc[PC_D_IROCV_NG_COUNT]==2);
     check(plc.resultCodes[0]==1&&plc.resultCodes[1]==1&&plc.resultCodes[2]==0);
     check(judge.acc_totaltray==1&&judge.acc_finalng==1);
-    // Repeated publication must not double-count, and overwrites stale PLC codes/bits.
+    // 반복 결과 반영 시 중복 집계 없이 이전 PLC 코드·비트를 덮어쓴다.
     plc.resultCodes[2]=1;
     plc.SetData(plc.pc_Interface_Data,PC_D_IROCV_MEASURE_OK_NG,2,true);
     judge.UpdatePlcResults();
@@ -396,15 +396,15 @@ int main(){
     check(plc.resultCodes[2]==0);
     judge.PrepareRemeasureItems();check(judge.retest.pendingItems[0]==3);
     judge.ExecuteRemeasure();check(judge.lastCommand.s=="IR*"&&judge.retest.cell[0]==CELL_IR_NG);
-    judge.ExecuteRemeasure();check(judge.retest.waitingItem==1); // Still waiting: no OCV yet.
+    judge.ExecuteRemeasure();check(judge.retest.waitingItem==1); // OCV 미수신으로 대기 중.
     judge.tray.after_value[0]=15;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
     judge.ExecuteRemeasure();check(judge.lastCommand.s=="OCV"&&judge.retest.waitingItem==2);
     judge.tray.ocv_value[0]=2000;judge.retest.waitingChannel=-1;judge.retest.waitingItem=0;
     judge.ExecuteRemeasure();check(judge.retest.cell[0]==CELL_OK&&judge.acc_totaltray==1&&judge.acc_finalng==0);
-    // Any NG cause selects both IR and OCV; OK and empty cells are excluded.
+    // 불량 종류와 무관하게 IR·OCV를 모두 선택하며 정상·빈 셀은 제외한다.
     TTotalForm both;
-    both.tray.after_value[0]=25; // IR-only NG.
-    both.tray.ocv_value[1]=0;    // OCV-only NG.
+    both.tray.after_value[0]=25; // IR만 불량.
+    both.tray.ocv_value[1]=0;    // OCV만 불량.
     both.tray.after_value[2]=999;
     both.tray.cell[3]=0;both.tray.after_value[3]=999;
     both.PrepareRemeasureItems();

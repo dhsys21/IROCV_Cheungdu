@@ -95,7 +95,7 @@ int checks=0;
 #define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
 void ManualTests(){
     TTotalForm f;
-    // Active=true means opening, not established.
+    // Active=true는 연결 시도 중이며 연결 완료가 아니다.
     f.Client->Active=true;CHECK(f.CheckManualInspectionError());CHECK(f.red && f.displayed.s.find("Connection Fail")!=std::string::npos);
     f.Client->Online();Mod_PLC->pc.Online();Mod_PLC->plc.Online();
     Mod_PLC->pc.Close();CHECK(f.CheckManualInspectionError());CHECK(f.displayed=="PLC - PC Connection Fail.");
@@ -123,7 +123,7 @@ void SettingsTests(){
     f.ApplyConnectionSettings(true,true);
     CHECK(Mod_PLC->pc.Address=="192.0.2.4" && Mod_PLC->plc.Port==6008 && Mod_PLC->pc.Port==6007);
     CHECK(Mod_PLC->pc.closes==p+1 && Mod_PLC->plc.closes==l+1);
-    CHECK(f.client.closes==c+1); // PLC-only edit does not drop equipment.
+    CHECK(f.client.closes==c+1); // PLC 설정만 바꾸면 장비 연결은 유지한다.
     Mod_PLC->pc.Online();Mod_PLC->plc.Online();Mod_PLC->pc.Close();
     int opens=Mod_PLC->pc.opens;f.ApplyConnectionSettings(false,true);CHECK(Mod_PLC->pc.opens==opens+1 && Mod_PLC->plc.closes==l+1);
     f.eqPort.Text="bad";CHECK(!f.ValidateConnectionSettings(true,true));f.ApplyConnectionSettings(true,false);CHECK(f.Client->Port==46000);
@@ -131,7 +131,7 @@ void SettingsTests(){
     f.eqPort.Text="46000";f.eqHost.Text=" ";CHECK(!f.ValidateConnectionSettings(true,false));f.eqHost.Text="192.0.2.3";
     f.pcPort.Text="-1";CHECK(!f.ValidateConnectionSettings(false,true));f.pcPort.Text="6007";
     f.tray.ams=true;f.eqHost.Text="192.0.2.8";CHECK(!f.ValidateConnectionSettings(true,false));f.ApplyConnectionSettings(true,false);CHECK(f.Client->Host=="192.0.2.3");
-    f.eqHost.Text="192.0.2.3";CHECK(f.ValidateConnectionSettings(true,false)); // Same-address recovery allowed.
+    f.eqHost.Text="192.0.2.3";CHECK(f.ValidateConnectionSettings(true,false)); // 같은 주소로도 재접속할 수 있다.
     f.tray.ams=false;f.resultSaveStep=RESULT_WAIT_PLC_SEND;f.eqHost.Text="192.0.2.9";CHECK(!f.ValidateConnectionSettings(true,false));
     f.resultSaveStep=RESULT_IDLE;f.autoInspection.step=STEP_BUSY;CHECK(!f.ValidateConnectionSettings(true,false));f.autoInspection.step=STEP_WAIT_TRAY_IN;
 #ifdef TEST_IROCV
@@ -148,7 +148,7 @@ void SettingsTests(){
     CHECK(Mod_PLC->bClose && !Mod_PLC->pcRetry.Enabled && !Mod_PLC->plcRetry.Enabled);
     opens=Mod_PLC->pc.opens;Mod_PLC->Timer_PC_AutoConnectTimer(0);CHECK(Mod_PLC->pc.opens==opens);
     Mod_PLC->plc.failOpen=true;f.ApplyConnectionSettings(false,true);
-    CHECK(Mod_PLC->plcRetry.Enabled && Mod_PLC->pc.Active); // First path failure must not skip second path.
+    CHECK(Mod_PLC->plcRetry.Enabled && Mod_PLC->pc.Active); // 첫 연결이 실패해도 두 번째 연결을 시도한다.
     Mod_PLC->plc.failOpen=false;Mod_PLC->Timer_PLC_AutoConnectTimer(0);CHECK(Mod_PLC->plc.Active);
     Mod_PLC->Disconnect();
 }

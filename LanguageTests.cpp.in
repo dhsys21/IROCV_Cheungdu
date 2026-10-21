@@ -37,7 +37,7 @@ int main()
             CHECK(language.Translate(L"PC_SET PROBE_CLOSE (D5): 0 -> 1") == L"PC_SET PROBE_CLOSE (D5): 0 -> 1");
             UnicodeString caption=language.Translate(L"CELL SERIAL: BEFORE MEASURE");
             CHECK(caption.Pos(L"BEFORE MEASURE")==0);
-            CHECK(language.Translate(L"CELL SERIAL: BEFORE MEASURE")==caption); // cached
+            CHECK(language.Translate(L"CELL SERIAL: BEFORE MEASURE")==caption); // 캐시 사용
             CHECK(!language.GetLangStr(L"msgCellIdError1").IsEmpty());
             language.ReadLanguage(L"ZH");
             CHECK(language.Translate(L"PROCESS INFO") == L"\x6D41\x7A0B\x4FE1\x606F");
@@ -46,7 +46,7 @@ int main()
             CHECK(language.Translate(L"PLC: MANUAL").Pos(L"\x624B\x52A8")>0);
             CHECK(language.Translate(L"Waiting for PROBE DOWN") == L"\x7B49\x5F85\x63A2\x9488\x95ED\x5408");
             CHECK(language.Translate(L"Unregistered diagnostic text") == L"Unregistered diagnostic text");
-            language.LangDict->Values[L"TEXT_PROCESS_INFO"]=language.English->Values[L"TEXT_PROCESS_INFO"]; // overlay fallback
+            language.LangDict->Values[L"TEXT_PROCESS_INFO"]=language.English->Values[L"TEXT_PROCESS_INFO"]; // 덮어쓰기 실패 시 기본값
             CHECK(language.GetLangStr(L"TEXT_PROCESS_INFO")==L"PROCESS INFO");
             language.ReadLanguage(L"EN");
             CHECK(language.Translate(L"PC: AUTO")==L"PC: AUTO");

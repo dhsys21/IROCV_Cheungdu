@@ -1,4 +1,4 @@
-// Actual MSA handlers and stop implementation, without VCL or equipment.
+// 실제 MSA 이벤트·정지 처리 검사. VCL·장비 사용 없음.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -46,7 +46,7 @@ public:
     bool IsMeasurementResultComplete(){return complete;}
     void CancelResultSave(){waiting=false;complete=false;}
     void ResetMeasurementData(){++resets;complete=false;}
-    // Same mode contract as the production manual button: independent of PLC AUTO/TRAY.
+    // 수동 버튼과 같이 PLC AUTO·TRAY와 독립적으로 동작한다.
     void btnManualClick(TObject*){manual=true;autoTimer=false;++manualCalls;}
     void CmdStartMeasurement(){if(manual&&!waiting){++started;tray.ams=false;tray.amf=false;}}
     void SendData(AnsiString s){if(s.s=="STP")++stopped;}
@@ -80,23 +80,23 @@ int main(){
     CHECK(f.msaTimer->Enabled&&total.manual&&!total.autoTimer&&f.nStep==0);
     CHECK(plc.outputs[0]==1&&plc.outputs[1]==0&&!f.probetimer->Enabled);
     f.advMSAStartClick(0);CHECK(total.manualCalls==1);
-    f.Edit1->Text="99"; // Active repeat count remains 2.
-    f.msaTimerTimer(0);CHECK(f.nStep==0); // Still require actual probe open.
+    f.Edit1->Text="99"; // 진행 중인 반복 횟수는 2회로 유지한다.
+    f.msaTimerTimer(0);CHECK(f.nStep==0); // 실제 프로브 열림 확인이 필요하다.
     plc.inputs[0]=1;f.msaTimerTimer(0);CHECK(f.nStep==1&&plc.outputs[1]==1);
     f.msaTimerTimer(0);CHECK(f.nStep==1&&total.started==0);
     plc.inputs[1]=1;f.msaTimerTimer(0);CHECK(f.nStep==2&&total.started==1);
-    f.msaTimerTimer(0);CHECK(f.files==0); // Stale OPEN must not complete a round.
+    f.msaTimerTimer(0);CHECK(f.files==0); // 이전 OPEN 입력으로 주기를 완료하지 않는다.
     total.tray.amf=true;total.waiting=true;
     f.msaTimerTimer(0);CHECK(f.files==0&&f.msaTimer->Enabled);
-    total.waiting=false;f.msaTimerTimer(0);CHECK(f.files==0); // Not successfully completed.
+    total.waiting=false;f.msaTimerTimer(0);CHECK(f.files==0); // 정상 완료 아님.
     total.complete=true;f.msaTimerTimer(0);
     CHECK(f.files==1&&f.nStep==0&&f.lastTotal==2&&f.msaTimer->Enabled);
     f.msaTimerTimer(0);f.msaTimerTimer(0);
     CHECK(total.started==2&&f.nStep==2&&!total.tray.amf);
     total.tray.amf=true;total.complete=true;f.msaTimerTimer(0);
     CHECK(f.files==2&&f.reports==1&&!f.msaTimer->Enabled&&f.nStep==-1);
-    f.msaTimerTimer(0);CHECK(f.files==2); // Late queued timer.
-    // Stop must work during every MSA step, even with save pending and no probe/tray.
+    f.msaTimerTimer(0);CHECK(f.files==2); // 큐에서 지연된 타이머.
+    // 저장 대기·프로브·트레이 상태와 무관하게 모든 MSA 단계에서 정지한다.
     for(int step=0;step<3;++step){
         f.nStep=step;f.timer.Enabled=true;total.waiting=true;total.tray.ams=true;
         total.send.tx_mode=3;total.q_cmd.push("AMS");total.q_param.push("");

@@ -37,7 +37,7 @@ void __fastcall TTotalForm::CmdStartMeasurement()
     InitializeCellDisplay();
     tray.ams = false;
     tray.amf = false;
-    measurementClock.Prepare(); // Starts only when a valid AMS response is received.
+    measurementClock.Prepare(); // 유효한 AMS 응답을 받아야 시작한다.
     MakeData(3, "AMS");
     RecordOperationMeasurementStart();
 }
@@ -484,7 +484,7 @@ void __fastcall TTotalForm::CompleteResultCellSerialRead()
 //---------------------------------------------------------------------------
 // [CELL SERIAL 공통] 완료를 먼저 확인한다. 상시 읽기는 10초 초과 시 ID 없이 저장한다.
 // unsigned 경과시간 계산은 GetTickCount의 약 49일 주기 순환도 처리한다.
-// 디자이너 이벤트 진입점은 FormTotal.cpp의 Timer_ResultSaveTimer. 시리얼 수신·결과 저장·PLC 완료 대기는 이 파일에서 유지한다.
+// Timer_ResultSaveTimer에서 호출하며 시리얼 수신·결과 저장·PLC 완료를 처리한다.
 void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
 {
     if(IsAutoInspectionBlocked()) return;

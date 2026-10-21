@@ -13,9 +13,9 @@ TMod_PLC *Mod_PLC;
 __fastcall TMod_PLCAscii::TMod_PLCAscii(TComponent* Owner)
 	: TDataModule(Owner)
 {
-    //* PLC Data Init
+    // PLC 데이터 초기화
 	memset(plc_Interface_Data, 0, sizeof(unsigned char) * PLC_D_INTERFACE_LEN * 2);
-	//* PC Data Init
+	// PC 데이터 초기화
 	memset(pc_Interface_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_LEN * 2);
     memset(pc_Interface_Volt_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_VOLTAGE_LEN * 2);
 	memset(pc_Interface_Curr_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_CURRENT_LEN * 2);
@@ -176,8 +176,8 @@ void __fastcall TMod_PLCAscii::ClientSocket_PLCRead(TObject *Sender, TCustomWinS
 					// 4글자(1워드)씩 잘라서 16진수 변환 후 버퍼에 저장
 					AnsiString word_hex = data_part.SubString(num, 4);
 					int word_val = StrToInt("0x" + word_hex);
-					plc_Interface_Data[i][0] = word_val & 0xFF; // LSB
-					plc_Interface_Data[i][1] = (word_val >> 8) & 0xFF; // MSB
+					plc_Interface_Data[i][0] = word_val & 0xFF; // 최하위 바이트(LSB)
+					plc_Interface_Data[i][1] = (word_val >> 8) & 0xFF; // 최상위 바이트(MSB)
 					num += 4;
 				} else break;
 			}
@@ -250,7 +250,7 @@ void __fastcall TMod_PLCAscii::Timer_PC_WriteMsgTimer(TObject *Sender)
 	{
 		if(pc_ReadFlag)
 		{
-			//* Heart Beat
+			// 하트비트
 			if(BaseForm->nForm[0]->Client->Active)
 			{
 				bool flag = GetData(pc_Interface_Data, PC_D_HEART_BEAT, 0);
@@ -429,10 +429,10 @@ void __fastcall TMod_PLC2::SetDouble(unsigned char (*data)[2], int column, doubl
 //
 //	data[column][1] = temp / 256;
 //	data[column][0] = temp % 256;
-    short temp = static_cast<short>(value); // signed 16-bit 정수로 형변환
+    short temp = static_cast<short>(value); // 부호 있는 16비트 정수로 변환
 
     data[column][0] = temp & 0xFF;         // LSB (저장 순서에 따라 다름)
-    data[column][1] = (temp >> 8) & 0xFF;  // MSB
+    data[column][1] = (temp >> 8) & 0xFF;  // 최상위 바이트(MSB)
 }
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC2::SetString(unsigned char (*data)[2], int column, AnsiString msg)

@@ -156,7 +156,7 @@ void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
     RemeasureForm->Left = 200;
     RemeasureForm->Top = 70;
 	RemeasureForm->Visible = true;
-    // OnShow does not run again when the NG window is already visible.
+    // 이미 열린 NG 창에는 OnShow가 다시 발생하지 않는다.
     RemeasureForm->BringToFront();
 }
 //---------------------------------------------------------------------------
@@ -329,7 +329,7 @@ void __fastcall TTotalForm::btnManualClick(TObject *Sender)
 //    Timer_AutoInspection->Enabled = false;
 	this->CmdSetManualMode(true);
 	ShowPanelGroup(GrpLocal);
-    // MANUAL opens the former LOCAL TEST controls directly.
+    // 수동 버튼에서 기존 로컬 테스트 화면을 바로 연다.
     MeasureInfoForm->display.arl = nLocal;
     InitializeMeasureForm();
     MeasureInfoForm->pLocal->Visible = true;
