@@ -3,58 +3,58 @@
 
 #include "SiteConfig.h"
 
-// ÀÚµ¿ÃøÁ¤ ´Ü°è Á¤ÀÇ. PLC Åë½Å°ú È­¸é Ã³¸®´Â Stage_AutoInspection.cpp¿¡ ÀÖ´Ù.
-// RunAutoStep: ÇöÀç ´Ü°è¸¦ È®ÀÎÇÏ°í ÀÌ¹ø¿¡ ½ÇÇàÇÒ ¸í·É ÇÑ °³¸¦ °áÁ¤ÇÑ´Ù.
-// SetStep: ´ÙÀ½ ´Ü°è·Î º¯°æÇÏ°í ÇØ´ç ´Ü°èÀÇ ´ë±â È½¼ö¸¦ 0À¸·Î ÃÊ±âÈ­ÇÑ´Ù.
-// PRECHARGER¿Í °°Àº STEP/CMD °è¾àÀ» À¯ÁöÇÏµÇ, IR/OCVÀÇ ½ÃÀÛ Áö¿¬¡¤ÀçÃøÁ¤ ±ÔÄ¢Àº ÀÌ ÆÄÀÏ¿¡ µÐ´Ù.
-// ÃøÁ¤ ¿Ï·á ½ÅÈ£ ÀÚÃ¼°¡ ¾Æ´Ï¶ó °á°ú ÀúÀå/PLC ¼Û½Å ¸¶°¨ ÀÌÈÄ¿¡ SetMeasureComplete¸¦ È£ÃâÇÑ´Ù.
+// ìžë™ì¸¡ì • ë‹¨ê³„ ì •ì˜. PLC í†µì‹ ê³¼ í™”ë©´ ì²˜ë¦¬ëŠ” Stage_AutoInspection.cppì— ìžˆë‹¤.
+// RunAutoStep: í˜„ìž¬ ë‹¨ê³„ë¥¼ í™•ì¸í•˜ê³  ì´ë²ˆì— ì‹¤í–‰í•  ëª…ë ¹ í•œ ê°œë¥¼ ê²°ì •í•œë‹¤.
+// SetStep: ë‹¤ìŒ ë‹¨ê³„ë¡œ ë³€ê²½í•˜ê³  í•´ë‹¹ ë‹¨ê³„ì˜ ëŒ€ê¸° íšŸìˆ˜ë¥¼ 0ìœ¼ë¡œ ì´ˆê¸°í™”í•œë‹¤.
+// PRECHARGERì™€ ê°™ì€ STEP/CMD ê³„ì•½ì„ ìœ ì§€í•˜ë˜, IR/OCVì˜ ì‹œìž‘ ì§€ì—°Â·ìž¬ì¸¡ì • ê·œì¹™ì€ ì´ íŒŒì¼ì— ë‘”ë‹¤.
+// ì¸¡ì • ì™„ë£Œ ì‹ í˜¸ ìžì²´ê°€ ì•„ë‹ˆë¼ ê²°ê³¼ ì €ìž¥/PLC ì†¡ì‹  ë§ˆê° ì´í›„ì— SetMeasureCompleteë¥¼ í˜¸ì¶œí•œë‹¤.
 enum TAutoInspectionStep
 {
-    STEP_WAIT_TRAY_IN,                 // Æ®·¹ÀÌ µµÂø ´ë±â
-    STEP_READ_TRAY_ID,                 // Æ®·¹ÀÌ ID ÀÐ±â
-    STEP_READ_CELL_DATA,               // ¼¿ À¯¹« ÀÐ±â
-    STEP_WAIT_START_DELAY,             // ÃøÁ¤ ½ÃÀÛ Àü ¼³Á¤ ½Ã°£ ´ë±â
-    STEP_WAIT_CELL_SERIAL,             // ¼¿ ½Ã¸®¾ó ÀüÃ¼ ¼ö½Å ´ë±â
-    STEP_WAIT_CELL_SERIAL_ERROR,       // ½Ã¸®¾ó ¿À·ù: SAVE / CANCEL ¼±ÅÃ ´ë±â
-    STEP_WAIT_PROBE_CLOSE,             // ÇÁ·Îºê ´ÝÈû ´ë±â
-    STEP_WAIT_REMEASURE_PROBE_CLOSE,   // ÀçÃøÁ¤¿ë ÇÁ·Îºê ´ÝÈû ´ë±â
-    STEP_WAIT_MEASURE_COMPLETE,        // ÃøÁ¤ ¹× °á°ú Ã³¸® ¿Ï·á ´ë±â
-    STEP_WAIT_PROBE_OPEN,              // ÇÁ·Îºê ¿­¸² ´ë±â
-    STEP_WAIT_NG_ERROR,                // NG ¿À·ù: ¹èÃâ / Àç½ÃÀÛ ¼±ÅÃ ´ë±â
-    STEP_WAIT_TRAY_OUT,                // Æ®·¹ÀÌ ¹èÃâ ¿Ï·á ´ë±â
-    STEP_ERROR_STOP                    // ¿¹¿Ü ¹ß»ýÀ¸·Î ÀÚµ¿ ÁøÇà Á¤Áö
+    STEP_WAIT_TRAY_IN,                 // íŠ¸ë ˆì´ ë„ì°© ëŒ€ê¸°
+    STEP_READ_TRAY_ID,                 // íŠ¸ë ˆì´ ID ì½ê¸°
+    STEP_READ_CELL_DATA,               // ì…€ ìœ ë¬´ ì½ê¸°
+    STEP_WAIT_START_DELAY,             // ì¸¡ì • ì‹œìž‘ ì „ ì„¤ì • ì‹œê°„ ëŒ€ê¸°
+    STEP_WAIT_CELL_SERIAL,             // ì…€ ì‹œë¦¬ì–¼ ì „ì²´ ìˆ˜ì‹  ëŒ€ê¸°
+    STEP_WAIT_CELL_SERIAL_ERROR,       // ì‹œë¦¬ì–¼ ì˜¤ë¥˜: SAVE / CANCEL ì„ íƒ ëŒ€ê¸°
+    STEP_WAIT_PROBE_CLOSE,             // í”„ë¡œë¸Œ ë‹«íž˜ ëŒ€ê¸°
+    STEP_WAIT_REMEASURE_PROBE_CLOSE,   // ìž¬ì¸¡ì •ìš© í”„ë¡œë¸Œ ë‹«íž˜ ëŒ€ê¸°
+    STEP_WAIT_MEASURE_COMPLETE,        // ì¸¡ì • ë° ê²°ê³¼ ì²˜ë¦¬ ì™„ë£Œ ëŒ€ê¸°
+    STEP_WAIT_PROBE_OPEN,              // í”„ë¡œë¸Œ ì—´ë¦¼ ëŒ€ê¸°
+    STEP_WAIT_NG_ERROR,                // NG ì˜¤ë¥˜: ë°°ì¶œ / ìž¬ì‹œìž‘ ì„ íƒ ëŒ€ê¸°
+    STEP_WAIT_TRAY_OUT,                // íŠ¸ë ˆì´ ë°°ì¶œ ì™„ë£Œ ëŒ€ê¸°
+    STEP_ERROR_STOP                    // ì˜ˆì™¸ ë°œìƒìœ¼ë¡œ ìžë™ ì§„í–‰ ì •ì§€
 };
 
 enum TAutoInspectionCommand
 {
-    CMD_NONE,                             // ½ÇÇàÇÒ ¸í·É ¾øÀ½
-    CMD_TRAY_IN,                          // Æ®·¹ÀÌ µµÂø ÈÄ °Ë»ç Á¤º¸ ÃÊ±âÈ­
-    CMD_BYPASS_TRAY_OUT,                   // BYPASS ¹èÃâ
-    CMD_READ_TRAY_ID,                      // ÀÐÀº Æ®·¹ÀÌ ID Àû¿ë
-    CMD_READ_CELL_DATA,                    // ¼¿ À¯¹« ÀÐ±â
-    CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL,  // ÇÁ·Îºê ´Ý±â ¿äÃ» + ½Ã¸®¾ó ¼ö½Å ½ÃÀÛ
-    CMD_PROBE_CLOSE,                       // »ó½Ã ÀÐ±â: ÅõÀÔ ½Ã ½Ã¸®¾ó °Ë»ç ¾øÀÌ ÇÁ·Îºê ´Ý±â
-    CMD_SAVE_CELL_SERIAL,                 // Á¤»ó ¼ö½ÅÇÑ ½Ã¸®¾ó ÀúÀå
-    CMD_CELL_SERIAL_COUNT_ERROR,          // ½Ã¸®¾ó °³¼ö ºÒÀÏÄ¡ Ç¥½Ã
-    CMD_CELL_SERIAL_TIMEOUT,              // ½Ã¸®¾ó ¼ö½Å ½Ã°£ ÃÊ°ú Ç¥½Ã
-    CMD_MEASURE_START,                    // ÀüÃ¼ ÃøÁ¤ ½ÃÀÛ
-    CMD_REQUEST_PROBE_REMEASURE,          // ÇÁ·Îºê ¿­¸² È®ÀÎ ÈÄ ´Ù½Ã ´Ý±â ¿äÃ»
-    CMD_REMEASURE_START,                  // ÀüÃ¼/¼±ÅÃ ÀçÃøÁ¤ ½ÃÀÛ
-    CMD_NG_ERROR,                         // NG °³¼ö ¿À·ù Ç¥½Ã
-    CMD_TRAY_OUT,                         // Æ®·¹ÀÌ ¹èÃâ ¿äÃ»
-    CMD_TRAY_OUT_COMPLETE                 // ¹èÃâ ¿Ï·á ÈÄ Ãâ·Â Á¤¸®
+    CMD_NONE,                             // ì‹¤í–‰í•  ëª…ë ¹ ì—†ìŒ
+    CMD_TRAY_IN,                          // íŠ¸ë ˆì´ ë„ì°© í›„ ê²€ì‚¬ ì •ë³´ ì´ˆê¸°í™”
+    CMD_BYPASS_TRAY_OUT,                   // BYPASS ë°°ì¶œ
+    CMD_READ_TRAY_ID,                      // ì½ì€ íŠ¸ë ˆì´ ID ì ìš©
+    CMD_READ_CELL_DATA,                    // ì…€ ìœ ë¬´ ì½ê¸°
+    CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL,  // í”„ë¡œë¸Œ ë‹«ê¸° ìš”ì²­ + ì‹œë¦¬ì–¼ ìˆ˜ì‹  ì‹œìž‘
+    CMD_PROBE_CLOSE,                       // ìƒì‹œ ì½ê¸°: íˆ¬ìž… ì‹œ ì‹œë¦¬ì–¼ ê²€ì‚¬ ì—†ì´ í”„ë¡œë¸Œ ë‹«ê¸°
+    CMD_SAVE_CELL_SERIAL,                 // ì •ìƒ ìˆ˜ì‹ í•œ ì‹œë¦¬ì–¼ ì €ìž¥
+    CMD_CELL_SERIAL_COUNT_ERROR,          // ì‹œë¦¬ì–¼ ê°œìˆ˜ ë¶ˆì¼ì¹˜ í‘œì‹œ
+    CMD_CELL_SERIAL_TIMEOUT,              // ì‹œë¦¬ì–¼ ìˆ˜ì‹  ì‹œê°„ ì´ˆê³¼ í‘œì‹œ
+    CMD_MEASURE_START,                    // ì „ì²´ ì¸¡ì • ì‹œìž‘
+    CMD_REQUEST_PROBE_REMEASURE,          // í”„ë¡œë¸Œ ì—´ë¦¼ í™•ì¸ í›„ ë‹¤ì‹œ ë‹«ê¸° ìš”ì²­
+    CMD_REMEASURE_START,                  // ì „ì²´/ì„ íƒ ìž¬ì¸¡ì • ì‹œìž‘
+    CMD_NG_ERROR,                         // NG ê°œìˆ˜ ì˜¤ë¥˜ í‘œì‹œ
+    CMD_TRAY_OUT,                         // íŠ¸ë ˆì´ ë°°ì¶œ ìš”ì²­
+    CMD_TRAY_OUT_COMPLETE                 // ë°°ì¶œ ì™„ë£Œ í›„ ì¶œë ¥ ì •ë¦¬
 };
 
 struct TAutoInspectionSetting
 {
-    // Config ÀçÃøÁ¤ µÎ Ç×¸ñ. NG °³¼ö¿Í Àç°³Æó È½¼ö´Â º°°³ÀÌ¸ç ÀÌ¹ø Æ®·¹ÀÌ µ¿¾È °íÁ¤ÇÑ´Ù.
-    int closedProbeRemeasureMaxNgCount; // ´ÝÈû À¯Áö: NG°¡ 1~¼³Á¤°ª ÀÌÇÏÀÏ ¶§ 1È¸, 0=²û.
-    int probeRemeasureCount; // Ãß°¡ Àç°³Æó È½¼ö. 0=»ç¿ë ¾È ÇÔ, ÃÖÃÊ ÃøÁ¤ Á¦¿Ü.
-    // ¾Æ·¡ ´ë±â ¼³Á¤¸¸ 200ms Å¸ÀÌ¸ÓÀÇ À¯È¿ È£Ãâ È½¼ö ´ÜÀ§´Ù.
-    // ´ë±â ¼³Á¤°ª 50ÀÌ¸é ±âÁ¸ ÄÚµå¿Í µ¿ÀÏÇÏ°Ô 51¹øÂ° È£Ãâ¿¡¼­ ¿Ï·á/½Ã°£ ÃÊ°ú.
-    unsigned int startDelayCount; // ÃøÁ¤ ½ÃÀÛ Àü ´ë±â È½¼ö
-    unsigned int cellSerialTimeoutCount; // ½Ã¸®¾ó ¼ö½Å Á¦ÇÑ È½¼ö
-    // »ý»ê ¹öÀüÀÇ ±âº» ´ë±â È½¼ö·Î ÃÊ±âÈ­ÇÑ´Ù.
+    // Config ìž¬ì¸¡ì • ë‘ í•­ëª©. NG ê°œìˆ˜ì™€ ìž¬ê°œí íšŸìˆ˜ëŠ” ë³„ê°œì´ë©° ì´ë²ˆ íŠ¸ë ˆì´ ë™ì•ˆ ê³ ì •í•œë‹¤.
+    int closedProbeRemeasureMaxNgCount; // ë‹«íž˜ ìœ ì§€: NGê°€ 1~ì„¤ì •ê°’ ì´í•˜ì¼ ë•Œ 1íšŒ, 0=ë”.
+    int probeRemeasureCount; // ì¶”ê°€ ìž¬ê°œí íšŸìˆ˜. 0=ì‚¬ìš© ì•ˆ í•¨, ìµœì´ˆ ì¸¡ì • ì œì™¸.
+    // ì•„ëž˜ ëŒ€ê¸° ì„¤ì •ë§Œ 200ms íƒ€ì´ë¨¸ì˜ ìœ íš¨ í˜¸ì¶œ íšŸìˆ˜ ë‹¨ìœ„ë‹¤.
+    // ëŒ€ê¸° ì„¤ì •ê°’ 50ì´ë©´ ê¸°ì¡´ ì½”ë“œì™€ ë™ì¼í•˜ê²Œ 51ë²ˆì§¸ í˜¸ì¶œì—ì„œ ì™„ë£Œ/ì‹œê°„ ì´ˆê³¼.
+    unsigned int startDelayCount; // ì¸¡ì • ì‹œìž‘ ì „ ëŒ€ê¸° íšŸìˆ˜
+    unsigned int cellSerialTimeoutCount; // ì‹œë¦¬ì–¼ ìˆ˜ì‹  ì œí•œ íšŸìˆ˜
+    // ìƒì‚° ë²„ì „ì˜ ê¸°ë³¸ ëŒ€ê¸° íšŸìˆ˜ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     TAutoInspectionSetting() :
         closedProbeRemeasureMaxNgCount(DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT),
         probeRemeasureCount(0), startDelayCount(50), cellSerialTimeoutCount(50) {}
@@ -62,81 +62,81 @@ struct TAutoInspectionSetting
 
 struct TAutoInspectionData
 {
-    // ÇöÀç PLC ½ÅÈ£, ¿îÀü ¿É¼Ç, °Ë»ç ¼ö·®. ÁøÇà ´Ü°è(Step)¿Í´Â ´Ù¸¥ Á¤º¸´Ù.
-    bool trayIn; // PLC Æ®·¹ÀÌ µµÂø ½ÅÈ£
-    bool bypass; // BYPASS »ç¿ë ¿©ºÎ
-    bool trayIdReady; // Æ®·¹ÀÌ ID ÀÐ±â ¼º°ø ¿©ºÎ
-    bool cycleMode; // Àü Ã¤³ÎÀ» »ç¿ëÇÏ´Â Cycle ½ÃÇè ¸ðµå
-    bool cellSerialContinuousRead; // ÀÌ¹ø Æ®·¹ÀÌ ¼³Á¤: trueÀÌ¸é °á°ú ÀúÀå ¶§¸¸ ½Ã¸®¾ó °Ë»ç
-    bool serialComplete; // ºÐÇÒ ¼ö½Å ÀüÃ¼ ¿Ï·á ¿©ºÎ(PLC ÇÚµå¼ÎÀÌÅ© ºñÆ®°¡ ¾Æ´Ô)
-    bool probeClosed; // PLC ÇÁ·Îºê ´ÝÈû È®ÀÎ
-    bool probeOpen; // PLC ÇÁ·Îºê ¿­¸² È®ÀÎ
-    bool autoMode; // ÇöÀç ¿îÀü ¸ðµå°¡ AutoÀÎÁö
-    int cellCount; // CELL DATAÀÇ Á¸Àç ¼¿ °³¼ö
-    int serialCount; // ¼ö½ÅÇÑ À¯È¿ CELL SERIAL °³¼ö
-    int ngCount; // Á¸Àç ¼¿ Áß IR/OCV/Á¢ÃË ºÒ·® °³¼ö
-    int ngLimit; // NG ¿À·ù ¼³Á¤°ª(ÃÊ°ú ½Ã ¿À·ù)
-    // PLC ½ÅÈ£¿Í °Ë»ç ¼ö·®ÀÇ ±âº»°ªÀ» ÃÊ±âÈ­ÇÑ´Ù.
+    // í˜„ìž¬ PLC ì‹ í˜¸, ìš´ì „ ì˜µì…˜, ê²€ì‚¬ ìˆ˜ëŸ‰. ì§„í–‰ ë‹¨ê³„(Step)ì™€ëŠ” ë‹¤ë¥¸ ì •ë³´ë‹¤.
+    bool trayIn; // PLC íŠ¸ë ˆì´ ë„ì°© ì‹ í˜¸
+    bool bypass; // BYPASS ì‚¬ìš© ì—¬ë¶€
+    bool trayIdReady; // íŠ¸ë ˆì´ ID ì½ê¸° ì„±ê³µ ì—¬ë¶€
+    bool cycleMode; // ì „ ì±„ë„ì„ ì‚¬ìš©í•˜ëŠ” Cycle ì‹œí—˜ ëª¨ë“œ
+    bool cellSerialContinuousRead; // ì´ë²ˆ íŠ¸ë ˆì´ ì„¤ì •: trueì´ë©´ ê²°ê³¼ ì €ìž¥ ë•Œë§Œ ì‹œë¦¬ì–¼ ê²€ì‚¬
+    bool serialComplete; // ë¶„í•  ìˆ˜ì‹  ì „ì²´ ì™„ë£Œ ì—¬ë¶€(PLC í•¸ë“œì…°ì´í¬ ë¹„íŠ¸ê°€ ì•„ë‹˜)
+    bool probeClosed; // PLC í”„ë¡œë¸Œ ë‹«íž˜ í™•ì¸
+    bool probeOpen; // PLC í”„ë¡œë¸Œ ì—´ë¦¼ í™•ì¸
+    bool autoMode; // í˜„ìž¬ ìš´ì „ ëª¨ë“œê°€ Autoì¸ì§€
+    int cellCount; // CELL DATAì˜ ì¡´ìž¬ ì…€ ê°œìˆ˜
+    int serialCount; // ìˆ˜ì‹ í•œ ìœ íš¨ CELL SERIAL ê°œìˆ˜
+    int ngCount; // ì¡´ìž¬ ì…€ ì¤‘ IR/OCV/ì ‘ì´‰ ë¶ˆëŸ‰ ê°œìˆ˜
+    int ngLimit; // NG ì˜¤ë¥˜ ì„¤ì •ê°’(ì´ˆê³¼ ì‹œ ì˜¤ë¥˜)
+    // PLC ì‹ í˜¸ì™€ ê²€ì‚¬ ìˆ˜ëŸ‰ì˜ ê¸°ë³¸ê°’ì„ ì´ˆê¸°í™”í•œë‹¤.
     TAutoInspectionData();
 };
 
 class TAutoInspectionSequence
 {
 public:
-    // ÀÚµ¿ °Ë»ç ½ÃÀÛ ´Ü°è¸¦ TRAY IN ´ë±â·Î ¼³Á¤ÇÑ´Ù.
+    // ìžë™ ê²€ì‚¬ ì‹œìž‘ ë‹¨ê³„ë¥¼ TRAY IN ëŒ€ê¸°ë¡œ ì„¤ì •í•œë‹¤.
     TAutoInspectionSequence();
-    // ÇöÀç ´Ü°è Á¶È¸. ´Ù¸¥ Æû¿¡¼­ ´Ü°è °ªÀ» Á÷Á¢ º¯°æÇÏÁö ¾Ê´Â´Ù.
+    // í˜„ìž¬ ë‹¨ê³„ ì¡°íšŒ. ë‹¤ë¥¸ í¼ì—ì„œ ë‹¨ê³„ ê°’ì„ ì§ì ‘ ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
     TAutoInspectionStep GetStep() const { return currentStep; }
-    // ÇöÀç ´Ü°èÀÇ ´ë±â È½¼ö Á¶È¸(È­¸é ÁøÇà Ç¥½Ã¿ë).
+    // í˜„ìž¬ ë‹¨ê³„ì˜ ëŒ€ê¸° íšŸìˆ˜ ì¡°íšŒ(í™”ë©´ ì§„í–‰ í‘œì‹œìš©).
     unsigned int GetWaitCount() const { return waitCount; }
-    // Àû¿ë ÁßÀÎ ´ë±â ¼³Á¤ Á¶È¸.
+    // ì ìš© ì¤‘ì¸ ëŒ€ê¸° ì„¤ì • ì¡°íšŒ.
     const TAutoInspectionSetting &GetSetting() const { return sequenceSetting; }
-    // ´ë±â ¼³Á¤À» Àû¿ëÇÏ°í TRAY INºÎÅÍ ½ÃÀÛÇÑ´Ù. PLC Ãâ·ÂÀº È£ÃâºÎ¿¡¼­ ÃÊ±âÈ­ÇÑ´Ù.
+    // ëŒ€ê¸° ì„¤ì •ì„ ì ìš©í•˜ê³  TRAY INë¶€í„° ì‹œìž‘í•œë‹¤. PLC ì¶œë ¥ì€ í˜¸ì¶œë¶€ì—ì„œ ì´ˆê¸°í™”í•œë‹¤.
     void Initialize(const TAutoInspectionSetting &setting);
-    // Timer_AutoInspection¿¡¼­ ÇÑ ¹ø È£ÃâÇÒ ¶§ ÇöÀç ´Ü°èÀÇ Á¶°ÇÀ» °Ë»çÇÑ´Ù.
-    // ÇöÀç ´Ü°èÀÇ Á¶°ÇÀ» °Ë»çÇÏ¿© ½ÇÇàÇÒ ¸í·É ÇÏ³ª¸¦ ¹ÝÈ¯ÇÑ´Ù. PLC/UI¸¦ Á÷Á¢ Á¶ÀÛÇÏÁö ¾Ê´Â´Ù.
+    // Timer_AutoInspectionì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•  ë•Œ í˜„ìž¬ ë‹¨ê³„ì˜ ì¡°ê±´ì„ ê²€ì‚¬í•œë‹¤.
+    // í˜„ìž¬ ë‹¨ê³„ì˜ ì¡°ê±´ì„ ê²€ì‚¬í•˜ì—¬ ì‹¤í–‰í•  ëª…ë ¹ í•˜ë‚˜ë¥¼ ë°˜í™˜í•œë‹¤. PLC/UIë¥¼ ì§ì ‘ ì¡°ìž‘í•˜ì§€ ì•ŠëŠ”ë‹¤.
     TAutoInspectionCommand RunAutoStep(const TAutoInspectionData &data);
 
-    // ¿î¿µÀÚ ¼±ÅÃ/ÃøÁ¤ ¿Ï·á ÅëÁö: ¸ÂÁö ¾Ê´Â ´Ü°è ¶Ç´Â Áßº¹ ¿äÃ»Àº false/CMD_NONEÀ¸·Î ¹«½Ã.
-    // »ç¿ëÀÚ SAVE ½ÂÀÎ¿¡ µû¶ó ÇÁ·Îºê ´ÝÈû ´ë±â·Î ÁøÇàÇÑ´Ù. ½ÇÁ¦ ½Ã¸®¾ó ÀúÀåÀº Æû¿¡¼­ Ã³¸®ÇÑ´Ù.
+    // ìš´ì˜ìž ì„ íƒ/ì¸¡ì • ì™„ë£Œ í†µì§€: ë§žì§€ ì•ŠëŠ” ë‹¨ê³„ ë˜ëŠ” ì¤‘ë³µ ìš”ì²­ì€ false/CMD_NONEìœ¼ë¡œ ë¬´ì‹œ.
+    // ì‚¬ìš©ìž SAVE ìŠ¹ì¸ì— ë”°ë¼ í”„ë¡œë¸Œ ë‹«íž˜ ëŒ€ê¸°ë¡œ ì§„í–‰í•œë‹¤. ì‹¤ì œ ì‹œë¦¬ì–¼ ì €ìž¥ì€ í¼ì—ì„œ ì²˜ë¦¬í•œë‹¤.
     bool SaveCellSerialAfterError();
-    // ½Ã¸®¾ó ¿À·ù »óÅÂ¿¡¼­ ¼ö½Å ´ë±â·Î µÇµ¹¾Æ°£´Ù. ½ÇÁ¦ ¼ö½Å ¿äÃ»Àº Æû¿¡¼­ ½ÇÇàÇÑ´Ù.
+    // ì‹œë¦¬ì–¼ ì˜¤ë¥˜ ìƒíƒœì—ì„œ ìˆ˜ì‹  ëŒ€ê¸°ë¡œ ë˜ëŒì•„ê°„ë‹¤. ì‹¤ì œ ìˆ˜ì‹  ìš”ì²­ì€ í¼ì—ì„œ ì‹¤í–‰í•œë‹¤.
     bool RetryCellSerialRead();
-    // ÀçÃøÁ¤ °¡´ÉÇÑ ´Ü°è¿¡¼­ ÇÁ·Îºê ´ÝÈû ´ë±â·Î º¯°æÇÑ´Ù. ÁøÇà Áß Áßº¹ ¿äÃ»Àº °ÅÀýÇÑ´Ù.
+    // ìž¬ì¸¡ì • ê°€ëŠ¥í•œ ë‹¨ê³„ì—ì„œ í”„ë¡œë¸Œ ë‹«íž˜ ëŒ€ê¸°ë¡œ ë³€ê²½í•œë‹¤. ì§„í–‰ ì¤‘ ì¤‘ë³µ ìš”ì²­ì€ ê±°ì ˆí•œë‹¤.
     bool StartRemeasure();
-    // ½ÇÁ¦ Àç°³Æó ÀçÃøÁ¤ ½ÃÀÛ È½¼ö. »õ Æ®·¹ÀÌ¿¡¼­¸¸ 0À¸·Î ÃÊ±âÈ­ÇÑ´Ù.
+    // ì‹¤ì œ ìž¬ê°œí ìž¬ì¸¡ì • ì‹œìž‘ íšŸìˆ˜. ìƒˆ íŠ¸ë ˆì´ì—ì„œë§Œ 0ìœ¼ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     int GetProbeRemeasureDoneCount() const { return probeRemeasureDoneCount; }
-    // µÎ ÀçÃøÁ¤ ¼³Á¤À» TRAY IN ´ë±â¿¡¼­¸¸ ¹Ý¿µÇÑ´Ù. °Ë»ç µµÁß SAVEÇØµµ ÇöÀç Æ®·¹ÀÌ´Â À¯Áö.
-    // maxNgCount´Â ¼¿ °³¼ö(ÀÌÇÏ), probeCount´Â Ãß°¡ Àç°³Æó È½¼öÀÌ¸ç ¼­·Î ´Ù¸¥ ´ÜÀ§´Ù.
+    // ë‘ ìž¬ì¸¡ì • ì„¤ì •ì„ TRAY IN ëŒ€ê¸°ì—ì„œë§Œ ë°˜ì˜í•œë‹¤. ê²€ì‚¬ ë„ì¤‘ SAVEí•´ë„ í˜„ìž¬ íŠ¸ë ˆì´ëŠ” ìœ ì§€.
+    // maxNgCountëŠ” ì…€ ê°œìˆ˜(ì´í•˜), probeCountëŠ” ì¶”ê°€ ìž¬ê°œí íšŸìˆ˜ì´ë©° ì„œë¡œ ë‹¤ë¥¸ ë‹¨ìœ„ë‹¤.
     void SetNextTrayRemeasureSettings(int maxNgCount, int probeCount) {
         if(currentStep != STEP_WAIT_TRAY_IN) return;
         sequenceSetting.closedProbeRemeasureMaxNgCount =
             maxNgCount < 0 ? 0 : (maxNgCount > MAXCHANNEL ? MAXCHANNEL : maxNgCount);
         sequenceSetting.probeRemeasureCount = probeCount < 0 ? 0 : probeCount;
     }
-    // ÃøÁ¤ °á°ú Ã³¸® ¿Ï·á¸¦ ¹Þ¾Æ ÇÁ·Îºê ¿­¸² ´ë±â·Î º¯°æÇÑ´Ù. Áßº¹/´Ù¸¥ ´Ü°èÀÇ ¿Ï·á´Â ¹«½ÃÇÑ´Ù.
+    // ì¸¡ì • ê²°ê³¼ ì²˜ë¦¬ ì™„ë£Œë¥¼ ë°›ì•„ í”„ë¡œë¸Œ ì—´ë¦¼ ëŒ€ê¸°ë¡œ ë³€ê²½í•œë‹¤. ì¤‘ë³µ/ë‹¤ë¥¸ ë‹¨ê³„ì˜ ì™„ë£ŒëŠ” ë¬´ì‹œí•œë‹¤.
     bool SetMeasureComplete();
-    // Á¤»ó ÀÚµ¿ ¹èÃâ ÆÇ´Ü: NG ¿À·ù ´ë±â ¶Ç´Â Æ®·¹ÀÌ ¹èÃâ ¸í·ÉÀ» ¹ÝÈ¯ÇÑ´Ù.
+    // ì •ìƒ ìžë™ ë°°ì¶œ íŒë‹¨: NG ì˜¤ë¥˜ ëŒ€ê¸° ë˜ëŠ” íŠ¸ë ˆì´ ë°°ì¶œ ëª…ë ¹ì„ ë°˜í™˜í•œë‹¤.
     TAutoInspectionCommand AutomaticTrayOut(int ngCount, int cellCount, int ngLimit);
-    // ¿î¿µÀÚ°¡ ¿äÃ»ÇÑ °­Á¦ ¹èÃâ ´Ü°è·Î º¯°æÇÑ´Ù. NG ÆÇÁ¤Àº »ý·«ÇÏ°í Áßº¹ ¹èÃâ ¿äÃ»Àº ¹«½ÃÇÑ´Ù.
+    // ìš´ì˜ìžê°€ ìš”ì²­í•œ ê°•ì œ ë°°ì¶œ ë‹¨ê³„ë¡œ ë³€ê²½í•œë‹¤. NG íŒì •ì€ ìƒëžµí•˜ê³  ì¤‘ë³µ ë°°ì¶œ ìš”ì²­ì€ ë¬´ì‹œí•œë‹¤.
     TAutoInspectionCommand ForceTrayOut();
-    // ÀÚµ¿ ´Ü°è ÁøÇàÀ» ¿À·ù Á¤Áö·Î °íÁ¤ÇÑ´Ù. PLC ºñ»óÁ¤Áö³ª ÀÌµ¿ ¸í·ÉÀ» Ãâ·ÂÇÏÁö ¾Ê´Â´Ù.
+    // ìžë™ ë‹¨ê³„ ì§„í–‰ì„ ì˜¤ë¥˜ ì •ì§€ë¡œ ê³ ì •í•œë‹¤. PLC ë¹„ìƒì •ì§€ë‚˜ ì´ë™ ëª…ë ¹ì„ ì¶œë ¥í•˜ì§€ ì•ŠëŠ”ë‹¤.
     void StopWithError();
 
-    // ÇöÀç ´Ü°è°¡ ÃøÁ¤ ÁØºñ/ÃøÁ¤ ¿Ï·á/ÇÁ·Îºê ´ë±â ±¸°£ÀÎÁö ¹ÝÈ¯ÇÑ´Ù.
+    // í˜„ìž¬ ë‹¨ê³„ê°€ ì¸¡ì • ì¤€ë¹„/ì¸¡ì • ì™„ë£Œ/í”„ë¡œë¸Œ ëŒ€ê¸° êµ¬ê°„ì¸ì§€ ë°˜í™˜í•œë‹¤.
     bool IsMeasureStep() const;
-    // Á¸ÀçÇÏ´Â ¼¿ÀÇ NG°¡ ¼³Á¤°ª ÃÊ°ú ¶Ç´Â Àü·® NGÀÎÁö °Ë»çÇÑ´Ù. ¼³Á¤°ª°ú °°À¸¸é Çã¿ëÇÑ´Ù.
+    // ì¡´ìž¬í•˜ëŠ” ì…€ì˜ NGê°€ ì„¤ì •ê°’ ì´ˆê³¼ ë˜ëŠ” ì „ëŸ‰ NGì¸ì§€ ê²€ì‚¬í•œë‹¤. ì„¤ì •ê°’ê³¼ ê°™ìœ¼ë©´ í—ˆìš©í•œë‹¤.
     static bool IsNgCountError(int ngCount, int cellCount, int ngLimit);
-    // ´Ü°è ÀÌ¸§À» ·Î±×¿¡¼­ °Ë»ö °¡´ÉÇÑ ¹®ÀÚ¿­·Î ¹ÝÈ¯ÇÑ´Ù.
+    // ë‹¨ê³„ ì´ë¦„ì„ ë¡œê·¸ì—ì„œ ê²€ìƒ‰ ê°€ëŠ¥í•œ ë¬¸ìžì—´ë¡œ ë°˜í™˜í•œë‹¤.
     static const char *GetStepName(TAutoInspectionStep step);
 
 private:
     int probeRemeasureDoneCount;
-    bool automaticProbeRemeasure; // ÀÚµ¿ ¿äÃ»ÀÇ ´ÝÈû È®ÀÎ ¶§¸¸ È½¼ö¸¦ Áõ°¡½ÃÅ²´Ù.
-    TAutoInspectionStep currentStep; // ÇöÀç ÀÚµ¿ °Ë»ç ´Ü°è
-    unsigned int waitCount; // ÇöÀç ´Ü°è¿¡¼­ °æ°úÇÑ À¯È¿ Å¸ÀÌ¸Ó È£Ãâ È½¼ö
-    TAutoInspectionSetting sequenceSetting; // ÃÊ±âÈ­ ¶§ Àû¿ëÇÑ ´ë±â ¼³Á¤
-    // ´ÙÀ½ ´Ü°è·Î º¯°æÇÏ°í ÇØ´ç ´Ü°èÀÇ ´ë±â È½¼ö¸¦ 0À¸·Î ÃÊ±âÈ­ÇÑ´Ù.
+    bool automaticProbeRemeasure; // ìžë™ ìš”ì²­ì˜ ë‹«íž˜ í™•ì¸ ë•Œë§Œ íšŸìˆ˜ë¥¼ ì¦ê°€ì‹œí‚¨ë‹¤.
+    TAutoInspectionStep currentStep; // í˜„ìž¬ ìžë™ ê²€ì‚¬ ë‹¨ê³„
+    unsigned int waitCount; // í˜„ìž¬ ë‹¨ê³„ì—ì„œ ê²½ê³¼í•œ ìœ íš¨ íƒ€ì´ë¨¸ í˜¸ì¶œ íšŸìˆ˜
+    TAutoInspectionSetting sequenceSetting; // ì´ˆê¸°í™” ë•Œ ì ìš©í•œ ëŒ€ê¸° ì„¤ì •
+    // ë‹¤ìŒ ë‹¨ê³„ë¡œ ë³€ê²½í•˜ê³  í•´ë‹¹ ë‹¨ê³„ì˜ ëŒ€ê¸° íšŸìˆ˜ë¥¼ 0ìœ¼ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     void SetStep(TAutoInspectionStep step);
 };
 #endif

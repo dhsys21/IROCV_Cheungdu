@@ -1,5 +1,5 @@
-// [ÀÚµ¿ °Ë»ç ¿¬°á] Timer_AutoInspection, PLC ÀÔ·Â/Ãâ·Â, ´Ü°è Ç¥½Ã, ¿À·ùÃ¢ ¼±ÅÃ Ã³¸®.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [ìë™ ê²€ì‚¬ ì—°ê²°] Timer_AutoInspection, PLC ì…ë ¥/ì¶œë ¥, ë‹¨ê³„ í‘œì‹œ, ì˜¤ë¥˜ì°½ ì„ íƒ ì²˜ë¦¬.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -11,24 +11,24 @@
 
 namespace
 {
-// ÀÚµ¿ÃøÁ¤ Ã³¸® ÇÔ¼ö°¡ Áßº¹ ½ÇÇàµÇÁö ¾Êµµ·Ï Àá±Ù´Ù.
-// ProcessAutoInspection ÇÑ ¹øÀÇ Ã³¸® µ¿¾È¸¸ À¯ÁöÇÏ¸ç, ÇÔ¼ö Á¾·á/¿¹¿Ü ½Ã ÀÚµ¿ ÇØÁ¦ÇÑ´Ù.
+// ìë™ì¸¡ì • ì²˜ë¦¬ í•¨ìˆ˜ê°€ ì¤‘ë³µ ì‹¤í–‰ë˜ì§€ ì•Šë„ë¡ ì ê·¼ë‹¤.
+// ProcessAutoInspection í•œ ë²ˆì˜ ì²˜ë¦¬ ë™ì•ˆë§Œ ìœ ì§€í•˜ë©°, í•¨ìˆ˜ ì¢…ë£Œ/ì˜ˆì™¸ ì‹œ ìë™ í•´ì œí•œë‹¤.
 class TAutoInspectionRunLock
 {
 public:
-    // Ã³¸® ½ÃÀÛ: È£ÃâÀÚÀÇ ÀçÁøÀÔ ¹æÁö ÇÃ·¡±×¸¦ ÄÒ´Ù.
+    // ì²˜ë¦¬ ì‹œì‘: í˜¸ì¶œìì˜ ì¬ì§„ì… ë°©ì§€ í”Œë˜ê·¸ë¥¼ ì¼ ë‹¤.
     explicit TAutoInspectionRunLock(bool &isProcessing) : isProcessing_(isProcessing) { isProcessing_ = true; }
-    // Ã³¸® Á¾·á: ¿¹¿Ü°¡ ³ª´õ¶óµµ ÀçÁøÀÔ ¹æÁö ÇÃ·¡±×¸¦ ²ö´Ù.
+    // ì²˜ë¦¬ ì¢…ë£Œ: ì˜ˆì™¸ê°€ ë‚˜ë”ë¼ë„ ì¬ì§„ì… ë°©ì§€ í”Œë˜ê·¸ë¥¼ ëˆë‹¤.
     ~TAutoInspectionRunLock() { isProcessing_ = false; }
 private:
-    bool &isProcessing_; // TTotalForm::isAutoInspectionProcessing ÂüÁ¶
+    bool &isProcessing_; // TTotalForm::isAutoInspectionProcessing ì°¸ì¡°
 };
 }
 
 // Site-specific defaults and conversion from existing configuration live here.
 // Keep editMaxDelayTime in its original unit; no configuration migration needed.
 //---------------------------------------------------------------------------
-// ÀÚµ¿ÃøÁ¤ ´ë±â ¼³Á¤ ÀĞ±â: ±âÁ¸ 200ms Å¸ÀÌ¸Ó È£Ãâ È½¼ö ´ÜÀ§¸¦ À¯ÁöÇÑ´Ù.
+// ìë™ì¸¡ì • ëŒ€ê¸° ì„¤ì • ì½ê¸°: ê¸°ì¡´ 200ms íƒ€ì´ë¨¸ í˜¸ì¶œ íšŸìˆ˜ ë‹¨ìœ„ë¥¼ ìœ ì§€í•œë‹¤.
 TAutoInspectionSetting __fastcall TTotalForm::GetAutoInspectionSetting()
 {
     TAutoInspectionSetting setting;
@@ -41,7 +41,7 @@ TAutoInspectionSetting __fastcall TTotalForm::GetAutoInspectionSetting()
 }
 
 //---------------------------------------------------------------------------
-// ´Ü°è°¡ ¹Ù²ğ ¶§ ÀÌÀü/´ÙÀ½ ´Ü°è¿Í ÀüÈ¯ ÀÌÀ¯¸¦ PLC ·Î±×¿¡ ±â·ÏÇÑ´Ù.
+// ë‹¨ê³„ê°€ ë°”ë€” ë•Œ ì´ì „/ë‹¤ìŒ ë‹¨ê³„ì™€ ì „í™˜ ì´ìœ ë¥¼ PLC ë¡œê·¸ì— ê¸°ë¡í•œë‹¤.
 void __fastcall TTotalForm::WriteAutoStepLog(TAutoInspectionStep previous, AnsiString reason)
 {
     if(previous == autoInspection.GetStep()) return;
@@ -51,7 +51,7 @@ void __fastcall TTotalForm::WriteAutoStepLog(TAutoInspectionStep previous, AnsiS
 }
 
 //---------------------------------------------------------------------------
-// ÀÚµ¿ÃøÁ¤ ´Ü°è¿Í NG °³¼ö¸¦ ÃÊ±âÈ­ÇÑ´Ù. PLC Ãâ·Â°ú Æ®·¹ÀÌ µ¥ÀÌÅÍ ÃÊ±âÈ­´Â InitializeInspection¿¡¼­ ÇÑ´Ù.
+// ìë™ì¸¡ì • ë‹¨ê³„ì™€ NG ê°œìˆ˜ë¥¼ ì´ˆê¸°í™”í•œë‹¤. PLC ì¶œë ¥ê³¼ íŠ¸ë ˆì´ ë°ì´í„° ì´ˆê¸°í™”ëŠ” InitializeInspectionì—ì„œ í•œë‹¤.
 void __fastcall TTotalForm::ResetAutoInspection()
 {
     TAutoInspectionStep previous = autoInspection.GetStep();
@@ -61,8 +61,8 @@ void __fastcall TTotalForm::ResetAutoInspection()
     ResetOperationView();
 }
 
-// ÀÚµ¿ Å¸ÀÌ¸Ó°¡ ²¨Á® ÀÖ¾îµµ »óÅÂ Å¸ÀÌ¸Ó¿¡¼­ PLC ¿îÀü ¸ğµå¸¦ °¨½ÃÇÑ´Ù.
-// PLC ¼öµ¿/Åë½Å ÇØÁ¦ ÀüÈ¯ ½Ã ÇÑ ¹ø¸¸ ÃÊ±âÈ­ÇÏ¸ç, ÀÚµ¿ º¹±Í´Â TRAY IN ´ë±âºÎÅÍ ½ÃÀÛÇÑ´Ù.
+// ìë™ íƒ€ì´ë¨¸ê°€ êº¼ì ¸ ìˆì–´ë„ ìƒíƒœ íƒ€ì´ë¨¸ì—ì„œ PLC ìš´ì „ ëª¨ë“œë¥¼ ê°ì‹œí•œë‹¤.
+// PLC ìˆ˜ë™/í†µì‹  í•´ì œ ì „í™˜ ì‹œ í•œ ë²ˆë§Œ ì´ˆê¸°í™”í•˜ë©°, ìë™ ë³µê·€ëŠ” TRAY IN ëŒ€ê¸°ë¶€í„° ì‹œì‘í•œë‹¤.
 void __fastcall TTotalForm::UpdateAutoInspectionMode()
 {
     const unsigned long version = Mod_PLC->plcAutoMode.GetResetVersion();
@@ -98,8 +98,8 @@ bool __fastcall TTotalForm::IsAutoInspectionBlocked()
     return (stage.arl == nAuto && !bLocal) && autoInspectionBlockedByPlc;
 }
 //---------------------------------------------------------------------------
-// ¼ÒÇÁÆ®¿ş¾î ½ÃÄö½º ÃÊ±âÈ­ÀÌ¸ç ¹°¸®ÀûÀÎ ÃæÀü/ÃøÁ¤ Á¤Áö ¸í·ÉÀº º¸³»Áö ¾Ê´Â´Ù.
-// ±âÁ¸ ÃøÁ¤ Ç¥½Ã°ªÀº À¯ÁöÇÏµÇ, ÀÌÀü °Ë»ç¿¡¼­ ´ë±âÇÏ´ø °á°ú ÀúÀå/COMPLETE´Â Ãë¼ÒÇÑ´Ù.
+// ì†Œí”„íŠ¸ì›¨ì–´ ì‹œí€€ìŠ¤ ì´ˆê¸°í™”ì´ë©° ë¬¼ë¦¬ì ì¸ ì¶©ì „/ì¸¡ì • ì •ì§€ ëª…ë ¹ì€ ë³´ë‚´ì§€ ì•ŠëŠ”ë‹¤.
+// ê¸°ì¡´ ì¸¡ì • í‘œì‹œê°’ì€ ìœ ì§€í•˜ë˜, ì´ì „ ê²€ì‚¬ì—ì„œ ëŒ€ê¸°í•˜ë˜ ê²°ê³¼ ì €ì¥/COMPLETEëŠ” ì·¨ì†Œí•œë‹¤.
 void __fastcall TTotalForm::ResetAutoInspectionForPlcMode()
 {
     CancelResultSave();
@@ -123,74 +123,74 @@ void __fastcall TTotalForm::ResetAutoInspectionForPlcMode()
 
 
 //---------------------------------------------------------------------------
-// ÀÚµ¿ÃøÁ¤ Å¸ÀÌ¸Ó Ã³¸®: ¿À·ù È®ÀÎ ¡æ ´Ü°è ÆÇ´Ü ¡æ ¸í·É ½ÇÇà ¡æ È­¸é °»½Å.
-// È£Ãâ À§Ä¡: FormTotal.cppÀÇ Timer_AutoInspectionTimer.
+// ìë™ì¸¡ì • íƒ€ì´ë¨¸ ì²˜ë¦¬: ì˜¤ë¥˜ í™•ì¸ â†’ ë‹¨ê³„ íŒë‹¨ â†’ ëª…ë ¹ ì‹¤í–‰ â†’ í™”ë©´ ê°±ì‹ .
+// í˜¸ì¶œ ìœ„ì¹˜: FormTotal.cppì˜ Timer_AutoInspectionTimer.
 void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
 {
     UpdateAutoInspectionMode();
     if(!Timer_AutoInspection->Enabled) return;
-    // PRECHARGER¿Í °øÅë °è¾à: ÀÔ·Â ¼öÁı ¡æ ¼ø¼ö »óÅÂ ÆÇ´Ü ¡æ CMD ½ÇÇà ¡æ Ç¥½Ã.
-    // IR/OCV Â÷ÀÌ: Àç°³Æó ÀçÃøÁ¤ Á¤Ã¥À» Àü´ŞÇÏ¸ç °á°ú ¸¶°¨Àº Timer_ResultSave°¡ µ¶¸³ Ã³¸®ÇÑ´Ù.
-    // 1. Ã³¸® ÁßÀÌ¸é Áßº¹ ½ÇÇàÀ» ¸·´Â´Ù.
+    // PRECHARGERì™€ ê³µí†µ ê³„ì•½: ì…ë ¥ ìˆ˜ì§‘ â†’ ìˆœìˆ˜ ìƒíƒœ íŒë‹¨ â†’ CMD ì‹¤í–‰ â†’ í‘œì‹œ.
+    // IR/OCV ì°¨ì´: ì¬ê°œí ì¬ì¸¡ì • ì •ì±…ì„ ì „ë‹¬í•˜ë©° ê²°ê³¼ ë§ˆê°ì€ Timer_ResultSaveê°€ ë…ë¦½ ì²˜ë¦¬í•œë‹¤.
+    // 1. ì²˜ë¦¬ ì¤‘ì´ë©´ ì¤‘ë³µ ì‹¤í–‰ì„ ë§‰ëŠ”ë‹¤.
     if(isAutoInspectionProcessing) return;
 
-    // ½ÇÇà Áß=true, ÇÔ¼ö Á¾·á ½Ã ÀÚµ¿À¸·Î false.
+    // ì‹¤í–‰ ì¤‘=true, í•¨ìˆ˜ ì¢…ë£Œ ì‹œ ìë™ìœ¼ë¡œ false.
     TAutoInspectionRunLock runLock(isAutoInspectionProcessing);
     try
     {
-        // 2. ¿¹¿Ü·Î Á¤ÁöµÈ »óÅÂ: Àç½ÃÀÛ Àü±îÁö ÁøÇàÇÏÁö ¾Ê´Â´Ù.
+        // 2. ì˜ˆì™¸ë¡œ ì •ì§€ëœ ìƒíƒœ: ì¬ì‹œì‘ ì „ê¹Œì§€ ì§„í–‰í•˜ì§€ ì•ŠëŠ”ë‹¤.
         if(autoInspection.GetStep() == STEP_ERROR_STOP)
         {
             DisplayError("Auto inspection stopped. Check the log and restart.", true);
             return;
         }
 
-        // 3. ÃøÁ¤Àåºñ/PLC ¿¬°á, PLC ¿À·ù ¹× ¼öµ¿ ¿îÀü Â÷´Ü Á¶°Ç È®ÀÎ.
+        // 3. ì¸¡ì •ì¥ë¹„/PLC ì—°ê²°, PLC ì˜¤ë¥˜ ë° ìˆ˜ë™ ìš´ì „ ì°¨ë‹¨ ì¡°ê±´ í™•ì¸.
         if(CheckAutoInspectionError()) return;
 
-        // 4. ÀçÃøÁ¤ ¼³Á¤ Àü´Ş. Æ®·¹ÀÌ ÅõÀÔ ´ë±â Áß¿¡¸¸ ¹İ¿µ.
-        //    Ã¹ ¹øÂ°: ´İÈû »óÅÂ ÀçÃøÁ¤ ÃÖ´ë NG °³¼ö(ÀÌÇÏ, 0=»ı·«).
-        //    µÎ ¹øÂ°: ÇÁ·Îºê Àç°³Æó Ãß°¡ ÃøÁ¤ È½¼ö(0=»ı·«).
+        // 4. ì¬ì¸¡ì • ì„¤ì • ì „ë‹¬. íŠ¸ë ˆì´ íˆ¬ì… ëŒ€ê¸° ì¤‘ì—ë§Œ ë°˜ì˜.
+        //    ì²« ë²ˆì§¸: ë‹«í˜ ìƒíƒœ ì¬ì¸¡ì • ìµœëŒ€ NG ê°œìˆ˜(ì´í•˜, 0=ìƒëµ).
+        //    ë‘ ë²ˆì§¸: í”„ë¡œë¸Œ ì¬ê°œí ì¶”ê°€ ì¸¡ì • íšŸìˆ˜(0=ìƒëµ).
         autoInspection.SetNextTrayRemeasureSettings(
             config.closedProbeRemeasureMaxNgCount, config.probeRemeasureCount);
 
-        // 5. PC¡æPLC AUTO READY Ãâ·Â. Auto=1, Local(¼öµ¿)=0.
+        // 5. PCâ†’PLC AUTO READY ì¶œë ¥. Auto=1, Local(ìˆ˜ë™)=0.
         SetAutoReadySignalToPLC();
 
-        // 6. Æ®·¹ÀÌ À¯¹«, ÇÁ·Îºê ¿­¸²/´İÈû, ¸ğµå, ¼¿/NG °³¼ö È®ÀÎ.
-        //    Æ®·¹ÀÌ ID¿Í CELL SERIAL ¿Ï·á ¿©ºÎ´Â ÇØ´ç ´Ü°è¿¡¼­¸¸ È®ÀÎ.
+        // 6. íŠ¸ë ˆì´ ìœ ë¬´, í”„ë¡œë¸Œ ì—´ë¦¼/ë‹«í˜, ëª¨ë“œ, ì…€/NG ê°œìˆ˜ í™•ì¸.
+        //    íŠ¸ë ˆì´ IDì™€ CELL SERIAL ì™„ë£Œ ì—¬ë¶€ëŠ” í•´ë‹¹ ë‹¨ê³„ì—ì„œë§Œ í™•ì¸.
         TAutoInspectionData data = ReadAutoInspectionData();
 
-        // º¯°æ Àü ´Ü°è º¸°ü: ´Ü°è ·Î±×¿Í PROBE OPEN ¿äÃ» ÇØÁ¦¿¡ »ç¿ë.
+        // ë³€ê²½ ì „ ë‹¨ê³„ ë³´ê´€: ë‹¨ê³„ ë¡œê·¸ì™€ PROBE OPEN ìš”ì²­ í•´ì œì— ì‚¬ìš©.
         TAutoInspectionStep previous = autoInspection.GetStep();
 
-        // ´ÙÀ½ ´Ü°è¿Í ½ÇÇàÇÒ ¸í·ÉÀ» ÃÖ´ë ÇÑ °³ °áÁ¤ÇÑ´Ù. CMD_NONEÀº Á¤»ó ½ÅÈ£/¿Ï·á ´ë±â´Ù.
-        // RunAutoStep ³»ºÎ´Â PLC/UI¸¦ Á¶ÀÛÇÏÁö ¾Ê°í STEP°ú ´ë±â È½¼ö¸¸ °»½ÅÇÑ´Ù.
+        // ë‹¤ìŒ ë‹¨ê³„ì™€ ì‹¤í–‰í•  ëª…ë ¹ì„ ìµœëŒ€ í•œ ê°œ ê²°ì •í•œë‹¤. CMD_NONEì€ ì •ìƒ ì‹ í˜¸/ì™„ë£Œ ëŒ€ê¸°ë‹¤.
+        // RunAutoStep ë‚´ë¶€ëŠ” PLC/UIë¥¼ ì¡°ì‘í•˜ì§€ ì•Šê³  STEPê³¼ ëŒ€ê¸° íšŸìˆ˜ë§Œ ê°±ì‹ í•œë‹¤.
         TAutoInspectionCommand command = autoInspection.RunAutoStep(data);
 
-        // ´Ü°è°¡ ¹Ù²ï °æ¿ì¿¡¸¸ ·Î±× ±â·Ï.
+        // ë‹¨ê³„ê°€ ë°”ë€ ê²½ìš°ì—ë§Œ ë¡œê·¸ ê¸°ë¡.
         WriteAutoStepLog(previous, "Timer");
 
-        // 7. ÇÁ·Îºê ¿­¸² ´ë±â¸¦ ¸¶Ä¡¸é PC¡æPLC PROBE OPEN ¿äÃ» ÇØÁ¦.
-        //    ½ÇÁ¦ ÇÁ·Îºê¸¦ ´İ´Â ¸í·ÉÀº ¾Æ´Ï´Ù.
+        // 7. í”„ë¡œë¸Œ ì—´ë¦¼ ëŒ€ê¸°ë¥¼ ë§ˆì¹˜ë©´ PCâ†’PLC PROBE OPEN ìš”ì²­ í•´ì œ.
+        //    ì‹¤ì œ í”„ë¡œë¸Œë¥¼ ë‹«ëŠ” ëª…ë ¹ì€ ì•„ë‹ˆë‹¤.
         if(previous == STEP_WAIT_PROBE_OPEN && command != CMD_NONE)
             ClearProbeOpenSignalToPLC();
 
-        // ¸í·É ½ÇÇà: PLC Ãâ·Â, ÃøÁ¤ ½ÃÀÛ, ½Ã¸®¾ó Ã³¸®, ¿À·ùÃ¢ µî.
-        // »óÅÂ ÆÇ´Ü ÈÄ ½ÇÇàÇÏ¹Ç·Î »õ ÀÔ·Â(½Ã¸®¾ó °³¼ö/ÇÁ·Îºê ÀÀ´ä)Àº ´ÙÀ½ À¯È¿ ÁÖ±â¿¡ ¹İ¿µµÈ´Ù.
+        // ëª…ë ¹ ì‹¤í–‰: PLC ì¶œë ¥, ì¸¡ì • ì‹œì‘, ì‹œë¦¬ì–¼ ì²˜ë¦¬, ì˜¤ë¥˜ì°½ ë“±.
+        // ìƒíƒœ íŒë‹¨ í›„ ì‹¤í–‰í•˜ë¯€ë¡œ ìƒˆ ì…ë ¥(ì‹œë¦¬ì–¼ ê°œìˆ˜/í”„ë¡œë¸Œ ì‘ë‹µ)ì€ ë‹¤ìŒ ìœ íš¨ ì£¼ê¸°ì— ë°˜ì˜ëœë‹¤.
         RunAutoInspectionCommand(command, data);
 
-        // 8. ÇöÀç ´Ü°è¿¡ ¸ÂÃç ÁøÇà È­¸é °»½Å.
+        // 8. í˜„ì¬ ë‹¨ê³„ì— ë§ì¶° ì§„í–‰ í™”ë©´ ê°±ì‹ .
         DisplayAutoInspectionStep();
     }
     catch(const Exception &error)
     {
-        // ¿¹¿Ü ³»¿ë ±â·Ï ÈÄ ÀÚµ¿ ÁøÇà Á¤Áö. ¼³ºñ ºñ»óÁ¤Áö ¸í·ÉÀº ¾Æ´Ï´Ù.
+        // ì˜ˆì™¸ ë‚´ìš© ê¸°ë¡ í›„ ìë™ ì§„í–‰ ì •ì§€. ì„¤ë¹„ ë¹„ìƒì •ì§€ ëª…ë ¹ì€ ì•„ë‹ˆë‹¤.
         StopAutoInspectionOnError(error.Message);
     }
     catch(...)
     {
-        // ±× ¿Ü ¿¹¿Üµµ ÀÚµ¿ ÁøÇà Á¤Áö.
+        // ê·¸ ì™¸ ì˜ˆì™¸ë„ ìë™ ì§„í–‰ ì •ì§€.
         StopAutoInspectionOnError("Unknown auto inspection exception");
     }
 }
@@ -198,7 +198,7 @@ void __fastcall TTotalForm::ProcessAutoInspection(TObject *Sender)
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-// ¿îÀü ¸ğµå¿¡ µû¶ó PLC AUTO READY ½ÅÈ£ ¼³Á¤: ÀÚµ¿=1, ¼öµ¿=0. °ªÀÌ ¹Ù²ğ ¶§¸¸ ±â·ÏÇÑ´Ù.
+// ìš´ì „ ëª¨ë“œì— ë”°ë¼ PLC AUTO READY ì‹ í˜¸ ì„¤ì •: ìë™=1, ìˆ˜ë™=0. ê°’ì´ ë°”ë€” ë•Œë§Œ ê¸°ë¡í•œë‹¤.
 void __fastcall TTotalForm::SetAutoReadySignalToPLC()
 {
     int current = Mod_PLC->GetValue(PC_D_IROCV_STAGE_AUTO_READY);
@@ -211,7 +211,7 @@ void __fastcall TTotalForm::SetAutoReadySignalToPLC()
 }
 
 //---------------------------------------------------------------------------
-// PLC ½ÅÈ£¡¤¿îÀü ¿É¼Ç¡¤°Ë»ç ¼ö·®À» ÀĞ´Â´Ù. ½Ã¸®¾óÀº ÀüÃ¼ ¼ö½Å ¿Ï·á ÈÄ ¹öÆÛ¿¡¼­ ÀĞ´Â´Ù.
+// PLC ì‹ í˜¸Â·ìš´ì „ ì˜µì…˜Â·ê²€ì‚¬ ìˆ˜ëŸ‰ì„ ì½ëŠ”ë‹¤. ì‹œë¦¬ì–¼ì€ ì „ì²´ ìˆ˜ì‹  ì™„ë£Œ í›„ ë²„í¼ì—ì„œ ì½ëŠ”ë‹¤.
 TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
 {
     TAutoInspectionData data;
@@ -240,7 +240,7 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
 }
 
 //---------------------------------------------------------------------------
-// PLC CELL DATA 25¿öµåÀÇ ºñÆ®¸ÊÀ¸·Î 400¼¿ À¯¹«¿Í °³¼ö¸¦ ÀĞ´Â´Ù. Cycle ¸ğµå´Â Àü Ã¤³Î »ç¿ë.
+// PLC CELL DATA 25ì›Œë“œì˜ ë¹„íŠ¸ë§µìœ¼ë¡œ 400ì…€ ìœ ë¬´ì™€ ê°œìˆ˜ë¥¼ ì½ëŠ”ë‹¤. Cycle ëª¨ë“œëŠ” ì „ ì±„ë„ ì‚¬ìš©.
 void __fastcall TTotalForm::ReadAutoCellData()
 {
     tray.cell_count = 0;
@@ -255,7 +255,7 @@ void __fastcall TTotalForm::ReadAutoCellData()
 }
 
 //---------------------------------------------------------------------------
-// CELL SERIAL 4,010¿öµå ºĞÇÒ ¼ö½Å ½ÃÀÛ. º°µµ START/COMPLETE ÇÚµå¼ÎÀÌÅ©´Â »ç¿ëÇÏÁö ¾Ê´Â´Ù.
+// CELL SERIAL 4,010ì›Œë“œ ë¶„í•  ìˆ˜ì‹  ì‹œì‘. ë³„ë„ START/COMPLETE í•¸ë“œì…°ì´í¬ëŠ” ì‚¬ìš©í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void __fastcall TTotalForm::StartAutoCellSerialRead()
 {
     // Uses Modplc's existing 4,010-word chunk reader, WITHOUT START/COMPLETE bits.
@@ -264,7 +264,7 @@ void __fastcall TTotalForm::StartAutoCellSerialRead()
 }
 
 //---------------------------------------------------------------------------
-// PLC ÇÁ·Îºê ¿­¸² È®ÀÎ ÈÄ PCÀÇ PROBE OPEN ¿äÃ»À» 0À¸·Î ÇØÁ¦ÇÑ´Ù.
+// PLC í”„ë¡œë¸Œ ì—´ë¦¼ í™•ì¸ í›„ PCì˜ PROBE OPEN ìš”ì²­ì„ 0ìœ¼ë¡œ í•´ì œí•œë‹¤.
 void __fastcall TTotalForm::ClearProbeOpenSignalToPLC()
 {
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
@@ -272,7 +272,7 @@ void __fastcall TTotalForm::ClearProbeOpenSignalToPLC()
 }
 
 //---------------------------------------------------------------------------
-// ´Ü°è ÆÇ´Ü¿¡¼­ ¹İÈ¯ÇÑ ¸í·ÉÀ» ÇÑ ¹ø ½ÇÇàÇÑ´Ù. ½ÇÁ¦ PLC Ãâ·Â¡¤ÃøÁ¤ ½ÃÀÛ¡¤¿À·ùÃ¢Àº ÀÌ°÷¿¡¼­ Ã³¸®ÇÑ´Ù.
+// ë‹¨ê³„ íŒë‹¨ì—ì„œ ë°˜í™˜í•œ ëª…ë ¹ì„ í•œ ë²ˆ ì‹¤í–‰í•œë‹¤. ì‹¤ì œ PLC ì¶œë ¥Â·ì¸¡ì • ì‹œì‘Â·ì˜¤ë¥˜ì°½ì€ ì´ê³³ì—ì„œ ì²˜ë¦¬í•œë‹¤.
 void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand command, const TAutoInspectionData &data)
 {
     TOperationCommandLogScope operationLogScope(this, command);
@@ -281,7 +281,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
         case CMD_NONE:
             return;
         case CMD_TRAY_IN:
-            // Æ®·¹ÀÌ ÅõÀÔºÎÅÍ´Â ¾È³» ¹øÈ£¸¦ ¼û±ä´Ù. ¹Ì¼ö½Å ÃøÁ¤°ªÀº °ø¶õÀ¸·Î Ç¥½ÃÇÑ´Ù.
+            // íŠ¸ë ˆì´ íˆ¬ì…ë¶€í„°ëŠ” ì•ˆë‚´ ë²ˆí˜¸ë¥¼ ìˆ¨ê¸´ë‹¤. ë¯¸ìˆ˜ì‹  ì¸¡ì •ê°’ì€ ê³µë€ìœ¼ë¡œ í‘œì‹œí•œë‹¤.
             showStartupChannelNumbers = false;
             InitializePlcData();
             InitializeTrayData();
@@ -302,7 +302,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
         case CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL:
             Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
             WritePlcLog("AutoInspection", "PC_D_IROCV_PROB_CLOSE = 1");
-            // ¹ÌÃ¼Å©¸¸ ÅõÀÔ ½Ã ÀüÃ¼ ¼ö½Å/°³¼ö °Ë»ç. »ó½Ã ¸ğµå´Â °á°ú ÀúÀå ¶§ °Ë»çÇÑ´Ù.
+            // ë¯¸ì²´í¬ë§Œ íˆ¬ì… ì‹œ ì „ì²´ ìˆ˜ì‹ /ê°œìˆ˜ ê²€ì‚¬. ìƒì‹œ ëª¨ë“œëŠ” ê²°ê³¼ ì €ì¥ ë•Œ ê²€ì‚¬í•œë‹¤.
             if(command == CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL) StartAutoCellSerialRead();
             break;
         case CMD_SAVE_CELL_SERIAL:
@@ -312,7 +312,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             break;
         case CMD_CELL_SERIAL_COUNT_ERROR:
         case CMD_CELL_SERIAL_TIMEOUT:
-            // ´Ü°è´Â ÀÌ¹Ì ¿À·ù ´ë±â »óÅÂ. Ã¢ Ç¥½Ã ¿©ºÎ¿Í ¹«°üÇÏ°Ô PLC ¿À·ù¸¦ Ãâ·ÂÇÑ´Ù.
+            // ë‹¨ê³„ëŠ” ì´ë¯¸ ì˜¤ë¥˜ ëŒ€ê¸° ìƒíƒœ. ì°½ í‘œì‹œ ì—¬ë¶€ì™€ ë¬´ê´€í•˜ê²Œ PLC ì˜¤ë¥˜ë¥¼ ì¶œë ¥í•œë‹¤.
             Mod_PLC->SetValue(PC_D_IROCV_ERROR, 1);
             Form_CellIdError->ChangeMessage("CELL SERIAL - BEFORE MEASUREMENT",
                 "Check CELL DATA count and complete CELL SERIAL data.",
@@ -325,15 +325,15 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
             Form_CellIdError->DisplayErrorMessage(this->Tag);
             break;
         case CMD_REQUEST_PROBE_REMEASURE:
-            // ÇÁ·Îºê ¿­¸²À» ½ÇÁ¦ È®ÀÎÇÑ µÚ ¿äÃ»ÇÑ´Ù. ±âÁ¸ ÀüÃ¼/ºÒ·®¼¿ ¼±ÅÃ ±âÁØ À¯Áö.
+            // í”„ë¡œë¸Œ ì—´ë¦¼ì„ ì‹¤ì œ í™•ì¸í•œ ë’¤ ìš”ì²­í•œë‹¤. ê¸°ì¡´ ì „ì²´/ë¶ˆëŸ‰ì…€ ì„ íƒ ê¸°ì¤€ ìœ ì§€.
             CancelResultSave();
             resultSaveStep = RESULT_IDLE;
             Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
             Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
-            // Àç°³Æó È½¼ö¿Í ´İÈû ÀçÃøÁ¤ NG Á¦ÇÑÀº º°°³. ÀüÃ¼/¼±ÅÃ ÀüÈ¯Àº »çÀÌÆ® Á¤Ã¥ À¯Áö.
+            // ì¬ê°œí íšŸìˆ˜ì™€ ë‹«í˜ ì¬ì¸¡ì • NG ì œí•œì€ ë³„ê°œ. ì „ì²´/ì„ íƒ ì „í™˜ì€ ì‚¬ì´íŠ¸ ì •ì±… ìœ ì§€.
             if(data.ngCount > PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD)
             {
-                ResetMeasurementData(); // ½Ã¸®¾ó/ÆÄÀÏ¸í/Æ®·¹ÀÌ ´©°è´Â º¸Á¸ÇÑ´Ù.
+                ResetMeasurementData(); // ì‹œë¦¬ì–¼/íŒŒì¼ëª…/íŠ¸ë ˆì´ ëˆ„ê³„ëŠ” ë³´ì¡´í•œë‹¤.
                 memset(&retest, 0, sizeof(retest));
                 retest.waitingChannel = -1;
                 tray.rem_mode = 0;
@@ -400,10 +400,10 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
 }
 
 //---------------------------------------------------------------------------
-// ÇöÀç ´Ü°èÀÇ È­¸é ¹®±¸¿Í MEASURING ½ÅÈ£¸¦ °»½ÅÇÑ´Ù. ÇÁ·Îºê/¹èÃâ µ¿ÀÛÀ» »õ·Î ½ÃÀÛÇÏÁö ¾Ê´Â´Ù.
+// í˜„ì¬ ë‹¨ê³„ì˜ í™”ë©´ ë¬¸êµ¬ì™€ MEASURING ì‹ í˜¸ë¥¼ ê°±ì‹ í•œë‹¤. í”„ë¡œë¸Œ/ë°°ì¶œ ë™ì‘ì„ ìƒˆë¡œ ì‹œì‘í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void __fastcall TTotalForm::DisplayAutoInspectionStep()
 {
-    // [CELL SERIAL °øÅë] ÃÖÁ¾ ¼ö½Å ´ë±â/¿À·ù ¹®±¸¸¦ ±âÁ¸ ÃøÁ¤ ´ë±â ¹®±¸·Î µ¤¾î¾²Áö ¾Ê´Â´Ù.
+    // [CELL SERIAL ê³µí†µ] ìµœì¢… ìˆ˜ì‹  ëŒ€ê¸°/ì˜¤ë¥˜ ë¬¸êµ¬ë¥¼ ê¸°ì¡´ ì¸¡ì • ëŒ€ê¸° ë¬¸êµ¬ë¡œ ë®ì–´ì“°ì§€ ì•ŠëŠ”ë‹¤.
     if(resultSaveStep == RESULT_WAIT_PLC_SEND)
     {
         Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
@@ -468,7 +468,7 @@ void __fastcall TTotalForm::DisplayAutoInspectionStep()
 }
 
 //---------------------------------------------------------------------------
-// ¿¹¿Ü ¹ß»ı ´Ü°è¿Í ¿øÀÎÀ» ±â·ÏÇÏ°í PC ÀÚµ¿ ÁøÇàÀ» Á¤ÁöÇÑ´Ù. ¼³ºñ ºñ»óÁ¤Áö ¸í·ÉÀº ¾Æ´Ï´Ù.
+// ì˜ˆì™¸ ë°œìƒ ë‹¨ê³„ì™€ ì›ì¸ì„ ê¸°ë¡í•˜ê³  PC ìë™ ì§„í–‰ì„ ì •ì§€í•œë‹¤. ì„¤ë¹„ ë¹„ìƒì •ì§€ ëª…ë ¹ì€ ì•„ë‹ˆë‹¤.
 void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
 {
     CancelResultSave();
@@ -486,10 +486,10 @@ void __fastcall TTotalForm::StopAutoInspectionOnError(AnsiString message)
 
 
 //---------------------------------------------------------------------------
-// ½Ã¸®¾ó ¿À·ùÃ¢ SAVE: ÇöÀç µ¥ÀÌÅÍ¸¦ ÀúÀåÇÏ°í ÇÁ·Îºê ´İÈû È®ÀÎ ´Ü°è·Î ÁøÇàÇÑ´Ù.
+// ì‹œë¦¬ì–¼ ì˜¤ë¥˜ì°½ SAVE: í˜„ì¬ ë°ì´í„°ë¥¼ ì €ì¥í•˜ê³  í”„ë¡œë¸Œ ë‹«í˜ í™•ì¸ ë‹¨ê³„ë¡œ ì§„í–‰í•œë‹¤.
 void __fastcall TTotalForm::AcceptCellSerialData()
 {
-    // ¹ÌÃ¼Å© ¸ğµåÀÇ ÅõÀÔ ÈÄ ¿À·ù¸¸ ÀÛ¾÷ÀÚ ¼±ÅÃÀ¸·Î Àç°³ÇÑ´Ù.
+    // ë¯¸ì²´í¬ ëª¨ë“œì˜ íˆ¬ì… í›„ ì˜¤ë¥˜ë§Œ ì‘ì—…ì ì„ íƒìœ¼ë¡œ ì¬ê°œí•œë‹¤.
     if(autoInspection.GetStep() != STEP_WAIT_CELL_SERIAL_ERROR) return;
     try
     {
@@ -505,10 +505,10 @@ void __fastcall TTotalForm::AcceptCellSerialData()
 }
 
 //---------------------------------------------------------------------------
-// ½Ã¸®¾ó ¿À·ùÃ¢ CANCEL: ´ë±â È½¼ö¸¦ ÃÊ±âÈ­ÇÏ°í 4,010¿öµå¸¦ Ã³À½ºÎÅÍ ´Ù½Ã ¼ö½ÅÇÑ´Ù.
+// ì‹œë¦¬ì–¼ ì˜¤ë¥˜ì°½ CANCEL: ëŒ€ê¸° íšŸìˆ˜ë¥¼ ì´ˆê¸°í™”í•˜ê³  4,010ì›Œë“œë¥¼ ì²˜ìŒë¶€í„° ë‹¤ì‹œ ìˆ˜ì‹ í•œë‹¤.
 void __fastcall TTotalForm::RetryCellSerialRead()
 {
-    // ¹ÌÃ¼Å© ¸ğµåÀÇ ÅõÀÔ ÈÄ ¿À·ù¸¸ ´Ù½Ã ÀĞ´Â´Ù.
+    // ë¯¸ì²´í¬ ëª¨ë“œì˜ íˆ¬ì… í›„ ì˜¤ë¥˜ë§Œ ë‹¤ì‹œ ì½ëŠ”ë‹¤.
     if(autoInspection.GetStep() != STEP_WAIT_CELL_SERIAL_ERROR) return;
     try
     {
@@ -522,7 +522,7 @@ void __fastcall TTotalForm::RetryCellSerialRead()
 }
 
 //---------------------------------------------------------------------------
-// °á°ú Ã³¸® ÇÔ¼ö Á¾·á¸¦ ½ÃÄö½º¿¡ ¾Ë¸°´Ù. ÀÌÈÄ PLC ÇÁ·Îºê ¿­¸²À» È®ÀÎÇØ¾ß ÀÚµ¿ ¹èÃâÇÑ´Ù.
+// ê²°ê³¼ ì²˜ë¦¬ í•¨ìˆ˜ ì¢…ë£Œë¥¼ ì‹œí€€ìŠ¤ì— ì•Œë¦°ë‹¤. ì´í›„ PLC í”„ë¡œë¸Œ ì—´ë¦¼ì„ í™•ì¸í•´ì•¼ ìë™ ë°°ì¶œí•œë‹¤.
 void __fastcall TTotalForm::SetAutoMeasurementComplete()
 {
     TAutoInspectionStep previous = autoInspection.GetStep();
@@ -531,7 +531,7 @@ void __fastcall TTotalForm::SetAutoMeasurementComplete()
 }
 
 //---------------------------------------------------------------------------
-// ÀçÃøÁ¤ °¡´É ´Ü°èÀÎÁö È®ÀÎÇÏ°í ÀÌÀü ÃøÁ¤ ¿Ï·á/ÇÁ·Îºê ¿­¸² ¿äÃ»À» ÃÊ±âÈ­ÇÑ´Ù.
+// ì¬ì¸¡ì • ê°€ëŠ¥ ë‹¨ê³„ì¸ì§€ í™•ì¸í•˜ê³  ì´ì „ ì¸¡ì • ì™„ë£Œ/í”„ë¡œë¸Œ ì—´ë¦¼ ìš”ì²­ì„ ì´ˆê¸°í™”í•œë‹¤.
 bool __fastcall TTotalForm::PrepareAutoRemeasure()
 {
     TAutoInspectionStep previous = autoInspection.GetStep();
@@ -554,7 +554,7 @@ bool __fastcall TTotalForm::PrepareAutoRemeasure()
 }
 
 //---------------------------------------------------------------------------
-// ÀÚµ¿ ¹èÃâ ÆÇ´Ü: Auto/ÇÁ·Îºê ¿­¸²/°á°ú ¿Ï·á¸¦ È®ÀÎÇÏ°í NG Á¶°Ç¿¡ µû¶ó ¿À·ù ´ë±â ¶Ç´Â ¹èÃâÇÑ´Ù.
+// ìë™ ë°°ì¶œ íŒë‹¨: Auto/í”„ë¡œë¸Œ ì—´ë¦¼/ê²°ê³¼ ì™„ë£Œë¥¼ í™•ì¸í•˜ê³  NG ì¡°ê±´ì— ë”°ë¼ ì˜¤ë¥˜ ëŒ€ê¸° ë˜ëŠ” ë°°ì¶œí•œë‹¤.
 void __fastcall TTotalForm::ProcessAutoTrayOut()
 {
     if(IsAutoInspectionBlocked()) return;
@@ -571,15 +571,15 @@ void __fastcall TTotalForm::ProcessAutoTrayOut()
 }
 
 //---------------------------------------------------------------------------
-// ¼öµ¿ ¶Ç´Â ¿î¿µÀÚ°¡ ½ÂÀÎÇÑ ¹èÃâ: NG¸¦ ´Ù½Ã °Ë»çÇÏÁö ¾Ê°í TRAY OUTÀ» ¿äÃ»ÇÑ´Ù.
+// ìˆ˜ë™ ë˜ëŠ” ìš´ì˜ìê°€ ìŠ¹ì¸í•œ ë°°ì¶œ: NGë¥¼ ë‹¤ì‹œ ê²€ì‚¬í•˜ì§€ ì•Šê³  TRAY OUTì„ ìš”ì²­í•œë‹¤.
 void __fastcall TTotalForm::ForceTrayOut()
 {
-    CancelResultSave(); // [CELL SERIAL °øÅë] ¹èÃâ ÀÌÈÄ Áö¿¬µÈ °á°ú ÀúÀå ¹æÁö.
+    CancelResultSave(); // [CELL SERIAL ê³µí†µ] ë°°ì¶œ ì´í›„ ì§€ì—°ëœ ê²°ê³¼ ì €ì¥ ë°©ì§€.
     try
     {
         TAutoInspectionStep previous = autoInspection.GetStep();
         TAutoInspectionCommand command = autoInspection.ForceTrayOut();
-        // ÀÛ¾÷ÀÚ°¡ ½ÂÀÎÇÑ ¹èÃâ¿¡¼­ ¿À·ù¸¦ ÇØÁ¦ÇÑ´Ù. ¿À·ùÃ¢ Å¸ÀÌ¸Ó¿¡¼­´Â ÇØÁ¦ÇÏÁö ¾Ê´Â´Ù.
+        // ì‘ì—…ìê°€ ìŠ¹ì¸í•œ ë°°ì¶œì—ì„œ ì˜¤ë¥˜ë¥¼ í•´ì œí•œë‹¤. ì˜¤ë¥˜ì°½ íƒ€ì´ë¨¸ì—ì„œëŠ” í•´ì œí•˜ì§€ ì•ŠëŠ”ë‹¤.
         Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
         WriteAutoStepLog(previous, "Manual / operator-approved tray out (NG bypass)");
         RunAutoInspectionCommand(command, TAutoInspectionData());
@@ -589,7 +589,7 @@ void __fastcall TTotalForm::ForceTrayOut()
 }
 
 //---------------------------------------------------------------------------
-// NG ¿À·ùÃ¢ Restart: PLC¡¤Æ®·¹ÀÌ¡¤ÀÚµ¿ ´Ü°è¸¦ ÃÊ±âÈ­ÇÏ°í TRAY INºÎÅÍ ´Ù½Ã °Ë»çÇÑ´Ù.
+// NG ì˜¤ë¥˜ì°½ Restart: PLCÂ·íŠ¸ë ˆì´Â·ìë™ ë‹¨ê³„ë¥¼ ì´ˆê¸°í™”í•˜ê³  TRAY INë¶€í„° ë‹¤ì‹œ ê²€ì‚¬í•œë‹¤.
 void __fastcall TTotalForm::RestartAutoInspection()
 {
     try
@@ -601,7 +601,7 @@ void __fastcall TTotalForm::RestartAutoInspection()
 }
 
 //---------------------------------------------------------------------------
-// ÀÚµ¿ °Ë»ç ÀüÃ¼ ÃÊ±âÈ­: PLC Ãâ·Â ¡æ Æ®·¹ÀÌ µ¥ÀÌÅÍ ¡æ ´Ü°è ¼ø¼­·Î ÃÊ±âÈ­ÇÑ´Ù.
+// ìë™ ê²€ì‚¬ ì „ì²´ ì´ˆê¸°í™”: PLC ì¶œë ¥ â†’ íŠ¸ë ˆì´ ë°ì´í„° â†’ ë‹¨ê³„ ìˆœì„œë¡œ ì´ˆê¸°í™”í•œë‹¤.
 void __fastcall TTotalForm::InitializeInspection()
 {
     InitializePlcData();
@@ -611,7 +611,7 @@ void __fastcall TTotalForm::InitializeInspection()
 }
 
 //---------------------------------------------------------------------------
-// ¸ŞÀÎ È­¸é ¼öµ¿ ¹èÃâ: ÀçÃøÁ¤ ¸ñ·Ï Á¤¸®, °­Á¦ ¹èÃâ, PROBE CLOSE=0 / OPEN=1 / COMPLETE=1.
+// ë©”ì¸ í™”ë©´ ìˆ˜ë™ ë°°ì¶œ: ì¬ì¸¡ì • ëª©ë¡ ì •ë¦¬, ê°•ì œ ë°°ì¶œ, PROBE CLOSE=0 / OPEN=1 / COMPLETE=1.
 void __fastcall TTotalForm::ProcessManualTrayOut()
 {
 		for(int i = 0; i < MAXCHANNEL; i++) retest.cell[i] = 0;

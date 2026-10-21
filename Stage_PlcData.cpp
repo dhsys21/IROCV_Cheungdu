@@ -1,5 +1,5 @@
-// [PLC °á°ú ÀÛ¼º] °Ë»ç Ãâ·Â ÃÊ±âÈ­, NG ºñÆ®/¼ö·®, IR/OCV °ª, °á°ú ÄÚµå, ±Ô°Ý°ª.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [PLC ê²°ê³¼ ìž‘ì„±] ê²€ì‚¬ ì¶œë ¥ ì´ˆê¸°í™”, NG ë¹„íŠ¸/ìˆ˜ëŸ‰, IR/OCV ê°’, ê²°ê³¼ ì½”ë“œ, ê·œê²©ê°’.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #include <math.h>
@@ -10,7 +10,7 @@
 #include "FormCalibration.h"
 
 //---------------------------------------------------------------------------
-// PC¡æPLC °Ë»ç Ãâ·Â°ú °á°ú ¹öÆÛ ÃÊ±âÈ­. ±âÁ¸ ÁÖ¼Ò¡¤ÃÊ±â°ª¡¤Ãâ·Â ¼ø¼­¸¦ À¯ÁöÇÑ´Ù.
+// PCâ†’PLC ê²€ì‚¬ ì¶œë ¥ê³¼ ê²°ê³¼ ë²„í¼ ì´ˆê¸°í™”. ê¸°ì¡´ ì£¼ì†ŒÂ·ì´ˆê¸°ê°’Â·ì¶œë ¥ ìˆœì„œë¥¼ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::InitializePlcData()
 {
     Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
@@ -40,7 +40,7 @@ void __fastcall TTotalForm::InitializePlcData()
 }
 
 //---------------------------------------------------------------------------
-// IR/OCV °ªÀ» PLC °á°ú ¹öÆÛ¿¡ ¾´´Ù. ÀÎÀÚ ¾ø´Â ÇÔ¼ö´Â ÃøÁ¤°ª, int ÀÎÀÚ´Â ÃÊ±âÈ­ °ªÀÌ´Ù.
+// IR/OCV ê°’ì„ PLC ê²°ê³¼ ë²„í¼ì— ì“´ë‹¤. ì¸ìž ì—†ëŠ” í•¨ìˆ˜ëŠ” ì¸¡ì •ê°’, int ì¸ìžëŠ” ì´ˆê¸°í™” ê°’ì´ë‹¤.
 void __fastcall TTotalForm::WriteIROCVValue()
 {
 	for(int i = 0; i < MAXCHANNEL; i++)
@@ -59,7 +59,7 @@ void __fastcall TTotalForm::WriteIROCVValue()
 }
 
 //---------------------------------------------------------------------------
-// IR/OCV °ªÀ» PLC °á°ú ¹öÆÛ¿¡ ¾´´Ù. ÀÎÀÚ ¾ø´Â ÇÔ¼ö´Â ÃøÁ¤°ª, int ÀÎÀÚ´Â ÃÊ±âÈ­ °ªÀÌ´Ù.
+// IR/OCV ê°’ì„ PLC ê²°ê³¼ ë²„í¼ì— ì“´ë‹¤. ì¸ìž ì—†ëŠ” í•¨ìˆ˜ëŠ” ì¸¡ì •ê°’, int ì¸ìžëŠ” ì´ˆê¸°í™” ê°’ì´ë‹¤.
 void __fastcall TTotalForm::WriteIROCVValue(int initValue)
 {
 	for(int i = 0; i < MAXCHANNEL; i++)
@@ -69,25 +69,25 @@ void __fastcall TTotalForm::WriteIROCVValue(int initValue)
         Mod_PLC->SetOcvValue(PC_D_IROCV_OCV_VALUE, i, initValue);
 }
 
-// ÃßÈÄ º¹±¸¿ë ºÒ·®ÄÚµå. ÇöÀç PLC Àü¼Û ¾È ÇÔ.
-// º¹±¸ ½Ã Ã¤³Îº° nCode ÃÊ±â°ª°ú MAXCHANNEL È®ÀÎ.
-// ÇÔ¼ö ¼±¾ð ÈÄ UpdatePlcResults() µÚ¿¡¼­ È£ÃâÇÏ°í, Àü¼ÛºÎ¿Í ¿Ï·á Á¶°Çµµ º¹±¸.
+// ì¶”í›„ ë³µêµ¬ìš© ë¶ˆëŸ‰ì½”ë“œ. í˜„ìž¬ PLC ì „ì†¡ ì•ˆ í•¨.
+// ë³µêµ¬ ì‹œ ì±„ë„ë³„ nCode ì´ˆê¸°ê°’ê³¼ MAXCHANNEL í™•ì¸.
+// í•¨ìˆ˜ ì„ ì–¸ í›„ UpdatePlcResults() ë’¤ì—ì„œ í˜¸ì¶œí•˜ê³ , ì „ì†¡ë¶€ì™€ ì™„ë£Œ ì¡°ê±´ë„ ë³µêµ¬.
 // void __fastcall TTotalForm::WriteResultCode()
 // {
 //     int nCode;
 //     for(int i = 0; i < 400; i++)
 //     {
-//         if(retest.cell[i] == 2) nCode = 5;         // IR ±Ô°Ý ºÒ·®
-//         else if(retest.cell[i] == 3) nCode = 4;    // OCV ±Ô°Ý ºÒ·®
-//         else if(retest.cell[i] == 4) nCode = 6;    // IR Á¢ÃË ºÒ·®(999)
+//         if(retest.cell[i] == 2) nCode = 5;         // IR ê·œê²© ë¶ˆëŸ‰
+//         else if(retest.cell[i] == 3) nCode = 4;    // OCV ê·œê²© ë¶ˆëŸ‰
+//         else if(retest.cell[i] == 4) nCode = 6;    // IR ì ‘ì´‰ ë¶ˆëŸ‰(999)
 //
 //         Mod_PLC->SetResultCode(PC_D_IROCV_RESULT_CODE + i, nCode);
 //     }
 // }
 
 //---------------------------------------------------------------------------
-// ÃÖÁ¾ ÆÇÁ¤À¸·Î PLC NG ºñÆ®¡¤°á°ú ÄÚµå¡¤¼ö·®À» ÇÑ ¹ø¿¡ ÀÛ¼ºÇÑ´Ù(OK=0, NG=1).
-// measurementNgCount´Â ½ÇÁ¦ ¼¿ÀÇ ºÒ·®¸¸ ¼¾´Ù. PLC °á°ú ¹öÆÛ¸¦ ´Ù½Ã ÀÐ¾î ÆÇÁ¤ÇÏÁö ¾Ê´Â´Ù.
+// ìµœì¢… íŒì •ìœ¼ë¡œ PLC NG ë¹„íŠ¸Â·ê²°ê³¼ ì½”ë“œÂ·ìˆ˜ëŸ‰ì„ í•œ ë²ˆì— ìž‘ì„±í•œë‹¤(OK=0, NG=1).
+// measurementNgCountëŠ” ì‹¤ì œ ì…€ì˜ ë¶ˆëŸ‰ë§Œ ì„¼ë‹¤. PLC ê²°ê³¼ ë²„í¼ë¥¼ ë‹¤ì‹œ ì½ì–´ íŒì •í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void __fastcall TTotalForm::UpdatePlcResults()
 {
     int plcNgCount = 0;
@@ -98,12 +98,12 @@ void __fastcall TTotalForm::UpdatePlcResults()
         const bool occupied = tray.cell[i] == 1;
         const int result = retest.cell[i];
         const bool measurementNg = occupied && result != CELL_OK;
-        const bool plcNg = !occupied || measurementNg; // ±âÁ¸ Á¤Ã¥: ºó Ã¤³Îµµ PLC¿¡´Â NG.
+        const bool plcNg = !occupied || measurementNg; // ê¸°ì¡´ ì •ì±…: ë¹ˆ ì±„ë„ë„ PLCì—ëŠ” NG.
         Mod_PLC->SetData(Mod_PLC->pc_Interface_Data, PC_D_IROCV_MEASURE_OK_NG + i / 16, i % 16, plcNg);
         Mod_PLC->SetResultCode(PC_D_IROCV_RESULT_CODE + i, plcNg ? 1 : 0);
         if(plcNg) ++plcNgCount;
         if(measurementNg) ++measurementNgCount;
-        // ±âÁ¸ IR/Á¢ÃË ºÒ·® ´©°è ÀÇ¹Ì À¯Áö(OCV Á¦¿Ü). ÀçÃøÁ¤ ½Ã ÃÖÁ¾°ª Â÷ÀÌ¸¸ ¹Ý¿µÇÑ´Ù.
+        // ê¸°ì¡´ IR/ì ‘ì´‰ ë¶ˆëŸ‰ ëˆ„ê³„ ì˜ë¯¸ ìœ ì§€(OCV ì œì™¸). ìž¬ì¸¡ì • ì‹œ ìµœì¢…ê°’ ì°¨ì´ë§Œ ë°˜ì˜í•œë‹¤.
         if(occupied && (result == CELL_IR_NG || result == CELL_CONTACT_NG)) ++finalIrNg;
     }
     if(!trayResultCounted) { ++acc_totaltray; trayResultCounted = true; }
@@ -113,10 +113,10 @@ void __fastcall TTotalForm::UpdatePlcResults()
 }
 
 //---------------------------------------------------------------------------
-// ÇöÀç IR/OCV ±Ô°Ý »ó¡¤ÇÏÇÑÀ» ±âÁ¸ ¹èÀ²·Î PLC ¼³Á¤ ¹öÆÛ¿¡ ±â·ÏÇÑ´Ù.
+// í˜„ìž¬ IR/OCV ê·œê²© ìƒÂ·í•˜í•œì„ ê¸°ì¡´ ë°°ìœ¨ë¡œ PLC ì„¤ì • ë²„í¼ì— ê¸°ë¡í•œë‹¤.
 void __fastcall TTotalForm::WritePlcSpecifications()
 {
-    // ÀúÀå/ÀÐ±â¿¡¼­ È®Á¤ÇÑ °Ë»ç ±Ô°Ý »ç¿ë. PLC Àü¼Û ¹èÀ²Àº ±âÁ¸´ë·Î À¯ÁöÇÑ´Ù.
+    // ì €ìž¥/ì½ê¸°ì—ì„œ í™•ì •í•œ ê²€ì‚¬ ê·œê²© ì‚¬ìš©. PLC ì „ì†¡ ë°°ìœ¨ì€ ê¸°ì¡´ëŒ€ë¡œ ìœ ì§€í•œë‹¤.
     int32_t irMin = static_cast<int32_t>(config.ir_min * 10.0);
     int32_t irMax = static_cast<int32_t>(config.ir_max * 10.0);
     int32_t ocvMin = static_cast<int32_t>(config.ocv_min * 10.0);

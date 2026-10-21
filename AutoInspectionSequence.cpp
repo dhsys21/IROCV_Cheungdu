@@ -1,10 +1,10 @@
-// [ÀÚµ¿ °Ë»ç ´Ü°è ÆÇ´Ü] PLC/VCL¿¡ ÀÇÁ¸ÇÏÁö ¾Ê´Â ´Ü°è¡¤¸í·É °áÁ¤ ÄÚµå.
-// ½ÇÁ¦ Ãâ·Â: Stage_AutoInspection.cpp / RunAutoInspectionCommand
+// [ìë™ ê²€ì‚¬ ë‹¨ê³„ íŒë‹¨] PLC/VCLì— ì˜ì¡´í•˜ì§€ ì•ŠëŠ” ë‹¨ê³„Â·ëª…ë ¹ ê²°ì • ì½”ë“œ.
+// ì‹¤ì œ ì¶œë ¥: Stage_AutoInspection.cpp / RunAutoInspectionCommand
 
 #include "AutoInspectionSequence.h"
 #include <limits.h>
 
-// PLC ½ÅÈ£¿Í °Ë»ç ¼ö·®ÀÇ ±âº»°ªÀ» ÃÊ±âÈ­ÇÑ´Ù.
+// PLC ì‹ í˜¸ì™€ ê²€ì‚¬ ìˆ˜ëŸ‰ì˜ ê¸°ë³¸ê°’ì„ ì´ˆê¸°í™”í•œë‹¤.
 TAutoInspectionData::TAutoInspectionData()
     : trayIn(false), bypass(false), trayIdReady(false), cycleMode(false),
       cellSerialContinuousRead(false), serialComplete(false), probeClosed(false), probeOpen(false),
@@ -12,17 +12,17 @@ TAutoInspectionData::TAutoInspectionData()
 {
 }
 
-// ÀÚµ¿ °Ë»ç ½ÃÀÛ ´Ü°è¸¦ TRAY IN ´ë±â·Î ¼³Á¤ÇÑ´Ù.
+// ìë™ ê²€ì‚¬ ì‹œì‘ ë‹¨ê³„ë¥¼ TRAY IN ëŒ€ê¸°ë¡œ ì„¤ì •í•œë‹¤.
 TAutoInspectionSequence::TAutoInspectionSequence() : probeRemeasureDoneCount(0), automaticProbeRemeasure(false), currentStep(STEP_WAIT_TRAY_IN), waitCount(0) {}
 
-// ´ÙÀ½ ´Ü°è·Î º¯°æÇÏ°í ÇØ´ç ´Ü°èÀÇ ´ë±â È½¼ö¸¦ 0À¸·Î ÃÊ±âÈ­ÇÑ´Ù.
+// ë‹¤ìŒ ë‹¨ê³„ë¡œ ë³€ê²½í•˜ê³  í•´ë‹¹ ë‹¨ê³„ì˜ ëŒ€ê¸° íšŸìˆ˜ë¥¼ 0ìœ¼ë¡œ ì´ˆê¸°í™”í•œë‹¤.
 void TAutoInspectionSequence::SetStep(TAutoInspectionStep step)
 {
     currentStep = step;
     waitCount = 0;
 }
 
-// ´ë±â ¼³Á¤À» Àû¿ëÇÏ°í TRAY INºÎÅÍ ½ÃÀÛÇÑ´Ù. PLC Ãâ·ÂÀº È£ÃâºÎ¿¡¼­ ÃÊ±âÈ­ÇÑ´Ù.
+// ëŒ€ê¸° ì„¤ì •ì„ ì ìš©í•˜ê³  TRAY INë¶€í„° ì‹œì‘í•œë‹¤. PLC ì¶œë ¥ì€ í˜¸ì¶œë¶€ì—ì„œ ì´ˆê¸°í™”í•œë‹¤.
 void TAutoInspectionSequence::Initialize(const TAutoInspectionSetting &setting)
 {
     sequenceSetting = setting;
@@ -31,16 +31,16 @@ void TAutoInspectionSequence::Initialize(const TAutoInspectionSetting &setting)
     SetStep(STEP_WAIT_TRAY_IN);
 }
 
-// ÇöÀç ´Ü°èÀÇ Á¶°ÇÀ» °Ë»çÇÏ¿© ½ÇÇàÇÒ ¸í·É ÇÏ³ª¸¦ ¹İÈ¯ÇÑ´Ù. PLC/UI¸¦ Á÷Á¢ Á¶ÀÛÇÏÁö ¾Ê´Â´Ù.
-// PRECHARGER¿Í °øÅë: ÅõÀÔ/ID/¼¿ ¡æ ¸ğµåº° ½Ã¸®¾ó ¡æ ÇÁ·Îºê ¡æ ÃøÁ¤/°á°ú ¡æ ¹èÃâ.
-// IR/OCV °íÀ¯: ½ÃÀÛ Áö¿¬, ´İÈû »óÅÂ ÀçÃøÁ¤ ¹× Àç°³Æó ÀçÃøÁ¤. ÃæÀü ÀåºñÀÇ ¼³Á¤ È®ÀÎ ´Ü°è´Â ¾ø´Ù.
-// waitCount´Â À¯È¿ Å¸ÀÌ¸Ó È£Ãâ È½¼öÀÌ¸ç ¼³Á¤ NÀÌ¸é N+1¹øÂ° ´ë±â È£Ãâ¿¡ Á¦ÇÑÀ» ³Ñ´Â´Ù.
+// í˜„ì¬ ë‹¨ê³„ì˜ ì¡°ê±´ì„ ê²€ì‚¬í•˜ì—¬ ì‹¤í–‰í•  ëª…ë ¹ í•˜ë‚˜ë¥¼ ë°˜í™˜í•œë‹¤. PLC/UIë¥¼ ì§ì ‘ ì¡°ì‘í•˜ì§€ ì•ŠëŠ”ë‹¤.
+// PRECHARGERì™€ ê³µí†µ: íˆ¬ì…/ID/ì…€ â†’ ëª¨ë“œë³„ ì‹œë¦¬ì–¼ â†’ í”„ë¡œë¸Œ â†’ ì¸¡ì •/ê²°ê³¼ â†’ ë°°ì¶œ.
+// IR/OCV ê³ ìœ : ì‹œì‘ ì§€ì—°, ë‹«í˜ ìƒíƒœ ì¬ì¸¡ì • ë° ì¬ê°œí ì¬ì¸¡ì •. ì¶©ì „ ì¥ë¹„ì˜ ì„¤ì • í™•ì¸ ë‹¨ê³„ëŠ” ì—†ë‹¤.
+// waitCountëŠ” ìœ íš¨ íƒ€ì´ë¨¸ í˜¸ì¶œ íšŸìˆ˜ì´ë©° ì„¤ì • Nì´ë©´ N+1ë²ˆì§¸ ëŒ€ê¸° í˜¸ì¶œì— ì œí•œì„ ë„˜ëŠ”ë‹¤.
 TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectionData &data)
 {
     switch(currentStep)
     {
         case STEP_WAIT_TRAY_IN:
-            // 1. ÅõÀÔ ´ë±â. BYPASS´Â ÃøÁ¤À» »ı·«ÇÏ°í, Á¤»ó ÅõÀÔÀº Æ®·¹ÀÌº° ÀçÃøÁ¤ È½¼ö¸¦ ÃÊ±âÈ­ÇÑ´Ù.
+            // 1. íˆ¬ì… ëŒ€ê¸°. BYPASSëŠ” ì¸¡ì •ì„ ìƒëµí•˜ê³ , ì •ìƒ íˆ¬ì…ì€ íŠ¸ë ˆì´ë³„ ì¬ì¸¡ì • íšŸìˆ˜ë¥¼ ì´ˆê¸°í™”í•œë‹¤.
             if(!data.trayIn) return CMD_NONE;
             if(data.bypass)
             {
@@ -53,22 +53,22 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             return CMD_TRAY_IN;
 
         case STEP_READ_TRAY_ID:
-            // 2. ÀÏ¹İ PLC ºí·Ï¿¡¼­ À¯È¿ÇÑ ID°¡ ÁØºñµÇ¾î¾ß È­¸é/Æ®·¹ÀÌ¿¡ Àû¿ëÇÑ´Ù.
+            // 2. ì¼ë°˜ PLC ë¸”ë¡ì—ì„œ ìœ íš¨í•œ IDê°€ ì¤€ë¹„ë˜ì–´ì•¼ í™”ë©´/íŠ¸ë ˆì´ì— ì ìš©í•œë‹¤.
             if(!data.trayIdReady) return CMD_NONE;
             SetStep(STEP_READ_CELL_DATA);
             return CMD_READ_TRAY_ID;
 
         case STEP_READ_CELL_DATA:
-            // 3. ¼¿ À¯¹« ÀĞ±â¸¦ ¸í·ÉÇÏ°í, ´ÙÀ½ À¯È¿ ÁÖ±â¿¡ ¼¿ °³¼ö¿Í ½ÃÀÛ Áö¿¬À» ÆÇ´ÜÇÑ´Ù.
+            // 3. ì…€ ìœ ë¬´ ì½ê¸°ë¥¼ ëª…ë ¹í•˜ê³ , ë‹¤ìŒ ìœ íš¨ ì£¼ê¸°ì— ì…€ ê°œìˆ˜ì™€ ì‹œì‘ ì§€ì—°ì„ íŒë‹¨í•œë‹¤.
             SetStep(STEP_WAIT_START_DELAY);
             return CMD_READ_CELL_DATA;
 
         case STEP_WAIT_START_DELAY:
-            // 4. Cycle ½ÃÇè ¿Ü¿¡´Â Á¸Àç ¼¿ÀÌ ÀÖ¾î¾ß ÇÑ´Ù. ¼³Á¤µÈ ½ÃÀÛ Áö¿¬ ÈÄ ½Ã¸®¾ó ¸ğµå¸¦ ºĞ±âÇÑ´Ù.
+            // 4. Cycle ì‹œí—˜ ì™¸ì—ëŠ” ì¡´ì¬ ì…€ì´ ìˆì–´ì•¼ í•œë‹¤. ì„¤ì •ëœ ì‹œì‘ ì§€ì—° í›„ ì‹œë¦¬ì–¼ ëª¨ë“œë¥¼ ë¶„ê¸°í•œë‹¤.
             if(waitCount < UINT_MAX) ++waitCount;
             if(data.cellCount <= 0 && !data.cycleMode) return CMD_NONE;
             if(waitCount <= sequenceSetting.startDelayCount) return CMD_NONE;
-            // »ó½Ã ÀĞ±â´Â ÅõÀÔ ½Ã ½Ã¸®¾óÀ» ±â´Ù¸®°Å³ª ºñ±³ÇÏÁö ¾Ê´Â´Ù.
+            // ìƒì‹œ ì½ê¸°ëŠ” íˆ¬ì… ì‹œ ì‹œë¦¬ì–¼ì„ ê¸°ë‹¤ë¦¬ê±°ë‚˜ ë¹„êµí•˜ì§€ ì•ŠëŠ”ë‹¤.
             if(data.cellSerialContinuousRead)
             {
                 SetStep(STEP_WAIT_PROBE_CLOSE);
@@ -78,8 +78,8 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             return CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL;
 
         case STEP_WAIT_CELL_SERIAL:
-            // 5. ÀüÃ¼ ½Ã¸®¾ó ¿Ï·áº»¸¸ ¼¿ °³¼ö¿Í ºñ±³ÇÑ´Ù. ½Ã°£ °æ°è¿¡¼­´Â ¿Ï·á¸¦ ¸ÕÀú È®ÀÎÇÑ´Ù.
-            //    ºÒÀÏÄ¡/½Ã°£ ÃÊ°ú´Â ¿À·ù ´ë±â·Î ÁøÀÔÇÏ¸ç ÀÛ¾÷ÀÚ SAVE/CANCEL Àü±îÁö ÁøÇàÇÏÁö ¾Ê´Â´Ù.
+            // 5. ì „ì²´ ì‹œë¦¬ì–¼ ì™„ë£Œë³¸ë§Œ ì…€ ê°œìˆ˜ì™€ ë¹„êµí•œë‹¤. ì‹œê°„ ê²½ê³„ì—ì„œëŠ” ì™„ë£Œë¥¼ ë¨¼ì € í™•ì¸í•œë‹¤.
+            //    ë¶ˆì¼ì¹˜/ì‹œê°„ ì´ˆê³¼ëŠ” ì˜¤ë¥˜ ëŒ€ê¸°ë¡œ ì§„ì…í•˜ë©° ì‘ì—…ì SAVE/CANCEL ì „ê¹Œì§€ ì§„í–‰í•˜ì§€ ì•ŠëŠ”ë‹¤.
             if(data.serialComplete)
             {
                 if(data.serialCount == data.cellCount)
@@ -97,28 +97,28 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
 
         case STEP_WAIT_PROBE_CLOSE:
         case STEP_WAIT_REMEASURE_PROBE_CLOSE:
-            // 6. Æ®·¹ÀÌ°¡ À¯ÁöµÇ°í ÇÁ·Îºê°¡ ´İÇô¾ß ½ÃÀÛÇÑ´Ù. ÀÚµ¿ Àç°³Æó È½¼ö´Â ½ÇÁ¦ ½ÃÀÛ ¶§¸¸ Áõ°¡ÇÑ´Ù.
+            // 6. íŠ¸ë ˆì´ê°€ ìœ ì§€ë˜ê³  í”„ë¡œë¸Œê°€ ë‹«í˜€ì•¼ ì‹œì‘í•œë‹¤. ìë™ ì¬ê°œí íšŸìˆ˜ëŠ” ì‹¤ì œ ì‹œì‘ ë•Œë§Œ ì¦ê°€í•œë‹¤.
             if(!data.probeClosed || !data.trayIn) return CMD_NONE;
             {
                 const bool remeasure = currentStep == STEP_WAIT_REMEASURE_PROBE_CLOSE;
                 if(remeasure && automaticProbeRemeasure) ++probeRemeasureDoneCount;
                 automaticProbeRemeasure = false;
-                SetStep(STEP_WAIT_MEASURE_COMPLETE); // ¸í·É ½ÇÇàº¸´Ù ¸ÕÀú ´ë±â·Î ÀüÈ¯ÇÏ¿© Áßº¹ ½ÃÀÛ ¹æÁö.
+                SetStep(STEP_WAIT_MEASURE_COMPLETE); // ëª…ë ¹ ì‹¤í–‰ë³´ë‹¤ ë¨¼ì € ëŒ€ê¸°ë¡œ ì „í™˜í•˜ì—¬ ì¤‘ë³µ ì‹œì‘ ë°©ì§€.
                 return remeasure ? CMD_REMEASURE_START : CMD_MEASURE_START;
             }
 
         case STEP_WAIT_PROBE_OPEN:
-            // 7. °á°ú ÀúÀå/PLC ¼Û½Å ¿Ï·á ÀÌÈÄ ÁøÀÔÇÑ´Ù. Auto + ¿­¸² È®ÀÎ ÈÄ ÀçÃøÁ¤ ¶Ç´Â ¹èÃâÀ» ÆÇ´ÜÇÑ´Ù.
+            // 7. ê²°ê³¼ ì €ì¥/PLC ì†¡ì‹  ì™„ë£Œ ì´í›„ ì§„ì…í•œë‹¤. Auto + ì—´ë¦¼ í™•ì¸ í›„ ì¬ì¸¡ì • ë˜ëŠ” ë°°ì¶œì„ íŒë‹¨í•œë‹¤.
             if(!data.autoMode || !data.probeOpen) return CMD_NONE;
             return AutomaticTrayOut(data.ngCount, data.cellCount, data.ngLimit);
 
         case STEP_WAIT_TRAY_OUT:
-            // 8. TRAY IN ÇØÁ¦¸¦ È®ÀÎÇØ¾ß ¹èÃâ Ãâ·ÂÀ» Á¤¸®ÇÏ°í ´ÙÀ½ Æ®·¹ÀÌ¸¦ ¹ŞÀ» ¼ö ÀÖ´Ù.
+            // 8. TRAY IN í•´ì œë¥¼ í™•ì¸í•´ì•¼ ë°°ì¶œ ì¶œë ¥ì„ ì •ë¦¬í•˜ê³  ë‹¤ìŒ íŠ¸ë ˆì´ë¥¼ ë°›ì„ ìˆ˜ ìˆë‹¤.
             if(data.trayIn) return CMD_NONE;
             SetStep(STEP_WAIT_TRAY_IN);
             return CMD_TRAY_OUT_COMPLETE;
 
-        // ¾Æ·¡ ´Ü°è´Â Å¸ÀÌ¸Ó¸¸À¸·Î ÇØÁ¦µÇÁö ¾Ê´Â´Ù. ÀÛ¾÷ÀÚ ¼±ÅÃ/°á°ú ¸¶°¨ ¿Ï·á°¡ ´ÙÀ½ ´Ü°è¸¦ ÅëÁöÇÑ´Ù.
+        // ì•„ë˜ ë‹¨ê³„ëŠ” íƒ€ì´ë¨¸ë§Œìœ¼ë¡œ í•´ì œë˜ì§€ ì•ŠëŠ”ë‹¤. ì‘ì—…ì ì„ íƒ/ê²°ê³¼ ë§ˆê° ì™„ë£Œê°€ ë‹¤ìŒ ë‹¨ê³„ë¥¼ í†µì§€í•œë‹¤.
         case STEP_WAIT_CELL_SERIAL_ERROR:
         case STEP_WAIT_MEASURE_COMPLETE:
         case STEP_WAIT_NG_ERROR:
@@ -129,7 +129,7 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
     return CMD_NONE;
 }
 
-// »ç¿ëÀÚ SAVE ½ÂÀÎ¿¡ µû¶ó ÇÁ·Îºê ´İÈû ´ë±â·Î ÁøÇàÇÑ´Ù. ½ÇÁ¦ ½Ã¸®¾ó ÀúÀåÀº Æû¿¡¼­ Ã³¸®ÇÑ´Ù.
+// ì‚¬ìš©ì SAVE ìŠ¹ì¸ì— ë”°ë¼ í”„ë¡œë¸Œ ë‹«í˜ ëŒ€ê¸°ë¡œ ì§„í–‰í•œë‹¤. ì‹¤ì œ ì‹œë¦¬ì–¼ ì €ì¥ì€ í¼ì—ì„œ ì²˜ë¦¬í•œë‹¤.
 bool TAutoInspectionSequence::SaveCellSerialAfterError()
 {
     if(currentStep != STEP_WAIT_CELL_SERIAL_ERROR) return false;
@@ -137,7 +137,7 @@ bool TAutoInspectionSequence::SaveCellSerialAfterError()
     return true;
 }
 
-// ½Ã¸®¾ó ¿À·ù »óÅÂ¿¡¼­ ¼ö½Å ´ë±â·Î µÇµ¹¾Æ°£´Ù. ½ÇÁ¦ ¼ö½Å ¿äÃ»Àº Æû¿¡¼­ ½ÇÇàÇÑ´Ù.
+// ì‹œë¦¬ì–¼ ì˜¤ë¥˜ ìƒíƒœì—ì„œ ìˆ˜ì‹  ëŒ€ê¸°ë¡œ ë˜ëŒì•„ê°„ë‹¤. ì‹¤ì œ ìˆ˜ì‹  ìš”ì²­ì€ í¼ì—ì„œ ì‹¤í–‰í•œë‹¤.
 bool TAutoInspectionSequence::RetryCellSerialRead()
 {
     if(currentStep != STEP_WAIT_CELL_SERIAL_ERROR) return false;
@@ -145,18 +145,18 @@ bool TAutoInspectionSequence::RetryCellSerialRead()
     return true;
 }
 
-// ÀçÃøÁ¤ °¡´ÉÇÑ ´Ü°è¿¡¼­ ÇÁ·Îºê ´İÈû ´ë±â·Î º¯°æÇÑ´Ù. ÁøÇà Áß Áßº¹ ¿äÃ»Àº °ÅÀıÇÑ´Ù.
+// ì¬ì¸¡ì • ê°€ëŠ¥í•œ ë‹¨ê³„ì—ì„œ í”„ë¡œë¸Œ ë‹«í˜ ëŒ€ê¸°ë¡œ ë³€ê²½í•œë‹¤. ì§„í–‰ ì¤‘ ì¤‘ë³µ ìš”ì²­ì€ ê±°ì ˆí•œë‹¤.
 bool TAutoInspectionSequence::StartRemeasure()
 {
     // Existing remeasure buttons are also usable from the idle/manual UI.
     if(currentStep != STEP_WAIT_TRAY_IN && currentStep != STEP_WAIT_NG_ERROR && currentStep != STEP_WAIT_PROBE_OPEN)
         return false;
-    automaticProbeRemeasure = false; // ÀÛ¾÷ÀÚ°¡ Á÷Á¢ ´©¸¥ ÀçÃøÁ¤Àº ÀÚµ¿ È½¼ö¿Í ±¸ºĞ.
+    automaticProbeRemeasure = false; // ì‘ì—…ìê°€ ì§ì ‘ ëˆ„ë¥¸ ì¬ì¸¡ì •ì€ ìë™ íšŸìˆ˜ì™€ êµ¬ë¶„.
     SetStep(STEP_WAIT_REMEASURE_PROBE_CLOSE);
     return true;
 }
 
-// ÃøÁ¤ °á°ú Ã³¸® ¿Ï·á¸¦ ¹Ş¾Æ ÇÁ·Îºê ¿­¸² ´ë±â·Î º¯°æÇÑ´Ù. Áßº¹/´Ù¸¥ ´Ü°èÀÇ ¿Ï·á´Â ¹«½ÃÇÑ´Ù.
+// ì¸¡ì • ê²°ê³¼ ì²˜ë¦¬ ì™„ë£Œë¥¼ ë°›ì•„ í”„ë¡œë¸Œ ì—´ë¦¼ ëŒ€ê¸°ë¡œ ë³€ê²½í•œë‹¤. ì¤‘ë³µ/ë‹¤ë¥¸ ë‹¨ê³„ì˜ ì™„ë£ŒëŠ” ë¬´ì‹œí•œë‹¤.
 bool TAutoInspectionSequence::SetMeasureComplete()
 {
     if(currentStep != STEP_WAIT_MEASURE_COMPLETE) return false;
@@ -164,7 +164,7 @@ bool TAutoInspectionSequence::SetMeasureComplete()
     return true;
 }
 
-// Á¸ÀçÇÏ´Â ¼¿ÀÇ NG°¡ ¼³Á¤°ª ÃÊ°ú ¶Ç´Â Àü·® NGÀÎÁö °Ë»çÇÑ´Ù. ¼³Á¤°ª°ú °°À¸¸é Çã¿ëÇÑ´Ù.
+// ì¡´ì¬í•˜ëŠ” ì…€ì˜ NGê°€ ì„¤ì •ê°’ ì´ˆê³¼ ë˜ëŠ” ì „ëŸ‰ NGì¸ì§€ ê²€ì‚¬í•œë‹¤. ì„¤ì •ê°’ê³¼ ê°™ìœ¼ë©´ í—ˆìš©í•œë‹¤.
 bool TAutoInspectionSequence::IsNgCountError(int ngCount, int cellCount, int ngLimit)
 {
     // NgCount is occupied-cell IR/OCV NG, NOT the PLC's lowercase ngCount.
@@ -172,11 +172,11 @@ bool TAutoInspectionSequence::IsNgCountError(int ngCount, int cellCount, int ngL
     return (cellCount > 0 && ngCount == cellCount) || ngCount > ngLimit;
 }
 
-// Á¤»ó ÀÚµ¿ ¹èÃâ ÆÇ´Ü: NG ¿À·ù ´ë±â ¶Ç´Â Æ®·¹ÀÌ ¹èÃâ ¸í·ÉÀ» ¹İÈ¯ÇÑ´Ù.
+// ì •ìƒ ìë™ ë°°ì¶œ íŒë‹¨: NG ì˜¤ë¥˜ ëŒ€ê¸° ë˜ëŠ” íŠ¸ë ˆì´ ë°°ì¶œ ëª…ë ¹ì„ ë°˜í™˜í•œë‹¤.
 TAutoInspectionCommand TAutoInspectionSequence::AutomaticTrayOut(int ngCount, int cellCount, int ngLimit)
 {
     if(currentStep != STEP_WAIT_PROBE_OPEN) return CMD_NONE;
-    // 2¹ø ÀçÃøÁ¤Àº NG ¾Ë¶÷ ±âÁØ°ú º°°³: ºÒ·®ÀÌ ³²°í ¼³Á¤ È½¼ö°¡ ³²À¸¸é ¸ÕÀú Àç°³Æó.
+    // 2ë²ˆ ì¬ì¸¡ì •ì€ NG ì•ŒëŒ ê¸°ì¤€ê³¼ ë³„ê°œ: ë¶ˆëŸ‰ì´ ë‚¨ê³  ì„¤ì • íšŸìˆ˜ê°€ ë‚¨ìœ¼ë©´ ë¨¼ì € ì¬ê°œí.
     if(ngCount > 0 && probeRemeasureDoneCount < sequenceSetting.probeRemeasureCount)
     {
         automaticProbeRemeasure = true;
@@ -192,7 +192,7 @@ TAutoInspectionCommand TAutoInspectionSequence::AutomaticTrayOut(int ngCount, in
     return CMD_TRAY_OUT;
 }
 
-// ¿î¿µÀÚ°¡ ¿äÃ»ÇÑ °­Á¦ ¹èÃâ ´Ü°è·Î º¯°æÇÑ´Ù. NG ÆÇÁ¤Àº »ı·«ÇÏ°í Áßº¹ ¹èÃâ ¿äÃ»Àº ¹«½ÃÇÑ´Ù.
+// ìš´ì˜ìê°€ ìš”ì²­í•œ ê°•ì œ ë°°ì¶œ ë‹¨ê³„ë¡œ ë³€ê²½í•œë‹¤. NG íŒì •ì€ ìƒëµí•˜ê³  ì¤‘ë³µ ë°°ì¶œ ìš”ì²­ì€ ë¬´ì‹œí•œë‹¤.
 TAutoInspectionCommand TAutoInspectionSequence::ForceTrayOut()
 {
     if(currentStep == STEP_WAIT_TRAY_OUT) return CMD_NONE;
@@ -201,17 +201,17 @@ TAutoInspectionCommand TAutoInspectionSequence::ForceTrayOut()
     return CMD_TRAY_OUT;
 }
 
-// ÀÚµ¿ ´Ü°è ÁøÇàÀ» ¿À·ù Á¤Áö·Î °íÁ¤ÇÑ´Ù. PLC ºñ»óÁ¤Áö³ª ÀÌµ¿ ¸í·ÉÀ» Ãâ·ÂÇÏÁö ¾Ê´Â´Ù.
+// ìë™ ë‹¨ê³„ ì§„í–‰ì„ ì˜¤ë¥˜ ì •ì§€ë¡œ ê³ ì •í•œë‹¤. PLC ë¹„ìƒì •ì§€ë‚˜ ì´ë™ ëª…ë ¹ì„ ì¶œë ¥í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void TAutoInspectionSequence::StopWithError() { SetStep(STEP_ERROR_STOP); }
 
-// ÇöÀç ´Ü°è°¡ ÃøÁ¤ ÁØºñ/ÃøÁ¤ ¿Ï·á/ÇÁ·Îºê ´ë±â ±¸°£ÀÎÁö ¹İÈ¯ÇÑ´Ù.
+// í˜„ì¬ ë‹¨ê³„ê°€ ì¸¡ì • ì¤€ë¹„/ì¸¡ì • ì™„ë£Œ/í”„ë¡œë¸Œ ëŒ€ê¸° êµ¬ê°„ì¸ì§€ ë°˜í™˜í•œë‹¤.
 bool TAutoInspectionSequence::IsMeasureStep() const
 {
     return currentStep == STEP_WAIT_PROBE_CLOSE || currentStep == STEP_WAIT_REMEASURE_PROBE_CLOSE ||
            currentStep == STEP_WAIT_MEASURE_COMPLETE || currentStep == STEP_WAIT_PROBE_OPEN;
 }
 
-// ´Ü°è ÀÌ¸§À» ·Î±×¿ë ¹®ÀÚ¿­·Î ¹İÈ¯ÇÑ´Ù.
+// ë‹¨ê³„ ì´ë¦„ì„ ë¡œê·¸ìš© ë¬¸ìì—´ë¡œ ë°˜í™˜í•œë‹¤.
 const char *TAutoInspectionSequence::GetStepName(TAutoInspectionStep step)
 {
     switch(step)

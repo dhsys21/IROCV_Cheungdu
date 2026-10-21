@@ -33,7 +33,7 @@ void __fastcall TRemeasureForm::RefreshForm()
 			pre[i]->ParentBackground = false;
 		}
 //		if(acc_remeasure[i] >= 10){
-//			pre[i]->Color = pcolor4->Color;  // ¸¶Áö¸· ÃøÁ¤  Ã¤³Î
+//			pre[i]->Color = pcolor4->Color;  // ë§ˆì§€ë§‰ ì¸¡ì •  ì±„ë„
 //			pre[i]->ParentBackground = false;
 //		}
 	}
@@ -56,7 +56,7 @@ void __fastcall TRemeasureForm::FormCreate(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TRemeasureForm::MakePanel()
 {
-    // ÇÑ Ã¤³ÎÀÇ µÎ Ç¥½ÃÃ¢Àº °°Àº ¼¿ ¾È¿¡ À§/¾Æ·¡·Î ¹èÄ¡ÇÑ´Ù.
+    // í•œ ì±„ë„ì˜ ë‘ í‘œì‹œì°½ì€ ê°™ì€ ì…€ ì•ˆì— ìœ„/ì•„ë˜ë¡œ ë°°ì¹˜í•œë‹¤.
     for(int index = 0; index < MAXCHANNEL; ++index)
     {
         const ChannelLayout::Rect r = ChannelLayout::ForChannel(
@@ -78,13 +78,13 @@ void __fastcall TRemeasureForm::MakePanel()
 //---------------------------------------------------------------------------
 void __fastcall TRemeasureForm::MakeUIPanel()
 {
-    // DFM¿¡ ³²Àº 16Ã¤³Î ±âÁØ Á¦¸ñÀº ¼û±â°í, ½ÇÁ¦ Çà/¿­ ¼ö·Î Ãà Á¦¸ñÀ» »ı¼ºÇÑ´Ù.
+    // DFMì— ë‚¨ì€ 16ì±„ë„ ê¸°ì¤€ ì œëª©ì€ ìˆ¨ê¸°ê³ , ì‹¤ì œ í–‰/ì—´ ìˆ˜ë¡œ ì¶• ì œëª©ì„ ìƒì„±í•œë‹¤.
     for(int i = 0; i < Panel2->ControlCount; ++i)
         Panel2->Controls[i]->Visible = false;
     Panel2->Caption = "";
     const int width = Panel2->ClientWidth;
     const int height = Panel2->ClientHeight;
-    // ¹è¿­ ¹øÈ£=¾È³» ¹øÈ£-1. Á¦¸ñ À§Ä¡¿Í Ã¤³Î À§Ä¡´Â µ¿ÀÏÇÑ ½ÃÀÛ ¸ğ¼­¸®¸¦ »ç¿ëÇÑ´Ù.
+    // ë°°ì—´ ë²ˆí˜¸=ì•ˆë‚´ ë²ˆí˜¸-1. ì œëª© ìœ„ì¹˜ì™€ ì±„ë„ ìœ„ì¹˜ëŠ” ë™ì¼í•œ ì‹œì‘ ëª¨ì„œë¦¬ë¥¼ ì‚¬ìš©í•œë‹¤.
     for(int column = 0; column < CELL_COLUMN_COUNT; ++column)
     {
         const ChannelLayout::Rect r = ChannelLayout::ColumnTitle(column, width, height);

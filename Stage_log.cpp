@@ -1,5 +1,5 @@
-// [¼³Á¤¡¤ÆÄÀÏ¡¤·Î±×] INI/Ã¤³Î ¸ÅÇÎ, °á°ú CSV, ´©Àû Á¤º¸, Åë½Å/PLC ·Î±×.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [ì„¤ì •Â·íŒŒì¼Â·ë¡œê·¸] INI/ì±„ë„ ë§¤í•‘, ê²°ê³¼ CSV, ëˆ„ì  ì •ë³´, í†µì‹ /PLC ë¡œê·¸.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -16,10 +16,10 @@ void __fastcall TTotalForm::WriteSystemInfo()
 	file = (AnsiString)BIN_PATH + "SystemInfo_"+ IntToStr(this->Tag) + ".inf";
 
 	ini = new TIniFile(file);
-	// 0=Àç°³Æó ¾øÀ½. ±âÁ¸ REMEASURE Å°¸¦ À¯ÁöÇÏ¸ç À½¼ö´Â 0À¸·Î Á¤±ÔÈ­ÇÑ´Ù.
+	// 0=ì¬ê°œí ì—†ìŒ. ê¸°ì¡´ REMEASURE í‚¤ë¥¼ ìœ ì§€í•˜ë©° ìŒìˆ˜ëŠ” 0ìœ¼ë¡œ ì •ê·œí™”í•œë‹¤.
     int probeCount = editProbeRemeasureCount->Text.ToIntDef(0);
     if(probeCount < 0) probeCount = 0;
-    // ´İÈû »óÅÂÀÇ ÀçÃøÁ¤ Çã¿ë NG °³¼ö: ÀÌÇÏ Á¶°Ç, 0=»ı·«. Ã¤³Î ¼ö ¹üÀ§·Î Á¦ÇÑ.
+    // ë‹«í˜ ìƒíƒœì˜ ì¬ì¸¡ì • í—ˆìš© NG ê°œìˆ˜: ì´í•˜ ì¡°ê±´, 0=ìƒëµ. ì±„ë„ ìˆ˜ ë²”ìœ„ë¡œ ì œí•œ.
     int maxNgCount = editClosedProbeRemeasureMaxNgCount->Text.ToIntDef(
         DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT);
     if(maxNgCount < 0) maxNgCount = 0;
@@ -33,8 +33,8 @@ void __fastcall TTotalForm::WriteSystemInfo()
     ini->DeleteKey("MAIN", "USE_AVERAGE");
     ini->DeleteKey("MAIN", "IR_RANGE");
     ini->DeleteKey("MAIN", "OCV_RANGE");
-    // [CELL SERIAL °øÅë] ¹ÌÃ¼Å©=TRAY IN º¸°ü(±âÁ¸), Ã¼Å©=»ó½Ã ¼ö½Å/°á°ú Á÷Àü ÀçÈ®ÀÎ.
-    // ½ÇÁ¦ Àû¿ëÀº ReadSystemInfo ¹× ´ÙÀ½ InitializeTrayData¿¡¼­ ÇÑ´Ù. ÇöÀç Æ®·¹ÀÌ ¸ğµå´Â À¯ÁöÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ë¯¸ì²´í¬=TRAY IN ë³´ê´€(ê¸°ì¡´), ì²´í¬=ìƒì‹œ ìˆ˜ì‹ /ê²°ê³¼ ì§ì „ ì¬í™•ì¸.
+    // ì‹¤ì œ ì ìš©ì€ ReadSystemInfo ë° ë‹¤ìŒ InitializeTrayDataì—ì„œ í•œë‹¤. í˜„ì¬ íŠ¸ë ˆì´ ëª¨ë“œëŠ” ìœ ì§€í•œë‹¤.
     ini->WriteBool("CELL_SERIAL", "CONTINUOUS_READ", chkCellSerialContinuousRead->Checked);
 
 	ini->WriteString("IROCV_PLC", "IP", editPLCIPAddress->Text);
@@ -54,7 +54,7 @@ void __fastcall TTotalForm::WriteSystemInfo()
     ini->WriteString("CELLINFO", "MODELNAME", editModelName->Text);
     ini->WriteString("PASSWORD", "PWD", editPwd->Text);
 
-    //* ÃøÁ¤¼Óµµ
+    //* ì¸¡ì •ì†ë„
     AnsiString speedmode = "2";
     if(rbSpeedSlow->Checked) speedmode = "0";
     else if(rbSpeedMed->Checked) speedmode = "1";
@@ -63,7 +63,7 @@ void __fastcall TTotalForm::WriteSystemInfo()
 
 	//* 2022 11 07
 
-    // È­¸é ÀÔ·ÂÀ» ÇÑ ¹ø¸¸ ÇØ¼®ÇÑ´Ù. ÆÄÀÏ/¸Ş¸ğ¸®/PLC°¡ °°Àº ±Ô°İÀ» »ç¿ëÇÑ´Ù.
+    // í™”ë©´ ì…ë ¥ì„ í•œ ë²ˆë§Œ í•´ì„í•œë‹¤. íŒŒì¼/ë©”ëª¨ë¦¬/PLCê°€ ê°™ì€ ê·œê²©ì„ ì‚¬ìš©í•œë‹¤.
     config.ir_min = BaseForm->StringToDouble(irEdit1->Text, DEFAULT_IR_MIN);
     config.ir_max = BaseForm->StringToDouble(irEdit2->Text, DEFAULT_IR_MAX);
     config.ocv_min = BaseForm->StringToDouble(ocvEdit1->Text, DEFAULT_OCV_MIN);
@@ -84,25 +84,25 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	file = (AnsiString)BIN_PATH + "SystemInfo_"+ IntToStr(this->Tag) + ".inf";
 
 	ini = new TIniFile(file);
-    // [CELL SERIAL °øÅë] ±âÁ¸ INI¿¡ Å°°¡ ¾øÀ¸¸é ±âÁ¸ TRAY IN ¼ö½Å ¹æ½ÄÀ¸·Î µ¿ÀÛÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ê¸°ì¡´ INIì— í‚¤ê°€ ì—†ìœ¼ë©´ ê¸°ì¡´ TRAY IN ìˆ˜ì‹  ë°©ì‹ìœ¼ë¡œ ë™ì‘í•œë‹¤.
     config.cell_serial_continuous_read = ini->ReadBool("CELL_SERIAL", "CONTINUOUS_READ", false);
     chkCellSerialContinuousRead->Checked = config.cell_serial_continuous_read;
     if(autoInspection.GetStep() == STEP_WAIT_TRAY_IN && !IsWaitingForResultSave() && (!tray.ams || tray.amf))
         ApplyCellSerialReadMode();
-    // ±âÁ¸ ÆÄÀÏ¿¡ »õ Å°°¡ ¾øÀ¸¸é 49°³ ÀÌÇÏ¸¦ À¯Áö. 0Àº ´İÈû ÀçÃøÁ¤¸¸ »ı·«ÇÑ´Ù.
+    // ê¸°ì¡´ íŒŒì¼ì— ìƒˆ í‚¤ê°€ ì—†ìœ¼ë©´ 49ê°œ ì´í•˜ë¥¼ ìœ ì§€. 0ì€ ë‹«í˜ ì¬ì¸¡ì •ë§Œ ìƒëµí•œë‹¤.
     config.closedProbeRemeasureMaxNgCount = ini->ReadInteger(
         "MAIN", "CLOSED_PROBE_REMEASURE_MAX_NG_COUNT", DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT);
     if(config.closedProbeRemeasureMaxNgCount < 0) config.closedProbeRemeasureMaxNgCount = 0;
     if(config.closedProbeRemeasureMaxNgCount > MAXCHANNEL) config.closedProbeRemeasureMaxNgCount = MAXCHANNEL;
-    // ±âÁ¸ REMEASURE Å°´Â Ãß°¡ Àç°³Æó È½¼ö Àü¿ë. ´İÈû NG °³¼ö ¼³Á¤°ú È¥¿ëÇÏÁö ¾Ê´Â´Ù.
+    // ê¸°ì¡´ REMEASURE í‚¤ëŠ” ì¶”ê°€ ì¬ê°œí íšŸìˆ˜ ì „ìš©. ë‹«í˜ NG ê°œìˆ˜ ì„¤ì •ê³¼ í˜¼ìš©í•˜ì§€ ì•ŠëŠ”ë‹¤.
 	config.probeRemeasureCount = ini->ReadInteger("MAIN", "REMEASURE", 0);
     if(config.probeRemeasureCount < 0) config.probeRemeasureCount = 0;
-    // ÀÌÀü ¹öÀüÀÇ Auto Remeasure ¹ÌÃ¼Å©´Â 0È¸·Î ÀÌ°ü. »õ ¼³Á¤Àº È½¼ö ÇÏ³ª¸¸ »ç¿ë.
+    // ì´ì „ ë²„ì „ì˜ Auto Remeasure ë¯¸ì²´í¬ëŠ” 0íšŒë¡œ ì´ê´€. ìƒˆ ì„¤ì •ì€ íšŸìˆ˜ í•˜ë‚˜ë§Œ ì‚¬ìš©.
     if(ini->ValueExists("MAIN", "AUTO_CHECK") && !ini->ReadBool("MAIN", "AUTO_CHECK", false))
         config.probeRemeasureCount = 0;
     config.remeasure_alarm_cnt = ini->ReadInteger("MAIN", "REMEASURE_ALARM_COUNT", 5);
 
-    //* ÃøÁ¤¼Óµµ
+    //* ì¸¡ì •ì†ë„
     AnsiString speedmode = "2";
     speedmode = ini->ReadString("MAIN", "SPEED_MODE", "2");
     if(speedmode == "0") rbSpeedSlow->Checked = true;
@@ -138,7 +138,7 @@ void __fastcall TTotalForm::ReadSystemInfo()
 	editIROCVIPAddress->Text = ini->ReadString("IROCV", "IP", "192.168.250.202");
 	editIROCVPort->Text = ini->ReadString("IROCV", "PORT", "45000");
 
-    // IP/Port´Â Ç¥½Ã/¸Ş¸ğ¸®¸¸ ÀĞ°í, ÀúÀå/¿¬°á ¹öÆ°¿¡¼­ ½ÇÁ¦ ¼ÒÄÏ¿¡ Àû¿ëÇÑ´Ù.
+    // IP/PortëŠ” í‘œì‹œ/ë©”ëª¨ë¦¬ë§Œ ì½ê³ , ì €ì¥/ì—°ê²° ë²„íŠ¼ì—ì„œ ì‹¤ì œ ì†Œì¼“ì— ì ìš©í•œë‹¤.
 
 	editModelName->Text = ini->ReadString("CELLINFO", "MODELNAME", "20PQ");
     editPwd->Text = ini->ReadString("PASSWORD", "PWD", "Eveml@123");
@@ -186,10 +186,10 @@ void __fastcall TTotalForm::ReadRemeasureInfo()
     acc_totaltray = ini->ReadInteger(title, "TOTAL_TRAY", 0);
     acc_finalng = ini->ReadInteger(title, "FINAL_NG", 0);
 
-    //* ÃÑ ´©ÀûºÒ·®
-	if(retest_info == "-1"){	// ÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾ÊÀ¸¸é
+    //* ì´ ëˆ„ì ë¶ˆëŸ‰
+	if(retest_info == "-1"){	// íŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë©´
 		for(int index=0; index<MAXCHANNEL; ++index){
-			acc_remeasure[index] = 0; 	// ¸ğµÎ 0À¸·Î
+			acc_remeasure[index] = 0; 	// ëª¨ë‘ 0ìœ¼ë¡œ
 		}
 	}
 	else{
@@ -202,10 +202,10 @@ void __fastcall TTotalForm::ReadRemeasureInfo()
 		}
 	}
 
-    //* ÃÑ ÃøÁ¤ È½¼ö
-	if(strTotalUse == "-1"){	// ÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾ÊÀ¸¸é
+    //* ì´ ì¸¡ì • íšŸìˆ˜
+	if(strTotalUse == "-1"){	// íŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë©´
 		for(int index = 0; index < MAXCHANNEL; ++index)
-			acc_totaluse[index] = 0; 	// ¸ğµÎ 0À¸·Î
+			acc_totaluse[index] = 0; 	// ëª¨ë‘ 0ìœ¼ë¡œ
 	} else{
 		for(int index = 0; index < MAXCHANNEL; ++index){
 			posTotalNg = strTotalUse.Pos("_");
@@ -223,7 +223,7 @@ void __fastcall TTotalForm::ReadRemeasureInfo()
 	delete ini;
 }
 
-void __fastcall TTotalForm::WriteRemeasureInfo()	// Tray°¡ Vacancy »óÅÂÀÏ¶§ ±â·Ï
+void __fastcall TTotalForm::WriteRemeasureInfo()	// Trayê°€ Vacancy ìƒíƒœì¼ë•Œ ê¸°ë¡
 {
 	TIniFile *ini;
 
@@ -378,7 +378,7 @@ bool __fastcall TTotalForm::WriteResultFile()
     FileClose(file_handle);
     file_handle = -1;
     if(written != file.Length()) { DeleteFile(filename); return false; }
-    // ¿Ï¼ºµÈ ÀÓ½Ã ÆÄÀÏ¸¸ ÃÖÁ¾ °æ·Î·Î ±³Ã¼. ÀçÃøÁ¤/Àç½Ãµµ¿¡¼­µµ ±âÁ¸ °á°ú¸¦ ¸ÕÀú Áö¿ìÁö ¾Ê´Â´Ù.
+    // ì™„ì„±ëœ ì„ì‹œ íŒŒì¼ë§Œ ìµœì¢… ê²½ë¡œë¡œ êµì²´. ì¬ì¸¡ì •/ì¬ì‹œë„ì—ì„œë„ ê¸°ì¡´ ê²°ê³¼ë¥¼ ë¨¼ì € ì§€ìš°ì§€ ì•ŠëŠ”ë‹¤.
     if(!MoveFileExA(filename.c_str(), resultFileName.c_str(),
         MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
     { DeleteFile(filename); return false; }
@@ -417,12 +417,12 @@ void __fastcall TTotalForm::WriteErrorLog(AnsiString title, AnsiString detail1, 
 	FileClose(file_handle);
 }
 
-void __fastcall TTotalForm::ReadCalibrationOffsets()                         //20171202 °³º°º¸Á¤À» À§ÇØ Ãß°¡
+void __fastcall TTotalForm::ReadCalibrationOffsets()                         //20171202 ê°œë³„ë³´ì •ì„ ìœ„í•´ ì¶”ê°€
 {
 	TIniFile *ini;
 	ini = new TIniFile((AnsiString)BIN_PATH + "Caliboffset_" + IntToStr(this->Tag) + ".cali");
 
-	for(int index=0; index<MAXCHANNEL; ++index){     							//20171202 °³º°º¸Á¤À» À§ÇØ Ãß°¡
+	for(int index=0; index<MAXCHANNEL; ++index){     							//20171202 ê°œë³„ë³´ì •ì„ ìœ„í•´ ì¶”ê°€
 		stage.ir_offset[index] = ini->ReadFloat("IR OFFSET", IntToStr(index+1), 0.0);
 	}
 
@@ -430,7 +430,7 @@ void __fastcall TTotalForm::ReadCalibrationOffsets()                         //2
 }
 
 //---------------------------------------------------------------------------
-// mapping.csv¿¡¼­ Àåºñ¡êÈ­¸é Ã¤³Î ¸ÅÇÎÀ» ÀĞ°í, ÆÄÀÏÀÌ ¾øÀ¸¸é ±âº» ¸ÅÇÎÀ» ¸¸µç´Ù.
+// mapping.csvì—ì„œ ì¥ë¹„â†”í™”ë©´ ì±„ë„ ë§¤í•‘ì„ ì½ê³ , íŒŒì¼ì´ ì—†ìœ¼ë©´ ê¸°ë³¸ ë§¤í•‘ì„ ë§Œë“ ë‹¤.
 void __fastcall TTotalForm::ReadChannelMapping()
 {
 	AnsiString str, FileName;
@@ -447,13 +447,13 @@ void __fastcall TTotalForm::ReadChannelMapping()
 
 		for (int i = 1; i <= MAXCHANNEL; ++i) {
 			str = data->Strings[i];
-			str.Delete(1, str.Pos(",")); // Ã¤³Î
+			str.Delete(1, str.Pos(",")); // ì±„ë„
 			chMap[i] = str.ToInt();
 			chReverseMap[str.ToInt()] = i;
 		}
 	}
 	else {
-		data->Add("º¯°æÀü, º¯°æÈÄ");
+		data->Add("ë³€ê²½ì „, ë³€ê²½í›„");
 		for (int i = 1; i <= MAXCHANNEL; ++i) {
 			chMap[i] = i;
             chReverseMap[i] = i;

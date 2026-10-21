@@ -64,7 +64,7 @@ struct Fixture
     }
 };
 
-// Á¤»ó ¿¬¼Ó ÃøÁ¤°ú °á°ú Ã³¸® Àü ¹èÃâ ¹æÁö¸¦ °ËÁõÇÑ´Ù.
+// ì •ìƒ ì—°ì† ì¸¡ì •ê³¼ ê²°ê³¼ ì²˜ë¦¬ ì „ ë°°ì¶œ ë°©ì§€ë¥¼ ê²€ì¦í•œë‹¤.
 static void NormalCycle()
 {
     Fixture f;
@@ -85,7 +85,7 @@ static void NormalCycle()
     CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_IN);
 }
 
-// ½Ã¸®¾ó °³¼ö¡¤ºÎºĞ ¼ö½Å¡¤½Ã°£ °æ°è¡¤SAVE/CANCELÀ» °ËÁõÇÑ´Ù.
+// ì‹œë¦¬ì–¼ ê°œìˆ˜Â·ë¶€ë¶„ ìˆ˜ì‹ Â·ì‹œê°„ ê²½ê³„Â·SAVE/CANCELì„ ê²€ì¦í•œë‹¤.
 static void SerialCountAndTimeout()
 {
     Fixture mismatch;
@@ -124,7 +124,7 @@ static void SerialCountAndTimeout()
     CHECK(overrideMismatch.seq.SaveCellSerialAfterError());
 }
 
-// NG ±âÁØ°ú ¿À·ùÃ¢ ¹èÃâ/Àç½ÃÀÛÀ» °ËÁõÇÑ´Ù.
+// NG ê¸°ì¤€ê³¼ ì˜¤ë¥˜ì°½ ë°°ì¶œ/ì¬ì‹œì‘ì„ ê²€ì¦í•œë‹¤.
 static void NgChoices()
 {
     CHECK(!TAutoInspectionSequence::IsNgCountError(10, 400, 10));
@@ -164,7 +164,7 @@ static void NgChoices()
     CHECK(allNg.seq.RunAutoStep(allNg.data) == CMD_NG_ERROR);
 }
 
-// ¼öµ¿/BYPASS ¹èÃâ ¹× Auto ¸ğµå Á¶°ÇÀ» °ËÁõÇÑ´Ù.
+// ìˆ˜ë™/BYPASS ë°°ì¶œ ë° Auto ëª¨ë“œ ì¡°ê±´ì„ ê²€ì¦í•œë‹¤.
 static void BypassAndManual()
 {
     Fixture bypass;
@@ -189,7 +189,7 @@ static void BypassAndManual()
     CHECK(noAuto.seq.RunAutoStep(noAuto.data) == CMD_TRAY_OUT);
 }
 
-// Áßº¹ ½ÃÀÛ/¿Ï·á, ÀçÃøÁ¤, ¿À·ù Á¤Áö¸¦ °ËÁõÇÑ´Ù.
+// ì¤‘ë³µ ì‹œì‘/ì™„ë£Œ, ì¬ì¸¡ì •, ì˜¤ë¥˜ ì •ì§€ë¥¼ ê²€ì¦í•œë‹¤.
 static void GuardsAndRemeasure()
 {
     Fixture f;
@@ -227,7 +227,7 @@ static void GuardsAndRemeasure()
     CHECK(fault.seq.GetStep() == STEP_WAIT_TRAY_IN);
 }
 
-// ½ÃÀÛ Áö¿¬, ¼¿ ¾øÀ½, ¿À·ù Áß ´ë±â È½¼ö º¸Á¸À» °ËÁõÇÑ´Ù.
+// ì‹œì‘ ì§€ì—°, ì…€ ì—†ìŒ, ì˜¤ë¥˜ ì¤‘ ëŒ€ê¸° íšŸìˆ˜ ë³´ì¡´ì„ ê²€ì¦í•œë‹¤.
 static void DelayAndPause()
 {
     Fixture f;
@@ -254,7 +254,7 @@ static void DelayAndPause()
         CHECK(strcmp(TAutoInspectionSequence::GetStepName((TAutoInspectionStep)s), "InvalidState") != 0);
 }
 
-// ÇÁ·Îºê Àç°³Æó Ãß°¡ È½¼ö(0/1/2), ¼º°ø Á¶±â Á¾·á, Áßº¹ ´İÈû, ´ÙÀ½ Æ®·¹ÀÌ ÃÊ±âÈ­.
+// í”„ë¡œë¸Œ ì¬ê°œí ì¶”ê°€ íšŸìˆ˜(0/1/2), ì„±ê³µ ì¡°ê¸° ì¢…ë£Œ, ì¤‘ë³µ ë‹«í˜, ë‹¤ìŒ íŠ¸ë ˆì´ ì´ˆê¸°í™”.
 static void ProbeRemeasureCounts()
 {
     for(int limit = 0; limit <= 2; ++limit)
@@ -264,7 +264,7 @@ static void ProbeRemeasureCounts()
         f.seq.Initialize(f.setting);
         f.ToProbeOpen();
         f.data.probeOpen = true;
-        f.data.ngCount = 1; // NG ¾Ë¶÷ ÇÑµµ ¹Ì¸¸µµ Àç°³Æó ´ë»óÀÌ´Ù.
+        f.data.ngCount = 1; // NG ì•ŒëŒ í•œë„ ë¯¸ë§Œë„ ì¬ê°œí ëŒ€ìƒì´ë‹¤.
         for(int round = 0; round < limit; ++round)
         {
             CHECK(f.seq.RunAutoStep(f.data) == CMD_REQUEST_PROBE_REMEASURE);

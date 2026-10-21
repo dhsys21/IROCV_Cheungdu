@@ -4,28 +4,28 @@
 // PLC AUTO/MANUAL input: confirmed for Chengdu, 0=manual / 1=automatic.
 const int PLC_AUTO_MODE_VALUE = 1;
 
-// »çÀÌÆ® º¯°æ ½ÃÀÛÁ¡: ½ÇÁ¦ Æ®·¹ÀÌ Çà/¿­. PLC ÁÖ¼Ò¿Í ÇÒ´ç ±æÀÌ´Â Modplc.h¿¡¼­ º°µµ·Î È®ÀÎÇÑ´Ù.
+// ì‚¬ì´íŠ¸ ë³€ê²½ ì‹œìž‘ì : ì‹¤ì œ íŠ¸ë ˆì´ í–‰/ì—´. PLC ì£¼ì†Œì™€ í• ë‹¹ ê¸¸ì´ëŠ” Modplc.hì—ì„œ ë³„ë„ë¡œ í™•ì¸í•œë‹¤.
 const int CELL_ROW_COUNT = 20;
 const int CELL_COLUMN_COUNT = 20;
 typedef char CheckTrayDimensions[(CELL_ROW_COUNT > 0 && CELL_COLUMN_COUNT > 0) ? 1 : -1];
 const int MAXCHANNEL = CELL_ROW_COUNT * CELL_COLUMN_COUNT;
-const int LINECOUNT = CELL_COLUMN_COUNT; // ±âÁ¸ È­¸é ÄÚµå È£È¯¿ë: ÇÑ ÁÙÀÇ ¼¿ °³¼ö.
+const int LINECOUNT = CELL_COLUMN_COUNT; // ê¸°ì¡´ í™”ë©´ ì½”ë“œ í˜¸í™˜ìš©: í•œ ì¤„ì˜ ì…€ ê°œìˆ˜.
 const int CELL_DATA_WORD_COUNT = (MAXCHANNEL + 15) / 16;
 
-// Ã¤³Î È­¸é ¹èÄ¡: 1¹ø ½ÃÀÛ ¸ð¼­¸® ¡¿ ¹øÈ£ Áõ°¡ ¹æÇâ = 8°¡Áö.
-// HORIZONTAL: ÇÑ Çà¿¡¼­ ÁÂ¿ì·Î ÁøÇà ÈÄ ´ÙÀ½ Çà, VERTICAL: ÇÑ ¿­¿¡¼­ »óÇÏ·Î ÁøÇà ÈÄ ´ÙÀ½ ¿­.
-// ¸Å Çà/¿­Àº °°Àº ¹æÇâÀ¸·Î ÁøÇàÇÏ¸ç Áö±×Àç±×(¿Õº¹) ¹èÄ¡´Â ¾Æ´Ï´Ù.
-// ±âÁ¸ ¶óÀÎ 5¿Í µ¿ÀÏÇÑ ±âº»°ª: ¿À¸¥ÂÊ ¾Æ·¡ 1¹ø ¡æ À§ÂÊ Áõ°¡ ¡æ ´ÙÀ½ ¿­Àº ¿ÞÂÊ.
-// È­¸é ÁÂÇ¥¸¸ ¹Ù²Û´Ù. PLC Ã¤³Î/¹è¿­ ÀÎµ¦½º/º¸Á¤¡¤ÆÇÁ¤ µ¥ÀÌÅÍ ¼ø¼­´Â º¯°æÇÏÁö ¾Ê´Â´Ù.
+// ì±„ë„ í™”ë©´ ë°°ì¹˜: 1ë²ˆ ì‹œìž‘ ëª¨ì„œë¦¬ Ã— ë²ˆí˜¸ ì¦ê°€ ë°©í–¥ = 8ê°€ì§€.
+// HORIZONTAL: í•œ í–‰ì—ì„œ ì¢Œìš°ë¡œ ì§„í–‰ í›„ ë‹¤ìŒ í–‰, VERTICAL: í•œ ì—´ì—ì„œ ìƒí•˜ë¡œ ì§„í–‰ í›„ ë‹¤ìŒ ì—´.
+// ë§¤ í–‰/ì—´ì€ ê°™ì€ ë°©í–¥ìœ¼ë¡œ ì§„í–‰í•˜ë©° ì§€ê·¸ìž¬ê·¸(ì™•ë³µ) ë°°ì¹˜ëŠ” ì•„ë‹ˆë‹¤.
+// ê¸°ì¡´ ë¼ì¸ 5ì™€ ë™ì¼í•œ ê¸°ë³¸ê°’: ì˜¤ë¥¸ìª½ ì•„ëž˜ 1ë²ˆ â†’ ìœ„ìª½ ì¦ê°€ â†’ ë‹¤ìŒ ì—´ì€ ì™¼ìª½.
+// í™”ë©´ ì¢Œí‘œë§Œ ë°”ê¾¼ë‹¤. PLC ì±„ë„/ë°°ì—´ ì¸ë±ìŠ¤/ë³´ì •Â·íŒì • ë°ì´í„° ìˆœì„œëŠ” ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
 enum TChannelStartCorner {
-    CHANNEL_BOTTOM_RIGHT, // ¿À¸¥ÂÊ ¾Æ·¡
-    CHANNEL_TOP_RIGHT,    // ¿À¸¥ÂÊ À§
-    CHANNEL_BOTTOM_LEFT,  // ¿ÞÂÊ ¾Æ·¡
-    CHANNEL_TOP_LEFT      // ¿ÞÂÊ À§
+    CHANNEL_BOTTOM_RIGHT, // ì˜¤ë¥¸ìª½ ì•„ëž˜
+    CHANNEL_TOP_RIGHT,    // ì˜¤ë¥¸ìª½ ìœ„
+    CHANNEL_BOTTOM_LEFT,  // ì™¼ìª½ ì•„ëž˜
+    CHANNEL_TOP_LEFT      // ì™¼ìª½ ìœ„
 };
 enum TChannelFillDirection {
-    CHANNEL_HORIZONTAL,  // ÁÂ¿ì ¿ì¼±: ÇÑ ÇàÀ» Ã¤¿ì°í ´ÙÀ½ ÇàÀ¸·Î
-    CHANNEL_VERTICAL     // »óÇÏ ¿ì¼±: ÇÑ ¿­À» Ã¤¿ì°í ´ÙÀ½ ¿­·Î
+    CHANNEL_HORIZONTAL,  // ì¢Œìš° ìš°ì„ : í•œ í–‰ì„ ì±„ìš°ê³  ë‹¤ìŒ í–‰ìœ¼ë¡œ
+    CHANNEL_VERTICAL     // ìƒí•˜ ìš°ì„ : í•œ ì—´ì„ ì±„ìš°ê³  ë‹¤ìŒ ì—´ë¡œ
 };
 const TChannelStartCorner CHANNEL_START_CORNER = CHANNEL_TOP_RIGHT;
 const TChannelFillDirection CHANNEL_FILL_DIRECTION = CHANNEL_HORIZONTAL;
@@ -33,26 +33,26 @@ typedef char CheckChannelLayout[
     (CHANNEL_START_CORNER >= CHANNEL_BOTTOM_RIGHT && CHANNEL_START_CORNER <= CHANNEL_TOP_LEFT &&
      (CHANNEL_FILL_DIRECTION == CHANNEL_HORIZONTAL || CHANNEL_FILL_DIRECTION == CHANNEL_VERTICAL)) ? 1 : -1];
 
-// ±Ô°Ý ±âº»°ªÀº ±âÁ¸ ¼³Á¤ÆÄÀÏ ÀÐ±â °ªÀ» À¯ÁöÇÑ´Ù. ÀúÀå/ÀÐ±â/ÀÔ·Â ½ÇÆÐ¿¡ °°Àº °ªÀ» »ç¿ë.
-// Á¤»óÀûÀ¸·Î ÀúÀåµÈ »çÀÌÆ®º° ±Ô°Ý°ªÀº º¯°æÇÏÁö ¾Ê´Â´Ù.
+// ê·œê²© ê¸°ë³¸ê°’ì€ ê¸°ì¡´ ì„¤ì •íŒŒì¼ ì½ê¸° ê°’ì„ ìœ ì§€í•œë‹¤. ì €ìž¥/ì½ê¸°/ìž…ë ¥ ì‹¤íŒ¨ì— ê°™ì€ ê°’ì„ ì‚¬ìš©.
+// ì •ìƒì ìœ¼ë¡œ ì €ìž¥ëœ ì‚¬ì´íŠ¸ë³„ ê·œê²©ê°’ì€ ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
 const int DEFAULT_IR_MIN = 10;
 const int DEFAULT_IR_MAX = 40;
 const int DEFAULT_OCV_MIN = 500;
 const int DEFAULT_OCV_MAX = 3000;
 
-// Config¿¡ »õ Å°°¡ ¾ø´Â ±âÁ¸ ¼³ºñ´Â ´ÝÈû ÀçÃøÁ¤ 1~49°³ Á¤Ã¥À» À¯ÁöÇÑ´Ù.
-// ½ÇÁ¦ Àû¿ë°ªÀº ConfigÀÇ closedProbeRemeasureMaxNgCount(ÀÌÇÏ, 0=²û).
+// Configì— ìƒˆ í‚¤ê°€ ì—†ëŠ” ê¸°ì¡´ ì„¤ë¹„ëŠ” ë‹«íž˜ ìž¬ì¸¡ì • 1~49ê°œ ì •ì±…ì„ ìœ ì§€í•œë‹¤.
+// ì‹¤ì œ ì ìš©ê°’ì€ Configì˜ closedProbeRemeasureMaxNgCount(ì´í•˜, 0=ë”).
 const int DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT = 49;
-// Àç°³Æó/OP ¿äÃ»ÀÇ ÀüÃ¼¡¤ºÒ·®¼¿ ¼±ÅÃ ±âÁØÀº º°µµ »çÀÌÆ® Á¤Ã¥ÀÌ´Ù.
-// ConfigÀÇ ´ÝÈû ÀçÃøÁ¤ ÃÖ´ë °³¼ö¿Í ¹«°ü: 50°³ ÃÊ°ú=ÀüÃ¼, ÀÌÇÏ=ºÒ·®¼¿.
+// ìž¬ê°œí/OP ìš”ì²­ì˜ ì „ì²´Â·ë¶ˆëŸ‰ì…€ ì„ íƒ ê¸°ì¤€ì€ ë³„ë„ ì‚¬ì´íŠ¸ ì •ì±…ì´ë‹¤.
+// Configì˜ ë‹«íž˜ ìž¬ì¸¡ì • ìµœëŒ€ ê°œìˆ˜ì™€ ë¬´ê´€: 50ê°œ ì´ˆê³¼=ì „ì²´, ì´í•˜=ë¶ˆëŸ‰ì…€.
 const int PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD = 50;
 const unsigned long RESULT_COMPLETE_DELAY_MS = 1000;
 const unsigned long RESULT_SERIAL_TIMEOUT_MS = 10000;
 
-// ÃÖÁ¾ ÆÇÁ¤ ÄÚµå. ¼öÄ¡°¡ ¿ì¼±¼øÀ§°¡ ¾Æ´Ï¸ç Á¢ÃË > IR > OCV ¼ø¼­·Î ÆÇÁ¤ÇÑ´Ù.
+// ìµœì¢… íŒì • ì½”ë“œ. ìˆ˜ì¹˜ê°€ ìš°ì„ ìˆœìœ„ê°€ ì•„ë‹ˆë©° ì ‘ì´‰ > IR > OCV ìˆœì„œë¡œ íŒì •í•œë‹¤.
 enum TCellResult { CELL_OK = 0, CELL_IR_NG = 2, CELL_OCV_NG = 3, CELL_CONTACT_NG = 4 };
 
-// °á°ú ¸¶°¨ »óÅÂ: ÆÄÀÏ ½ÇÆÐ´Â Àç½Ãµµ 1È¸ ÈÄ ÁøÇà. »ó½Ã ½Ã¸®¾ó ¿À·ù´Â ·Î±×¸¸ ±â·Ï.
+// ê²°ê³¼ ë§ˆê° ìƒíƒœ: íŒŒì¼ ì‹¤íŒ¨ëŠ” ìž¬ì‹œë„ 1íšŒ í›„ ì§„í–‰. ìƒì‹œ ì‹œë¦¬ì–¼ ì˜¤ë¥˜ëŠ” ë¡œê·¸ë§Œ ê¸°ë¡.
 enum TResultSaveStep {
     RESULT_IDLE, RESULT_WAIT_SERIAL,
     RESULT_WRITE_FILE, RESULT_WAIT_PLC_SEND, RESULT_COMPLETE, RESULT_CANCELLED, RESULT_ERROR

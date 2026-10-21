@@ -1,5 +1,5 @@
-// [Àåºñ Åë½Å] ¼ÒÄÏ ¿¬°á, ¼ö½Å Å¥, ÇÁ·¹ÀÓ ÇØ¼®, ¸í·É ¼Û½Å, ÀÀ´ä ºÐ±â¿Í ¿îÀü ¸ðµå.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [ìž¥ë¹„ í†µì‹ ] ì†Œì¼“ ì—°ê²°, ìˆ˜ì‹  í, í”„ë ˆìž„ í•´ì„, ëª…ë ¹ ì†¡ì‹ , ì‘ë‹µ ë¶„ê¸°ì™€ ìš´ì „ ëª¨ë“œ.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -16,7 +16,7 @@ void __fastcall TTotalForm::CmdStart()
 
 void __fastcall TTotalForm::CmdBattHeight(int height)
 {
-	// ÀÚµ¿°Ë»ç 2. ³ôÀÌ Àü¼Û (¼Û½Å)
+	// ìžë™ê²€ì‚¬ 2. ë†’ì´ ì „ì†¡ (ì†¡ì‹ )
 	if(sensor._SafetySensing_1 == true){
 		ProcessError("STAGE", "ERROR","Abnormal position tray", "Normal sensor was detected");
 	}else{
@@ -52,7 +52,7 @@ void __fastcall TTotalForm::CmdSetSpeed(int mode)
 
 void __fastcall TTotalForm::CmdSetManualMode(bool Set)
 {
-    //* ¼Óµµ º¯°æ IRT0->slow IRT1->medium IRT2->fast
+    //* ì†ë„ ë³€ê²½ IRT0->slow IRT1->medium IRT2->fast
     if(rbSpeedSlow->Checked) CmdSetSpeed(0);
     else if(rbSpeedMed->Checked) CmdSetSpeed(1);
     else if(rbSpeedFast->Checked) CmdSetSpeed(2);
@@ -116,10 +116,10 @@ int __fastcall TTotalForm::SensorState(AnsiString cmd)
 
 int __fastcall TTotalForm::ParseEquipmentMessage(AnsiString msg, AnsiString &param)
 {
-	// 1. stx, etx È®ÀÎ
-	// 2. CMD + PARAM ºÐ¸®
-	// 3. CHECKSUM È®ÀÎ
-	// 4. ÀçÀü¼Û ¹× ÀÀ´ä È®ÀÎ
+	// 1. stx, etx í™•ì¸
+	// 2. CMD + PARAM ë¶„ë¦¬
+	// 3. CHECKSUM í™•ì¸
+	// 4. ìž¬ì „ì†¡ ë° ì‘ë‹µ í™•ì¸
 
 
 	unsigned char stx, etx;
@@ -144,7 +144,7 @@ int __fastcall TTotalForm::ParseEquipmentMessage(AnsiString msg, AnsiString &par
 	if(stx != 0x02 || etx != 0x03)return -1;
 	if(check_sum != IntToHex(sum, 2))return -2;
 
-	// PC Àü¼Û¿¡ ´ëÇÑ °Ë»çÀåÄ¡ ÀÀ´ä ¸Þ¼¼Áö
+	// PC ì „ì†¡ì— ëŒ€í•œ ê²€ì‚¬ìž¥ì¹˜ ì‘ë‹µ ë©”ì„¸ì§€
 
 	if(cmd == "AMS")return AMS;
 	if(cmd == "AMF")return AMF;
@@ -204,7 +204,7 @@ void __fastcall TTotalForm::SendData(AnsiString Cmd, AnsiString Param)
 			msg = msg + (char)TxVector[i];
 		}
 		msg = msg + IntToHex(CheckSum,2) + (char)3;
-		// ·Î±× ³²±â±â
+		// ë¡œê·¸ ë‚¨ê¸°ê¸°
 		WriteCommLog("TX", msg);
 		sock->SendText(msg);
 		//sock->sen
@@ -224,8 +224,8 @@ void __fastcall TTotalForm::MakeData(int tx_mode, AnsiString cmd, AnsiString par
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ¼ÒÄÏ ¿¬°á ¿Ï·á: ¼Û½Å »óÅÂ¿Í È­¸éÀ» ÃÊ±âÈ­ÇÏ°í ÇöÀç ¸ðµå Á¤º¸¸¦ Àû¿ëÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ ClientConnect. ÃøÁ¤Àåºñ ¿¬°á ¿Ï·á´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìž¥ë¹„ ì†Œì¼“ ì—°ê²° ì™„ë£Œ: ì†¡ì‹  ìƒíƒœì™€ í™”ë©´ì„ ì´ˆê¸°í™”í•˜ê³  í˜„ìž¬ ëª¨ë“œ ì •ë³´ë¥¼ ì ìš©í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ ClientConnect. ì¸¡ì •ìž¥ë¹„ ì—°ê²° ì™„ë£ŒëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -235,7 +235,7 @@ void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
     remainMsg.clear();
     while(!rxq.empty()) rxq.pop(); // Never join bytes from different connections.
 
-	send.tx_mode = 0;  	// ÃÊ±âÈ­
+	send.tx_mode = 0;  	// ì´ˆê¸°í™”
 	send.time_out = 0;
 	send.re_send = 0;
 
@@ -249,8 +249,8 @@ void __fastcall TTotalForm::ProcessEquipmentConnected(TObject *Sender,
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ¼ÒÄÏ ¿¬°á Áß Ç¥½Ã¸¦ °»½ÅÇÑ´Ù. ¿¬°á ¿Ï·á·Î °£ÁÖÇÏÁö ¾Ê´Â´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ ClientConnecting. ÃøÁ¤Àåºñ ¿¬°á ÁøÇà´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìž¥ë¹„ ì†Œì¼“ ì—°ê²° ì¤‘ í‘œì‹œë¥¼ ê°±ì‹ í•œë‹¤. ì—°ê²° ì™„ë£Œë¡œ ê°„ì£¼í•˜ì§€ ì•ŠëŠ”ë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ ClientConnecting. ì¸¡ì •ìž¥ë¹„ ì—°ê²° ì§„í–‰ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentConnecting(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -260,8 +260,8 @@ void __fastcall TTotalForm::ProcessEquipmentConnecting(TObject *Sender,
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ¼ÒÄÏ ¿À·ù Ã³¸®: ¿¬°áÀ» ´Ý°í ¹Ì¿¬°á ÀÌ¹ÌÁö¸¦ °»½ÅÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ ClientError. ÃøÁ¤Àåºñ ¼ÒÄÏ ¿À·ù´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìž¥ë¹„ ì†Œì¼“ ì˜¤ë¥˜ ì²˜ë¦¬: ì—°ê²°ì„ ë‹«ê³  ë¯¸ì—°ê²° ì´ë¯¸ì§€ë¥¼ ê°±ì‹ í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ ClientError. ì¸¡ì •ìž¥ë¹„ ì†Œì¼“ ì˜¤ë¥˜ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentSocketError(TObject *Sender,
 	  TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
 {
@@ -275,8 +275,8 @@ void __fastcall TTotalForm::ProcessEquipmentSocketError(TObject *Sender,
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ¿¬°á ÇØÁ¦ Ã³¸®: ¿¬°á Ç¥½Ã¸¦ ¹Ù²Ù¸ç ÀÚµ¿ °Ë»ç ´Ü°è ÀÚÃ¼´Â º¸Á¸ÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ ClientDisconnect. ÃøÁ¤Àåºñ ¿¬°á ÇØÁ¦´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìž¥ë¹„ ì—°ê²° í•´ì œ ì²˜ë¦¬: ì—°ê²° í‘œì‹œë¥¼ ë°”ê¾¸ë©° ìžë™ ê²€ì‚¬ ë‹¨ê³„ ìžì²´ëŠ” ë³´ì¡´í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ ClientDisconnect. ì¸¡ì •ìž¥ë¹„ ì—°ê²° í•´ì œëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentDisconnected(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -291,15 +291,15 @@ void __fastcall TTotalForm::ProcessEquipmentDisconnected(TObject *Sender,
 }
 
 //---------------------------------------------------------------------------
-// ¼³Á¤µÈ ÀçÁ¢¼Ó Á¶°Ç¿¡ µû¶ó Àåºñ ¼ÒÄÏ ¿¬°áÀ» ´Ù½Ã ¿äÃ»ÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ ReContactTimerTimer. ÃøÁ¤Àåºñ ÀçÁ¢¼Ó´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ì„¤ì •ëœ ìž¬ì ‘ì† ì¡°ê±´ì— ë”°ë¼ ìž¥ë¹„ ì†Œì¼“ ì—°ê²°ì„ ë‹¤ì‹œ ìš”ì²­í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ ReContactTimerTimer. ì¸¡ì •ìž¥ë¹„ ìž¬ì ‘ì†ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentReconnect(TObject *Sender)
 {
     ReContactTimer->Enabled = false;
     if(!config.recontact || Client->Active) return;
     try
     {
-        Client->Active = true; // ºñµ¿±â ¿¬°á: ¿Ï·á ÆÇÁ¤Àº OnConnect/Socket->Connected·Î ÇÑ´Ù.
+        Client->Active = true; // ë¹„ë™ê¸° ì—°ê²°: ì™„ë£Œ íŒì •ì€ OnConnect/Socket->Connectedë¡œ í•œë‹¤.
     }
     catch(...)
     {
@@ -310,8 +310,8 @@ void __fastcall TTotalForm::ProcessEquipmentReconnect(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ¼ÒÄÏ¿¡¼­ ¹ÞÀº ¹®ÀÚ¿­À» ¼ö½Å Å¥¿¡ ³Ö´Â´Ù. ¸í·Éº° Ã³¸®´Â ProcessEquipmentMessage¿¡¼­ ÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ ClientRead. ÃøÁ¤Àåºñ ¼ö½Å ÇÁ·¹ÀÓ ºÐ¸®´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìž¥ë¹„ ì†Œì¼“ì—ì„œ ë°›ì€ ë¬¸ìžì—´ì„ ìˆ˜ì‹  íì— ë„£ëŠ”ë‹¤. ëª…ë ¹ë³„ ì²˜ë¦¬ëŠ” ProcessEquipmentMessageì—ì„œ í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ ClientRead. ì¸¡ì •ìž¥ë¹„ ìˆ˜ì‹  í”„ë ˆìž„ ë¶„ë¦¬ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentSocketRead(TObject *Sender,
       TCustomWinSocket *Socket)
 {
@@ -346,14 +346,14 @@ void __fastcall TTotalForm::ProcessEquipmentSocketRead(TObject *Sender,
 }
 
 //---------------------------------------------------------------------------
-// ¼ö½Å Å¥¸¦ ÀÐ¾î COMM_RECEIVE ¸Þ½ÃÁö·Î Àü´ÞÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ rxTimerTimer. ÃøÁ¤Àåºñ ¼ö½Å Å¥ Ã³¸®´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìˆ˜ì‹  íë¥¼ ì½ì–´ COMM_RECEIVE ë©”ì‹œì§€ë¡œ ì „ë‹¬í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ rxTimerTimer. ì¸¡ì •ìž¥ë¹„ ìˆ˜ì‹  í ì²˜ë¦¬ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentReceiveQueue(TObject *Sender)
 {
 	AnsiString RxStr;
 	bool flag;
 
-	if(rxq.empty() == false){	// µ¥ÀÌÅÍ°¡ ÀÖÀ¸¸é Ã³¸®
+	if(rxq.empty() == false){	// ë°ì´í„°ê°€ ìžˆìœ¼ë©´ ì²˜ë¦¬
 			RxStr = rxq.front().data();
 			rxq.pop();
 			SendMessage(BaseForm->nForm[Tag]->Handle, COMM_RECEIVE, 0, (LPARAM)&RxStr);
@@ -362,8 +362,8 @@ void __fastcall TTotalForm::ProcessEquipmentReceiveQueue(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-// ¿¹¾àµÈ Àåºñ ¸í·ÉÀÇ ¼Û½Å¡¤ÀçÀü¼ÛÀ» Ã³¸®ÇÑ´Ù. ÀÚµ¿ °Ë»ç ÁøÇà Å¸ÀÌ¸Ó¿Í ±¸ºÐÇÑ´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ SendTimerTimer. ÃøÁ¤Àåºñ ¼Û½Å Å¥ Ã³¸®´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ì˜ˆì•½ëœ ìž¥ë¹„ ëª…ë ¹ì˜ ì†¡ì‹ Â·ìž¬ì „ì†¡ì„ ì²˜ë¦¬í•œë‹¤. ìžë™ ê²€ì‚¬ ì§„í–‰ íƒ€ì´ë¨¸ì™€ êµ¬ë¶„í•œë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ SendTimerTimer. ì¸¡ì •ìž¥ë¹„ ì†¡ì‹  í ì²˜ë¦¬ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 {
     // Cancelled automatic commands must not be sent after PLC manual/reset.
@@ -377,7 +377,7 @@ void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 		senCnt += 1;
 
 		switch(send.tx_mode){
-			case 0: // ÀÏ¹Ý »óÅÂ, Å¸ÀÓ¾Æ¿ô Ã³¸®
+			case 0: // ì¼ë°˜ ìƒíƒœ, íƒ€ìž„ì•„ì›ƒ ì²˜ë¦¬
 				SendTimer->Interval = 10;
 				if(senCnt < 32 && senCnt > 30){
 					SendData("OUT");
@@ -386,16 +386,16 @@ void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 					SendData("SEN");
 				}
 				break;
-			case 1: // Æ¯Á¤ ¸Þ¼¼Áö Àü¼Û
+			case 1: // íŠ¹ì • ë©”ì„¸ì§€ ì „ì†¡
 				SendTimer->Interval = 500;
 				SendData(send.cmd, send.param);
 				break;
-			case 2:	// ÀÀ´äÀÏ °æ¿ì
+			case 2:	// ì‘ë‹µì¼ ê²½ìš°
 				SendTimer->Interval = 100;
 				SendData(send.cmd, send.param);
 				send.tx_mode = 0;
 				break;
-			case 3:	// Àü¼Û ÈÄ ´Ù¸¥ ¸í·É¾î ´ë±â
+			case 3:	// ì „ì†¡ í›„ ë‹¤ë¥¸ ëª…ë ¹ì–´ ëŒ€ê¸°
                 SendTimer->Interval = 300;
 				SendData(send.cmd, send.param);
 				send.tx_mode = 100;
@@ -404,8 +404,8 @@ void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 			default:
 				break;
 		}
-		send.time_out += 1;	// ÀçÀü¼Û È½¼ö ¹× Å¸ÀÌ¸Ó ½Ã°£ Ã¼Å©
-		// Å¸ÀÓ¾Æ¿ô ½Ã°£ ¼³Á¤ ÇÒ°Í.
+		send.time_out += 1;	// ìž¬ì „ì†¡ íšŸìˆ˜ ë° íƒ€ì´ë¨¸ ì‹œê°„ ì²´í¬
+		// íƒ€ìž„ì•„ì›ƒ ì‹œê°„ ì„¤ì • í• ê²ƒ.
 		if(send.time_out == 300){
 			//this->DisplayStatus(nNoAnswer);
 		}
@@ -413,7 +413,7 @@ void __fastcall TTotalForm::ProcessEquipmentSendQueue(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ÀÀ´ä ºÐ±â: AMS/AMF/IR/OCV/¼¾¼­ »óÅÂ µîÀ» ÇØ´ç Ã³¸® ÇÔ¼ö·Î Àü´ÞÇÑ´Ù.
+// ìž¥ë¹„ ì‘ë‹µ ë¶„ê¸°: AMS/AMF/IR/OCV/ì„¼ì„œ ìƒíƒœ ë“±ì„ í•´ë‹¹ ì²˜ë¦¬ í•¨ìˆ˜ë¡œ ì „ë‹¬í•œë‹¤.
 void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 {
 	AnsiString *msg, param;
@@ -431,7 +431,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 			return;
 		}
 		WriteCommLog("RX", *msg);
-		cmd = ParseEquipmentMessage(*msg, param); 	// cmd , check sum È®ÀÎ
+		cmd = ParseEquipmentMessage(*msg, param); 	// cmd , check sum í™•ì¸
 
         const bool blocked = IsAutoInspectionBlocked();
         // Ignore delayed measurement replies outside an active automatic measurement.
@@ -442,7 +442,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 
 		send.time_out = 0;
 
-        //if(!ims->m_bStart) return;      // ¼öÁ¤
+        //if(!ims->m_bStart) return;      // ìˆ˜ì •
 
 		switch(cmd){
 			case STA:
@@ -476,7 +476,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				}
 				break;
 			case BCR:
-				if( (param.Pos("?") == 0) && (param != "NOREAD") ){ 	// ¹ÙÄÚµå ÀÐ±â ¼º°ø
+				if( (param.Pos("?") == 0) && (param != "NOREAD") ){ 	// ë°”ì½”ë“œ ì½ê¸° ì„±ê³µ
 					//pTrayid->Caption = param;
 					editTrayId->Text = param;
 					send.tx_mode = 0;
@@ -493,7 +493,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 					}
 				}
 				break;
-			case IDN:        // ¹öÀü
+			case IDN:        // ë²„ì „
 				pConInfo->Caption = param;
 				send.tx_mode = 0;
 				break;
@@ -502,11 +502,11 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				DisplayStageError(RESET);
                 InitializeInspection(); // 2017 09 04 herald
 				//SendData("STA");
-				break;        // ¸ðµç ¿¡·¯ ÇØÁ¦
+				break;        // ëª¨ë“  ì—ëŸ¬ í•´ì œ
 			case SIZ:
 				send.tx_mode = 0;
 				DisplayStatus(nREADY);
-				break;        // BATT »çÀÌÁî Á¤º¸
+				break;        // BATT ì‚¬ì´ì¦ˆ ì •ë³´
 			case AMS:
                 measurementClock.Start(GetTickCount());
 				pb->Position = 0;
@@ -515,7 +515,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
                 tray.amf = false;
 				DisplayStatus(nRUN);
 				break;
-			case AMF:        // °Ë»çÁ¾·á ¾Ë¸²
+			case AMF:        // ê²€ì‚¬ì¢…ë£Œ ì•Œë¦¼
                 if(tray.amf) break; // Ignore a duplicate completion for this measurement.
                 measurementClock.Stop(GetTickCount());
 				send.tx_mode = 0;
@@ -524,34 +524,34 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 
 				ProcessMeasurementCompleteResponse();
 				break;
-			case IR:        // IR ¼¿ °Ë»ç
+			case IR:        // IR ì…€ ê²€ì‚¬
 				if(pb->Position < pb->Max)pb->Position += 1;
-				ProcessIr(param);	// ÀÐ±â , »ö±ò º¯È­
+				ProcessIr(param);	// ì½ê¸° , ìƒ‰ê¹” ë³€í™”
 				break;
-			case OCV:        // OCV ¼¿ °Ë»ç
+			case OCV:        // OCV ì…€ ê²€ì‚¬
 				ProcessOcv(param);
 				break;
-			case STP:        // °­Á¦ °Ë»ç Á¾·á
+			case STP:        // ê°•ì œ ê²€ì‚¬ ì¢…ë£Œ
                 measurementClock.Stop(GetTickCount());
 				send.tx_mode = 0;
 				DisplayStatus(nEND);
 				break;
-			case FIN:       // Æ®·¹ÀÌ ¹æÃâ
+			case FIN:       // íŠ¸ë ˆì´ ë°©ì¶œ
 				//this->DisplayStatus(nFinish);
 				ModChange();
 				send.tx_mode = 0;
 				break;
-			// °Ë»çÀåÄ¡ ¼Û½Å¿¡ ´ëÇÑ PCÀÀ´ä ¸Þ¼¼Áö Ã³¸®
+			// ê²€ì‚¬ìž¥ì¹˜ ì†¡ì‹ ì— ëŒ€í•œ PCì‘ë‹µ ë©”ì„¸ì§€ ì²˜ë¦¬
 			case MAN: send.tx_mode = 0; break;
 			case REM: send.tx_mode = 0; break;
 			case EMS: measurementClock.Stop(GetTickCount()); send.tx_mode = 0; break;
-			case SEN:        // ¼¾¼­Á¤º¸
+			case SEN:        // ì„¼ì„œì •ë³´
 				ProcessSensorInput(param);
 				break;
 			case sOUT:
 				ProcessSensorOutput(param);
 				break;
-			case ERR:        // °Ë»çÀåÄ¡ ¿¡·¯ ¹ß»ý
+			case ERR:        // ê²€ì‚¬ìž¥ì¹˜ ì—ëŸ¬ ë°œìƒ
                 measurementClock.Stop(GetTickCount());
 				ResponseError(param);
 				OldSenCmd = "NONE";
@@ -561,7 +561,7 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 				SendData("CLR");
 				OldSenCmd = "NONE";
 				ShowPanelGroup(OldGrp);
-				break;       // ¿¡·¯ ÇØÁ¦ Åëº¸
+				break;       // ì—ëŸ¬ í•´ì œ í†µë³´
 			case REC: send.tx_mode = 0; break;
 			case LRM:
 				send.tx_mode = 0;
@@ -578,28 +578,28 @@ void __fastcall TTotalForm::ProcessEquipmentMessage(TMessage& Msg)
 }
 
 //---------------------------------------------------------------------------
-// ÀåºñÀÇ ·ÎÄÃ ÀçÃøÁ¤ ¿äÃ»À» Ã³¸®ÇÏ°í ±âÁ¸ ºÒ·® °³¼ö¿¡ µû¶ó ÀçÃøÁ¤ ¸ðµå¸¦ Á¤ÇÑ´Ù.
+// ìž¥ë¹„ì˜ ë¡œì»¬ ìž¬ì¸¡ì • ìš”ì²­ì„ ì²˜ë¦¬í•˜ê³  ê¸°ì¡´ ë¶ˆëŸ‰ ê°œìˆ˜ì— ë”°ë¼ ìž¬ì¸¡ì • ëª¨ë“œë¥¼ ì •í•œë‹¤.
 void __fastcall TTotalForm::ProcessOpBoxRemeasureRequest(bool frm)
 {
-	// OP ¹Ú½º ÀçÃøÁ¤ ¿äÃ»½Ã
+	// OP ë°•ìŠ¤ ìž¬ì¸¡ì • ìš”ì²­ì‹œ
 	SendData("LRM");
 
 	if(GrpRemeasure->Visible == true){
 		ShowPanelGroup(GrpMain);
 
-        // OP ¹Ú½º ¿äÃ»ÀÇ ÀüÃ¼/¼±ÅÃ ±âÁØ. ConfigÀÇ ´ÝÈû À¯Áö ÀçÃøÁ¤ Á¦ÇÑ°ú´Â º°°³.
+        // OP ë°•ìŠ¤ ìš”ì²­ì˜ ì „ì²´/ì„ íƒ ê¸°ì¤€. Configì˜ ë‹«íž˜ ìœ ì§€ ìž¬ì¸¡ì • ì œí•œê³¼ëŠ” ë³„ê°œ.
 		if(retest.cnt_error > PROBE_REMEASURE_ALL_CELL_NG_THRESHOLD){
-			retest.re_excute = false;	// ÀüÃ¼ ÀçÃøÁ¤
+			retest.re_excute = false;	// ì „ì²´ ìž¬ì¸¡ì •
 		}
 		else{
-			retest.re_excute = true;	// ºÒ·® ÀçÃøÁ¤
+			retest.re_excute = true;	// ë¶ˆëŸ‰ ìž¬ì¸¡ì •
 		}
 		CmdBattHeight();
 	}
 }
 
 //---------------------------------------------------------------------------
-// ¿¹¾àµÈ Auto/Remote/Local ¿îÀü ¸ðµå¸¦ Àû¿ëÇÑ´Ù.
+// ì˜ˆì•½ëœ Auto/Remote/Local ìš´ì „ ëª¨ë“œë¥¼ ì ìš©í•œë‹¤.
 void __fastcall TTotalForm::ModChange()
 {
 	if(stage.arl != stage.arl_reserve){
@@ -621,7 +621,7 @@ void __fastcall TTotalForm::ModChange()
 }
 
 //---------------------------------------------------------------------------
-// ¼¾¼­ ÀÔ·Â ÀÀ´äÀ» ÀúÀåÇÏ°í Àåºñ »óÅÂ º¯°æÀ» °¨ÁöÇÑ´Ù.
+// ì„¼ì„œ ìž…ë ¥ ì‘ë‹µì„ ì €ìž¥í•˜ê³  ìž¥ë¹„ ìƒíƒœ ë³€ê²½ì„ ê°ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessSensorInput(AnsiString param)
 {
 	AnsiString cmd;
@@ -655,7 +655,7 @@ void __fastcall TTotalForm::ProcessSensorInput(AnsiString param)
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ ¼¾¼­ Ãâ·Â ÀÀ´äÀ» ¼¾¼­ Ãâ·Â ¹öÆÛ¿¡ ÀúÀåÇÑ´Ù.
+// ìž¥ë¹„ ì„¼ì„œ ì¶œë ¥ ì‘ë‹µì„ ì„¼ì„œ ì¶œë ¥ ë²„í¼ì— ì €ìž¥í•œë‹¤.
 void __fastcall TTotalForm::ProcessSensorOutput(AnsiString param)
 {
 	unsigned char *ptrOutput;
@@ -672,7 +672,7 @@ void __fastcall TTotalForm::ProcessSensorOutput(AnsiString param)
 }
 
 //---------------------------------------------------------------------------
-// Àåºñ »óÅÂ ÄÚµå º¯°æ¿¡ µû¸¥ ±âÁ¸ È­¸é/¸í·É Ã³¸®¸¦ ¼öÇàÇÑ´Ù.
+// ìž¥ë¹„ ìƒíƒœ ì½”ë“œ ë³€ê²½ì— ë”°ë¥¸ ê¸°ì¡´ í™”ë©´/ëª…ë ¹ ì²˜ë¦¬ë¥¼ ìˆ˜í–‰í•œë‹¤.
 void __fastcall TTotalForm::EquipStatus(int cmd)
 {
 	switch(cmd)
@@ -719,7 +719,7 @@ void __fastcall TTotalForm::EquipStatus(int cmd)
 }
 
 //---------------------------------------------------------------------------
-// ÃÖÃÊ ¼¾¼­ ÀÀ´äÀÇ ¿îÀü »óÅÂ¸¦ ÃÊ±â È­¸é¿¡ ¹Ý¿µÇÑ´Ù.
+// ìµœì´ˆ ì„¼ì„œ ì‘ë‹µì˜ ìš´ì „ ìƒíƒœë¥¼ ì´ˆê¸° í™”ë©´ì— ë°˜ì˜í•œë‹¤.
 void __fastcall TTotalForm::InitEquipStatus(int cmd)
 {
 
@@ -751,7 +751,7 @@ void __fastcall TTotalForm::InitEquipStatus(int cmd)
 }
 
 //---------------------------------------------------------------------------
-// ÀúÀå/¿¬°á ¹öÆ° °øÅë °ËÁõ. Àß¸øµÈ ÁÖ¼Ò/Æ÷Æ®´Â ÀúÀå Àü¿¡ ¾Ë¸®°í ±âÁ¸ ¿¬°áÀ» À¯ÁöÇÑ´Ù.
+// ì €ìž¥/ì—°ê²° ë²„íŠ¼ ê³µí†µ ê²€ì¦. ìž˜ëª»ëœ ì£¼ì†Œ/í¬íŠ¸ëŠ” ì €ìž¥ ì „ì— ì•Œë¦¬ê³  ê¸°ì¡´ ì—°ê²°ì„ ìœ ì§€í•œë‹¤.
 bool __fastcall TTotalForm::ValidateConnectionSettings(bool equipment, bool plc)
 {
     const AnsiString host = editIROCVIPAddress->Text.Trim();
@@ -772,7 +772,7 @@ bool __fastcall TTotalForm::ValidateConnectionSettings(bool equipment, bool plc)
                  Mod_PLC->ClientSocket_PLC->Address != plcHost ||
                  Mod_PLC->ClientSocket_PC->Port != pcPort ||
                  Mod_PLC->ClientSocket_PLC->Port != plcPort));
-    // °Ë»ç/°á°ú ¸¶°¨ µµÁß ´Ù¸¥ Àåºñ·Î ¹Ù²ÙÁö ¾Ê´Â´Ù. µ¿ÀÏ ÁÖ¼ÒÀÇ ²÷±ä ¿¬°á º¹±¸´Â Çã¿ëÇÑ´Ù.
+    // ê²€ì‚¬/ê²°ê³¼ ë§ˆê° ë„ì¤‘ ë‹¤ë¥¸ ìž¥ë¹„ë¡œ ë°”ê¾¸ì§€ ì•ŠëŠ”ë‹¤. ë™ì¼ ì£¼ì†Œì˜ ëŠê¸´ ì—°ê²° ë³µêµ¬ëŠ” í—ˆìš©í•œë‹¤.
     if(changed && ((tray.ams && !tray.amf) ||
         resultSaveStep == RESULT_WAIT_SERIAL || resultSaveStep == RESULT_WRITE_FILE ||
         resultSaveStep == RESULT_WAIT_PLC_SEND ||
@@ -785,8 +785,8 @@ bool __fastcall TTotalForm::ValidateConnectionSettings(bool equipment, bool plc)
     return true;
 }
 //---------------------------------------------------------------------------
-// ¼ÒÄÏ ¼³Á¤Àº ReadSystemInfo°¡ ¾Æ´Ï¶ó ¸í½ÃÀûÀÎ ÀúÀå/¿¬°á ½ÃÁ¡¿¡¼­¸¸ Àû¿ëÇÑ´Ù.
-// ÁÖ¼Ò°¡ °°°í ¿¬°á ÁßÀÌ¸é ±×´ë·Î À¯ÁöÇÏ¸ç, ¹Ù²ï ÁÖ¼Ò´Â Close ¡æ ¼³Á¤ ¡æ ºñµ¿±â Open ¼ø¼­´Ù.
+// ì†Œì¼“ ì„¤ì •ì€ ReadSystemInfoê°€ ì•„ë‹ˆë¼ ëª…ì‹œì ì¸ ì €ìž¥/ì—°ê²° ì‹œì ì—ì„œë§Œ ì ìš©í•œë‹¤.
+// ì£¼ì†Œê°€ ê°™ê³  ì—°ê²° ì¤‘ì´ë©´ ê·¸ëŒ€ë¡œ ìœ ì§€í•˜ë©°, ë°”ë€ ì£¼ì†ŒëŠ” Close â†’ ì„¤ì • â†’ ë¹„ë™ê¸° Open ìˆœì„œë‹¤.
 void __fastcall TTotalForm::ApplyConnectionSettings(bool equipment, bool plc)
 {
     if(!ValidateConnectionSettings(equipment, plc)) return;
@@ -802,7 +802,7 @@ void __fastcall TTotalForm::ApplyConnectionSettings(bool equipment, bool plc)
             Client->Address = "";
             Client->Host = host;
             Client->Port = port;
-            // ÀÌÀü Á¢¼ÓÀÇ ºÎºÐ ÀÀ´ä/´ë±â ¸í·ÉÀ» »õ Àåºñ¿¡¼­ ÀÌ¾î¼­ Ã³¸®ÇÏÁö ¾Ê´Â´Ù.
+            // ì´ì „ ì ‘ì†ì˜ ë¶€ë¶„ ì‘ë‹µ/ëŒ€ê¸° ëª…ë ¹ì„ ìƒˆ ìž¥ë¹„ì—ì„œ ì´ì–´ì„œ ì²˜ë¦¬í•˜ì§€ ì•ŠëŠ”ë‹¤.
             while(!rxq.empty()) rxq.pop();
             remainMsg = "";
             while(!q_cmd.empty()) q_cmd.pop();

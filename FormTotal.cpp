@@ -1,5 +1,5 @@
-// [Æû ÁøÀÔÁ¡] »ı¼º/Ç¥½Ã/´İ±â, ¹öÆ°¡¤ÀÔ·Â ÀÌº¥Æ®. °Ë»ç Ã³¸® ±¸ÇöÀº ¿ªÇÒº° Stage_*.cpp¸¦ Âü°íÇÑ´Ù.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [í¼ ì§„ì…ì ] ìƒì„±/í‘œì‹œ/ë‹«ê¸°, ë²„íŠ¼Â·ì…ë ¥ ì´ë²¤íŠ¸. ê²€ì‚¬ ì²˜ë¦¬ êµ¬í˜„ì€ ì—­í• ë³„ Stage_*.cppë¥¼ ì°¸ê³ í•œë‹¤.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -16,7 +16,7 @@
 TTotalForm *TotalForm;
 
 //===========================================================================
-// Æû »ı¼º / ½ÃÀÛ / Á¾·á
+// í¼ ìƒì„± / ì‹œì‘ / ì¢…ë£Œ
 //===========================================================================
 __fastcall TTotalForm::TTotalForm(TComponent* Owner)
 	: TForm(Owner)
@@ -53,7 +53,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
     countedFinalIrNg = 0;
     config.probeRemeasureCount = 0;
     config.closedProbeRemeasureMaxNgCount = DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT;
-    tray.ams = false; // ¼³Á¤À» Ã³À½ ÀĞÀ» ¶§ ÁøÇà ÁßÀÎ ÃøÁ¤À¸·Î ¿ÀÀÎÇÏÁö ¾Ê°Ô ÇÑ´Ù.
+    tray.ams = false; // ì„¤ì •ì„ ì²˜ìŒ ì½ì„ ë•Œ ì§„í–‰ ì¤‘ì¸ ì¸¡ì •ìœ¼ë¡œ ì˜¤ì¸í•˜ì§€ ì•Šê²Œ í•œë‹¤.
     measurementNgCount = 0;
     showStartupChannelNumbers = true;
     memset(irValueReceived, 0, sizeof(irValueReceived));
@@ -99,9 +99,9 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
 	this->Height = pback->Height;
 
     pnlConfig->Width = 600;
-    pnlConfig->Height = 644; // [CELL SERIAL °øÅë] ¼ö½Å ¹æ½Ä ¼³Á¤ ¿µ¿ª Æ÷ÇÔ.
+    pnlConfig->Height = 644; // [CELL SERIAL ê³µí†µ] ìˆ˜ì‹  ë°©ì‹ ì„¤ì • ì˜ì—­ í¬í•¨.
 
-	this->ReadCalibrationOffsets();                      //20171202 °³º°º¸Á¤À» À§ÇØ Ãß°¡
+	this->ReadCalibrationOffsets();                      //20171202 ê°œë³„ë³´ì •ì„ ìœ„í•´ ì¶”ê°€
 
 	OldPLCStatus = "";
 	PLCStatus = "";
@@ -110,7 +110,7 @@ void __fastcall TTotalForm::FormShow(TObject *Sender)
     InitializeInspection();
 	btnMeasureInfoClick(this);
 
-    //* ÀÓ½Ã
+    //* ì„ì‹œ
     acc_finalng = 0;
     acc_totaltray = 0;
     CreateOperationView();
@@ -125,7 +125,7 @@ void __fastcall TTotalForm::FormClose(TObject *Sender, TCloseAction &Action)
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// ¼³Á¤ ¹× ÃøÁ¤ È­¸é ¹öÆ°
+// ì„¤ì • ë° ì¸¡ì • í™”ë©´ ë²„íŠ¼
 //===========================================================================
 void __fastcall TTotalForm::btnSaveConfigClick(TObject *Sender)
 {
@@ -162,7 +162,7 @@ void __fastcall TTotalForm::btnRemeasureInfoClick(TObject *Sender)
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// ÀçÃøÁ¤ / ¹èÃâ ¹öÆ°: ½ÇÁ¦ Ã³¸®´Â Stage_Measurement / Stage_AutoInspection
+// ì¬ì¸¡ì • / ë°°ì¶œ ë²„íŠ¼: ì‹¤ì œ ì²˜ë¦¬ëŠ” Stage_Measurement / Stage_AutoInspection
 //===========================================================================
 void __fastcall TTotalForm::RemeasureAllBtnClick(TObject *Sender)
 {
@@ -199,7 +199,7 @@ void __fastcall TTotalForm::btnTrayOutClick(TObject *Sender)
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// ¸ñ·Ï ±×¸®±â / Æ®·¹ÀÌ ID ÀÔ·Â
+// ëª©ë¡ ê·¸ë¦¬ê¸° / íŠ¸ë ˆì´ ID ì…ë ¥
 //===========================================================================
 void __fastcall TTotalForm::BadListDrawItem(TCustomListView *Sender,
 	  TListItem *Item, TRect &Rect, TOwnerDrawState drawState)
@@ -265,7 +265,7 @@ void __fastcall TTotalForm::editTrayIdKeyDown(TObject *Sender, WORD &Key,
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// Àåºñ ÃÊ±âÈ­ / Ã¤³Î ¸¶¿ì½º Ç¥½Ã / ¿îÀü ¸ğµå
+// ì¥ë¹„ ì´ˆê¸°í™” / ì±„ë„ ë§ˆìš°ìŠ¤ í‘œì‹œ / ìš´ì „ ëª¨ë“œ
 //===========================================================================
 void __fastcall TTotalForm::btnResetClick(TObject *Sender)
 {
@@ -350,13 +350,13 @@ void __fastcall TTotalForm::btnAutoClick(TObject *Sender)
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// È­¸é ¿­±â / ¾ÏÈ£ / ±³Á¤
+// í™”ë©´ ì—´ê¸° / ì•”í˜¸ / êµì •
 //===========================================================================
 void __fastcall TTotalForm::btnMeasureInfoClick(TObject *Sender)
 {
     MeasureInfoForm->Left = 640;
     MeasureInfoForm->Top = 85;
-    // ¼ö½ÅÇÑ °ªÀº À¯ÁöÇÏ°í, ¹Ì¼ö½Å Ç×¸ñÀº Ã¤³Î/À§Ä¡ ¹øÈ£¸¦ Ç¥½ÃÇÑ´Ù.
+    // ìˆ˜ì‹ í•œ ê°’ì€ ìœ ì§€í•˜ê³ , ë¯¸ìˆ˜ì‹  í•­ëª©ì€ ì±„ë„/ìœ„ì¹˜ ë²ˆí˜¸ë¥¼ í‘œì‹œí•œë‹¤.
     InitializeMeasureForm();
 }
 //---------------------------------------------------------------------------
@@ -420,11 +420,11 @@ void __fastcall TTotalForm::btnCloseConnConfigClick(TObject *Sender)
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// PLC / ÃøÁ¤Àåºñ ¿¬°á ¹öÆ°
+// PLC / ì¸¡ì •ì¥ë¹„ ì—°ê²° ë²„íŠ¼
 //===========================================================================
 void __fastcall TTotalForm::btnConnectPLCClick(TObject *Sender)
 {
-    // ´Ù¸¥ ¼³Á¤À» ÀúÀåÇÏ°Å³ª ¼³ºñ ¼ÒÄÏÀ» °Çµå¸®Áö ¾Ê°í PLC ÀÔ·Â°ª¸¸ Áï½Ã Àû¿ëÇÑ´Ù.
+    // ë‹¤ë¥¸ ì„¤ì •ì„ ì €ì¥í•˜ê±°ë‚˜ ì„¤ë¹„ ì†Œì¼“ì„ ê±´ë“œë¦¬ì§€ ì•Šê³  PLC ì…ë ¥ê°’ë§Œ ì¦‰ì‹œ ì ìš©í•œë‹¤.
     ApplyConnectionSettings(false, true);
 }
 //---------------------------------------------------------------------------
@@ -457,7 +457,7 @@ void __fastcall TTotalForm::btnDisConnectIROCVClick(TObject *Sender)
 //---------------------------------------------------------------------------
 
 //===========================================================================
-// ±âÁ¸ ½ÃÇè¿ë UI / ¼Óµµ / ´ë±â ½Ã°£ Ç¥½Ã
+// ê¸°ì¡´ ì‹œí—˜ìš© UI / ì†ë„ / ëŒ€ê¸° ì‹œê°„ í‘œì‹œ
 //===========================================================================
 void __fastcall TTotalForm::Button1Click(TObject *Sender)
 {
@@ -482,30 +482,30 @@ void __fastcall TTotalForm::GroupBox8DblClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-// µğÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡: DFM¿¡ ¿¬°áµÈ ÇÔ¼ö´Â ÀÌ Æû ÆÄÀÏ¿¡ À¯ÁöÇÑ´Ù.
-// ½ÇÁ¦ Ã³¸®¸¸ Stage_*.cpp·Î ºĞ¸®ÇØ ÀÌº¥Æ® ÀÌµ¿°ú ¿ªÇÒº° ÄÚµå Á¤¸®¸¦ ÇÔ²² À¯ÁöÇÑ´Ù.
-// ÀÚµ¿ÃøÁ¤ Å¸ÀÌ¸Ó Ã³¸®: Stage_AutoInspection.cppÀÇ ProcessAutoInspection¸¦ È®ÀÎÇÑ´Ù.
+// ë””ìì´ë„ˆ ì´ë²¤íŠ¸ ì§„ì…ì : DFMì— ì—°ê²°ëœ í•¨ìˆ˜ëŠ” ì´ í¼ íŒŒì¼ì— ìœ ì§€í•œë‹¤.
+// ì‹¤ì œ ì²˜ë¦¬ë§Œ Stage_*.cppë¡œ ë¶„ë¦¬í•´ ì´ë²¤íŠ¸ ì´ë™ê³¼ ì—­í• ë³„ ì½”ë“œ ì •ë¦¬ë¥¼ í•¨ê»˜ ìœ ì§€í•œë‹¤.
+// ìë™ì¸¡ì • íƒ€ì´ë¨¸ ì²˜ë¦¬: Stage_AutoInspection.cppì˜ ProcessAutoInspectionë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::Timer_AutoInspectionTimer(TObject *Sender)
 {
     ProcessAutoInspection(Sender);
 }
 //---------------------------------------------------------------------------
 
-// ½Ã¸®¾ó ¼ö½Å¡¤°á°ú ÀúÀå¡¤PLC ¿Ï·á ´ë±â: Stage_Measurement.cppÀÇ ProcessResultSave¸¦ È®ÀÎÇÑ´Ù.
+// ì‹œë¦¬ì–¼ ìˆ˜ì‹ Â·ê²°ê³¼ ì €ì¥Â·PLC ì™„ë£Œ ëŒ€ê¸°: Stage_Measurement.cppì˜ ProcessResultSaveë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::Timer_ResultSaveTimer(TObject *Sender)
 {
     ProcessResultSave(Sender);
 }
 //---------------------------------------------------------------------------
 
-// ¼³ºñ »óÅÂ¡¤¾Ë¶÷¡¤PLC Ç¥½Ã °»½Å: Stage_Form.cppÀÇ ProcessStageStatus¸¦ È®ÀÎÇÑ´Ù.
+// ì„¤ë¹„ ìƒíƒœÂ·ì•ŒëŒÂ·PLC í‘œì‹œ ê°±ì‹ : Stage_Form.cppì˜ ProcessStageStatusë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::StatusTimerTimer(TObject *Sender)
 {
     ProcessStageStatus(Sender);
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¿¬°á ¿Ï·á: Stage_comm.cppÀÇ ProcessEquipmentConnected¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ì—°ê²° ì™„ë£Œ: Stage_comm.cppì˜ ProcessEquipmentConnectedë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::ClientConnect(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -513,7 +513,7 @@ void __fastcall TTotalForm::ClientConnect(TObject *Sender,
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¿¬°á ÁøÇà: Stage_comm.cppÀÇ ProcessEquipmentConnecting¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ì—°ê²° ì§„í–‰: Stage_comm.cppì˜ ProcessEquipmentConnectingë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -521,7 +521,7 @@ void __fastcall TTotalForm::ClientConnecting(TObject *Sender,
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¼ÒÄÏ ¿À·ù: Stage_comm.cppÀÇ ProcessEquipmentSocketError¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ì†Œì¼“ ì˜¤ë¥˜: Stage_comm.cppì˜ ProcessEquipmentSocketErrorë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::ClientError(TObject *Sender,
 	  TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode)
 {
@@ -529,7 +529,7 @@ void __fastcall TTotalForm::ClientError(TObject *Sender,
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¿¬°á ÇØÁ¦: Stage_comm.cppÀÇ ProcessEquipmentDisconnected¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ì—°ê²° í•´ì œ: Stage_comm.cppì˜ ProcessEquipmentDisconnectedë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -537,14 +537,14 @@ void __fastcall TTotalForm::ClientDisconnect(TObject *Sender,
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ÀçÁ¢¼Ó: Stage_comm.cppÀÇ ProcessEquipmentReconnect¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ì¬ì ‘ì†: Stage_comm.cppì˜ ProcessEquipmentReconnectë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::ReContactTimerTimer(TObject *Sender)
 {
     ProcessEquipmentReconnect(Sender);
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¼ö½Å ÇÁ·¹ÀÓ ºĞ¸®: Stage_comm.cppÀÇ ProcessEquipmentSocketRead¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ìˆ˜ì‹  í”„ë ˆì„ ë¶„ë¦¬: Stage_comm.cppì˜ ProcessEquipmentSocketReadë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::ClientRead(TObject *Sender,
 	  TCustomWinSocket *Socket)
 {
@@ -552,14 +552,14 @@ void __fastcall TTotalForm::ClientRead(TObject *Sender,
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¼ö½Å Å¥ Ã³¸®: Stage_comm.cppÀÇ ProcessEquipmentReceiveQueue¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ìˆ˜ì‹  í ì²˜ë¦¬: Stage_comm.cppì˜ ProcessEquipmentReceiveQueueë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::rxTimerTimer(TObject *Sender)
 {
     ProcessEquipmentReceiveQueue(Sender);
 }
 //---------------------------------------------------------------------------
 
-// ÃøÁ¤Àåºñ ¼Û½Å Å¥ Ã³¸®: Stage_comm.cppÀÇ ProcessEquipmentSendQueue¸¦ È®ÀÎÇÑ´Ù.
+// ì¸¡ì •ì¥ë¹„ ì†¡ì‹  í ì²˜ë¦¬: Stage_comm.cppì˜ ProcessEquipmentSendQueueë¥¼ í™•ì¸í•œë‹¤.
 void __fastcall TTotalForm::SendTimerTimer(TObject *Sender)
 {
     ProcessEquipmentSendQueue(Sender);

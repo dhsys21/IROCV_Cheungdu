@@ -3,8 +3,8 @@
 
 #include "SiteConfig.h"
 
-// °øÅë ±Ô°Ý ÆÇÁ¤. Ç×¸ñº° ºÒ·®Àº È­¸é Ç¥½Ã¿ë, result´Â ÃÖÁ¾ ´ëÇ¥ ÆÇÁ¤ÀÌ´Ù.
-// ¼ö½Å ¿©ºÎ´Â ±âÁ¸ irValueReceived/ocvValueReceived·Î º°µµ °ü¸®ÇÑ´Ù.
+// ê³µí†µ ê·œê²© íŒì •. í•­ëª©ë³„ ë¶ˆëŸ‰ì€ í™”ë©´ í‘œì‹œìš©, resultëŠ” ìµœì¢… ëŒ€í‘œ íŒì •ì´ë‹¤.
+// ìˆ˜ì‹  ì—¬ë¶€ëŠ” ê¸°ì¡´ irValueReceived/ocvValueReceivedë¡œ ë³„ë„ ê´€ë¦¬í•œë‹¤.
 struct TCellJudgment
 {
     bool contactNg;
@@ -13,7 +13,7 @@ struct TCellJudgment
     int result;
 };
 
-// È­¸é/PLC¿¡ Á¢±ÙÇÏÁö ¾Ê´Â´Ù. °æ°è°ª Æ÷ÇÔ OK, ´ëÇ¥ ÆÇÁ¤Àº Á¢ÃË > IR > OCV.
+// í™”ë©´/PLCì— ì ‘ê·¼í•˜ì§€ ì•ŠëŠ”ë‹¤. ê²½ê³„ê°’ í¬í•¨ OK, ëŒ€í‘œ íŒì •ì€ ì ‘ì´‰ > IR > OCV.
 inline TCellJudgment JudgeCellValues(double ir, double ocv,
     double irMin, double irMax, double ocvMin, double ocvMax)
 {

@@ -56,16 +56,16 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
     lastPlcReadErrorTick = 0;
     resultSentParts = 0;
-    cellSerialContinuousRead = false; // [CELL SERIAL ∞¯≈Î] ±‚¡∏ TRAY IN ºˆΩ≈¿Ã ±‚∫ª∞™.
+    cellSerialContinuousRead = false; // [CELL SERIAL Í≥µÌÜµ] Í∏∞Ï°¥ TRAY IN ÏàòÏã†Ïù¥ Í∏∞Î≥∏Í∞í.
     ResetCellSerialRead();
     currentWriteTask = nPCDATA;
 }
 //---------------------------------------------------------------------------
-//	¡¢º” & «ÿ¡¶
+//	Ï†ëÏÜç & Ìï¥Ï†ú
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::Connect(AnsiString ip, int port1, int port2)
 {
-    // ªÁøÎ ¡ﬂ¿Œ º“ƒœ¿« ¡÷º“/∆˜∆Æ¥¬ ∫Ø∞Ê«“ ºˆ æ¯¥Ÿ. ¡÷º“ ∫Ø∞Ê Ω√ µŒ ∞Ê∑Œ∏¶ ∏’¿˙ ¥›¥¬¥Ÿ.
+    // ÏÇ¨Ïö© Ï§ëÏù∏ ÏÜåÏºìÏùò Ï£ºÏÜå/Ìè¨Ìä∏Îäî Î≥ÄÍ≤ΩÌï† Ïàò ÏóÜÎã§. Ï£ºÏÜå Î≥ÄÍ≤Ω Ïãú Îëê Í≤ΩÎ°úÎ•º Î®ºÏ†Ä Îã´ÎäîÎã§.
     const bool changed = ClientSocket_PLC->Address != ip || ClientSocket_PLC->Port != port1 ||
         ClientSocket_PC->Address != ip || ClientSocket_PC->Port != port2;
     if(changed) Disconnect();
@@ -89,7 +89,7 @@ void __fastcall TMod_PLC::Connect(AnsiString ip, int port1, int port2)
 void __fastcall TMod_PLC::Disconnect()
 {
     plcAutoMode.Invalidate();
-    // bClose¥¬ µŒ º“ƒœ¿« Disconnect ¿Ã∫•∆Æ ¿Ã»ƒø°µµ ¿Ø¡ˆ«—¥Ÿ. Connectø°º≠∏∏ «ÿ¡¶«—¥Ÿ.
+    // bCloseÎäî Îëê ÏÜåÏºìÏùò Disconnect Ïù¥Î≤§Ìä∏ Ïù¥ÌõÑÏóêÎèÑ Ïú†ÏßÄÌïúÎã§. ConnectÏóêÏÑúÎßå Ìï¥Ï†úÌïúÎã§.
     bClose = true;
     Timer_PLC_AutoConnect->Enabled = false;
     Timer_PC_AutoConnect->Enabled = false;
@@ -127,20 +127,20 @@ void __fastcall TMod_PLC::ResetCellSerialRead()
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::StartCellSerialRead()
 {
-    // [CELL SERIAL ∞¯≈Î] ¡ˆ±› ø‰√ª«— ¿Ã»ƒ¿« øœ¿¸«— 1»∏ ºˆΩ≈∏∏ øœ∑·∑Œ ¿Œ¡§«—¥Ÿ.
-    // ¿ÃπÃ ¡¯«‡ ¡ﬂ¿Œ ¿Ã¿¸ »∏¬˜¥¬ ¥Ÿ¿Ω ¿¿¥‰ø°º≠ πˆ∏Æ∞Ì √≥¿Ω∫Œ≈Õ ¥ŸΩ√ ¿–¥¬¥Ÿ.
+    // [CELL SERIAL Í≥µÌÜµ] ÏßÄÍ∏à ÏöîÏ≤≠Ìïú Ïù¥ÌõÑÏùò ÏôÑÏ†ÑÌïú 1Ìöå ÏàòÏã†Îßå ÏôÑÎ£åÎ°ú Ïù∏Ï†ïÌïúÎã§.
+    // Ïù¥ÎØ∏ ÏßÑÌñâ Ï§ëÏù∏ Ïù¥Ï†Ñ ÌöåÏ∞®Îäî Îã§Ïùå ÏùëÎãµÏóêÏÑú Î≤ÑÎ¶¨Í≥† Ï≤òÏùåÎ∂ÄÌÑ∞ Îã§Ïãú ÏùΩÎäîÎã§.
     CellSerialReadComplete = false;
     CellSerialReadRequested = true;
     memset(plc_Interface_Cell_Serial, 0, sizeof(plc_Interface_Cell_Serial));
 }
 //---------------------------------------------------------------------------
-// [CELL SERIAL ∞¯≈Î] ≈ÎΩ≈ ¡ﬂ¿Œ ¡∂∞¢¿∫ ∞«µÂ∏Æ¡ˆ æ ∞Ì ¥Ÿ¿Ω ¿–±‚ øπæ‡∫Œ≈Õ ∏µÂ∏¶ ¿˚øÎ«—¥Ÿ.
+// [CELL SERIAL Í≥µÌÜµ] ÌÜµÏã† Ï§ëÏù∏ Ï°∞Í∞ÅÏùÄ Í±¥ÎìúÎ¶¨ÏßÄ ÏïäÍ≥† Îã§Ïùå ÏùΩÍ∏∞ ÏòàÏïΩÎ∂ÄÌÑ∞ Î™®ÎìúÎ•º Ï†ÅÏö©ÌïúÎã§.
 void __fastcall TMod_PLC::SetCellSerialContinuousRead(bool enabled)
 {
     cellSerialContinuousRead = enabled;
 }
 //---------------------------------------------------------------------------
-// [CELL SERIAL ∞¯≈Î] ºˆΩ≈øÎ πˆ∆€∏∏ ¡ˆøÓ¥Ÿ. ªÛΩ√ ºˆΩ≈ ¡ﬂ øœ∑· πˆ∆€¥¬ ∞Ëº” ¡∂»∏«“ ºˆ ¿÷¥Ÿ.
+// [CELL SERIAL Í≥µÌÜµ] ÏàòÏã†Ïö© Î≤ÑÌçºÎßå ÏßÄÏö¥Îã§. ÏÉÅÏãú ÏàòÏã† Ï§ë ÏôÑÎ£å Î≤ÑÌçºÎäî Í≥ÑÏÜç Ï°∞ÌöåÌï† Ïàò ÏûàÎã§.
 void __fastcall TMod_PLC::BeginCellSerialRead()
 {
     memset(cellSerialReceiveData, 0, sizeof(cellSerialReceiveData));
@@ -150,7 +150,7 @@ void __fastcall TMod_PLC::BeginCellSerialRead()
     currentReadTask = nCELLSERIAL;
 }
 //---------------------------------------------------------------------------
-// [CELL SERIAL ∞¯≈Î] ¿œπ› µ•¿Ã≈Õ¥¬ ªÛΩ√ ∏µÂø°º≠µµ ∏≈ ¡∂∞¢ ªÁ¿Ãø° ¿–æÓ PLC Ω≈»£ ∞ªΩ≈¿ª ¿Ø¡ˆ«—¥Ÿ.
+// [CELL SERIAL Í≥µÌÜµ] ÏùºÎ∞ò Îç∞Ïù¥ÌÑ∞Îäî ÏÉÅÏãú Î™®ÎìúÏóêÏÑúÎèÑ Îß§ Ï°∞Í∞Å ÏÇ¨Ïù¥Ïóê ÏùΩÏñ¥ PLC Ïã†Ìò∏ Í∞±Ïã†ÏùÑ Ïú†ÏßÄÌïúÎã§.
 void __fastcall TMod_PLC::PrepareCellSerialRead()
 {
     if(CellSerialReadRequested || (cellSerialContinuousRead && !CellSerialReadActive))
@@ -159,7 +159,7 @@ void __fastcall TMod_PLC::PrepareCellSerialRead()
         currentReadTask = CellSerialReadActive ? nCELLSERIAL : nSTANDARD;
 }
 //---------------------------------------------------------------------------
-// [CELL SERIAL ∞¯≈Î] 820°ø4+730=4,010øˆµÂ∞° ∏µŒ ∏¿Œ µ⁄ø°∏∏ ∞·∞˙/»≠∏ÈøÎ πˆ∆€∏¶ ±≥√º«—¥Ÿ.
+// [CELL SERIAL Í≥µÌÜµ] 820√ó4+730=4,010ÏõåÎìúÍ∞Ä Î™®Îëê Î™®Ïù∏ Îí§ÏóêÎßå Í≤∞Í≥º/ÌôîÎ©¥Ïö© Î≤ÑÌçºÎ•º ÍµêÏ≤¥ÌïúÎã§.
 void __fastcall TMod_PLC::CompleteCellSerialChunk()
 {
     if(CellSerialReadRequested)
@@ -201,7 +201,7 @@ int __fastcall TMod_PLC::GetCellSerialReadWords(int index)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::InitializePcCommunication()
 {
-    resultSentParts = 0; // ¿Á¡¢º” »ƒ ¿Ã¿¸ ¿¸º€ «•Ωƒ¿ª ªÁøÎ«œ¡ˆ æ ¥¬¥Ÿ.
+    resultSentParts = 0; // Ïû¨Ï†ëÏÜç ÌõÑ Ïù¥Ï†Ñ Ï†ÑÏÜ° ÌëúÏãùÏùÑ ÏÇ¨Ïö©ÌïòÏßÄ ÏïäÎäîÎã§.
 	pc_Read = "";
 	pc_ReadFlag = true;
 	pc_ReadCount = 0;
@@ -252,7 +252,7 @@ void __fastcall TMod_PLC::ClientSocket_PCRead(TObject *Sender, TCustomWinSocket 
 
 		if(index == 1)
 		{
-			if(pc_Read.SubString(19, 4) == "0000")	//	π´¡∂≤´ ¿–æÓæﬂ «‘, ±◊∑°º≠ ª˝∑´
+			if(pc_Read.SubString(19, 4) == "0000")	//	Î¨¥Ï°∞ÍªÄ ÏùΩÏñ¥Ïïº Ìï®, Í∑∏ÎûòÏÑú ÏÉùÎûµ
 			{
 				pc_ReadFlag = true;
 				pc_ReadCount = 0;
@@ -284,7 +284,7 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
                             SetDouble(pc_Interface_Data, PC_D_HEART_BEAT, (int)!flag);
                         }
 
-                        //* write ir, ocv øœ∑·
+                        //* write ir, ocv ÏôÑÎ£å
                         if(GetPlcValue(PLC_D_IROCV_COMPLETE) == 1)
                             SetValue(PC_D_IROCV_COMPLETE, 0);
 
@@ -293,8 +293,8 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
                         ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
                         ClientSocket_PC->Socket->SendBuf(&pc_Interface_Data, sizeof(pc_Interface_Data));
 
-                        // ∫“∑Æƒ⁄µÂ(D47000~D47399) ¿¸º€ πÃªÁøÎ.
-                        // ¿ÁªÁøÎ Ω√ æ∆∑° ¡÷ºÆ «ÿ¡¶ π◊ WasResultTransmitted() ¡∂∞« ∫π±∏.
+                        // Î∂àÎüâÏΩîÎìú(D47000~D47399) Ï†ÑÏÜ° ÎØ∏ÏÇ¨Ïö©.
+                        // Ïû¨ÏÇ¨Ïö© Ïãú ÏïÑÎûò Ï£ºÏÑù Ìï¥Ï†ú Î∞è WasResultTransmitted() Ï°∞Í±¥ Î≥µÍµ¨.
                         // Sleep(30);
                         // PC_DataChange(0, PC_D_INTERFACE_IR_RESULT, DEVCODE_D, PC_D_INTERFACE_IR_RESULT_LEN);
                         // const int headerBytes = ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));
@@ -332,7 +332,7 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
 			}
 		}
 		else if(pc_ReadCount > 10)
-		{		//	3√ µøæ» ¿¿¥‰»Æ¿Œ
+		{		//	3Ï¥àÎèôÏïà ÏùëÎãµÌôïÏù∏
 			ClientSocket_PC->Close();
 		}
 
@@ -359,7 +359,7 @@ void __fastcall TMod_PLC::Timer_PC_AutoConnectTimer(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//	µ•¿Ã≈Õ ∫Ø∞Ê
+//	Îç∞Ïù¥ÌÑ∞ Î≥ÄÍ≤Ω
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::PC_DataChange(int subCommand, int address, int devCode, int devLen)
 {
@@ -430,7 +430,7 @@ void __fastcall TMod_PLC::ReportPlcReadError(AnsiString reason)
 void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket *Socket)
 
 {
-    bool responseComplete = false; // [CELL SERIAL ∞¯≈Î] TCP ¿œ∫Œ ºˆΩ≈ø°º≠¥¬ ¥Ÿ¿Ω ø‰√ª¿ª ∫∏≥ª¡ˆ æ ¥¬¥Ÿ.
+    bool responseComplete = false; // [CELL SERIAL Í≥µÌÜµ] TCP ÏùºÎ∂Ä ÏàòÏã†ÏóêÏÑúÎäî Îã§Ïùå ÏöîÏ≤≠ÏùÑ Î≥¥ÎÇ¥ÏßÄ ÏïäÎäîÎã§.
     int length = Socket->ReceiveLength();
 	plc_Read_Temp = Socket->ReceiveText();
 
@@ -441,13 +441,13 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
 	{
 		int index = plc_Read.Pos("D000");
 
-		if(index != 1) plc_Read.Delete(1, index - 1);		//	«Ï¥ı ¿ßƒ° ¿Œ¡ˆ »Æ¿Œ
+		if(index != 1) plc_Read.Delete(1, index - 1);		//	Ìó§Îçî ÏúÑÏπò Ïù∏ÏßÄ ÌôïÏù∏
 		if(plc_Read.Length() < 22) break;
 
-		if(plc_Read.SubString(19, 4) == "0000")		// ¡æ∑· ƒ⁄µÂ »Æ¿Œ(ø°∑Ø)
+		if(plc_Read.SubString(19, 4) == "0000")		// Ï¢ÖÎ£å ÏΩîÎìú ÌôïÏù∏(ÏóêÎü¨)
 		{
-			// [CELL SERIAL ∞¯≈Î] MC ±Ê¿Ã¥¬ πŸ¿Ã∆Æ, plc_Read¥¬ HEX πÆ¿⁄ø≠(πŸ¿Ã∆Æ¥Á 2±€¿⁄).
-            // TCPø°º≠ ¡∂∞¢≥™ µµ¬¯«— ¿¿¥‰¿ª ¿¸√º ¿¿¥‰¿∏∑Œ ø¿¿Œ«œ¡ˆ æ ¥¬¥Ÿ.
+			// [CELL SERIAL Í≥µÌÜµ] MC Í∏∏Ïù¥Îäî Î∞îÏù¥Ìä∏, plc_ReadÎäî HEX Î¨∏ÏûêÏó¥(Î∞îÏù¥Ìä∏Îãπ 2Í∏ÄÏûê).
+            // TCPÏóêÏÑú Ï°∞Í∞ÅÎÇò ÎèÑÏ∞©Ìïú ÏùëÎãµÏùÑ Ï†ÑÏ≤¥ ÏùëÎãµÏúºÎ°ú Ïò§Ïù∏ÌïòÏßÄ ÏïäÎäîÎã§.
 			int length = 18 + 2 * (StrToInt("0x" + plc_Read.SubString(15, 2))
 						+ (StrToInt("0x" + plc_Read.SubString(17, 2)) * 256));
 
@@ -459,7 +459,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
                 {
                     ReportPlcReadError("SHORT RESPONSE BYTES=" + IntToStr((length - 22) / 2));
                     plcAutoMode.Invalidate();
-                    // ¿ﬂ∏¯µ» ±Ê¿Ã¥¬ øœ∑·∑Œ ∞‘Ω√«œ¡ˆ æ ∞Ì ¿œπ› µ•¿Ã≈Õ∫Œ≈Õ ¿Áµø±‚»≠«—¥Ÿ.
+                    // ÏûòÎ™ªÎêú Í∏∏Ïù¥Îäî ÏôÑÎ£åÎ°ú Í≤åÏãúÌïòÏßÄ ÏïäÍ≥† ÏùºÎ∞ò Îç∞Ïù¥ÌÑ∞Î∂ÄÌÑ∞ Ïû¨ÎèôÍ∏∞ÌôîÌïúÎã§.
                     ResetCellSerialRead();
                     StartCellSerialRead();
                     plc_Read = "";
@@ -485,7 +485,7 @@ void __fastcall TMod_PLC::ClientSocket_PLCRead(TObject *Sender, TCustomWinSocket
 		}
 		else
         {
-            // [CELL SERIAL ∞¯≈Î] PLC ø¿∑˘ ¿¿¥‰¿« ¿Ã¿¸ øœ∑·∞™¿ª √÷¡æ ∞·∞˙ø° ªÁøÎ«œ¡ˆ æ ¥¬¥Ÿ.
+            // [CELL SERIAL Í≥µÌÜµ] PLC Ïò§Î•ò ÏùëÎãµÏùò Ïù¥Ï†Ñ ÏôÑÎ£åÍ∞íÏùÑ ÏµúÏ¢Ö Í≤∞Í≥ºÏóê ÏÇ¨Ïö©ÌïòÏßÄ ÏïäÎäîÎã§.
             ReportPlcReadError("END_CODE=0x" + plc_Read.SubString(21, 2) + plc_Read.SubString(19, 2));
             plcAutoMode.Invalidate();
             ResetCellSerialRead();
@@ -531,7 +531,7 @@ void __fastcall TMod_PLC::Timer_PLC_WriteMsgTimer(TObject *Sender)
 			plc_ReadFlag = false;
             plc_ReadCount = 0;
 		}
-		else if(plc_ReadCount > 10)		//	3√ µøæ» ¿¿¥‰»Æ¿Œ
+		else if(plc_ReadCount > 10)		//	3Ï¥àÎèôÏïà ÏùëÎãµÌôïÏù∏
 			ClientSocket_PLC->Close();
 
 		plc_ReadCount++;
@@ -555,7 +555,7 @@ void __fastcall TMod_PLC::Timer_PLC_AutoConnectTimer(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//	µ•¿Ã≈Õ ∫Ø∞Ê
+//	Îç∞Ïù¥ÌÑ∞ Î≥ÄÍ≤Ω
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::PLC_DataChange(int subCommand, int address, int devCode, int devLen)
 {
@@ -601,7 +601,7 @@ void __fastcall TMod_PLC::ReadPlcCellSerialChunk(int index, int wordsToRead)
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//	µ•¿Ã≈Õ æ≤±‚ & ¿–±‚
+//	Îç∞Ïù¥ÌÑ∞ Ïì∞Í∏∞ & ÏùΩÍ∏∞
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::SetData(unsigned char (*data)[2], int column, int num, bool flag)
@@ -619,9 +619,9 @@ void __fastcall TMod_PLC::SetDouble(unsigned char (*data)[2], int column, double
 //
 //	data[column][1] = temp / 256;
 //	data[column][0] = temp % 256;
-    short temp = static_cast<short>(value); // signed 16-bit ¡§ºˆ∑Œ «¸∫Ø»Ø
+    short temp = static_cast<short>(value); // signed 16-bit Ï†ïÏàòÎ°ú ÌòïÎ≥ÄÌôò
 
-    data[column][0] = temp & 0xFF;         // LSB (¿˙¿Â º¯º≠ø° µ˚∂Û ¥Ÿ∏ß)
+    data[column][0] = temp & 0xFF;         // LSB (Ï†ÄÏû• ÏàúÏÑúÏóê Îî∞Îùº Îã§Î¶Ñ)
     data[column][1] = (temp >> 8) & 0xFF;  // MSB
 }
 //---------------------------------------------------------------------------
@@ -671,10 +671,10 @@ AnsiString __fastcall TMod_PLC::GetString(unsigned char (*data)[2], int column, 
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//	µ•¿Ã≈Õ æ≤±‚ & ¿–±‚
+//	Îç∞Ïù¥ÌÑ∞ Ïì∞Í∏∞ & ÏùΩÍ∏∞
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// PLC ∏Ì∑…æÓ
+// PLC Î™ÖÎ†πÏñ¥
 //---------------------------------------------------------------------------
 double __fastcall TMod_PLC::GetPlcValue(int plc_address)
 {
@@ -766,7 +766,7 @@ int __fastcall TMod_PLC::GetOcvValue(int pc_address, int index)
     return (highWord << 16) | lowWord;
 }
 //---------------------------------------------------------------------------
-// PLC ∏Ì∑…æÓ
+// PLC Î™ÖÎ†πÏñ¥
 //---------------------------------------------------------------------------
 
 
@@ -775,13 +775,13 @@ int __fastcall TMod_PLC::GetOcvValue(int pc_address, int index)
 
 
 //---------------------------------------------------------------------------
-// √÷¡æ πˆ∆€ ¡ÿ∫Ò ¡˜»ƒ »£√‚. ¿Ã»ƒ ºº ∫Ì∑œ¿Ã ∞¢∞¢ Ω«¡¶ º€Ω≈µ» ∞ÊøÏ∏∏ øœ∑· ¡ˆø¨¿ª ≥°≥Ω¥Ÿ.
-// TCP º€Ω≈ »Æ¿Œ¿Ã∏Á PLC ≥ª∫Œ π›øµ ACK∏¶ ¿«πÃ«œ¡ˆ æ ¥¬¥Ÿ.
+// ÏµúÏ¢Ö Î≤ÑÌçº Ï§ÄÎπÑ ÏßÅÌõÑ Ìò∏Ï∂ú. Ïù¥ÌõÑ ÏÑ∏ Î∏îÎ°ùÏù¥ Í∞ÅÍ∞Å Ïã§Ï†ú ÏÜ°Ïã†Îêú Í≤ΩÏö∞Îßå ÏôÑÎ£å ÏßÄÏó∞ÏùÑ ÎÅùÎÇ∏Îã§.
+// TCP ÏÜ°Ïã† ÌôïÏù∏Ïù¥Î©∞ PLC ÎÇ¥Î∂Ä Î∞òÏòÅ ACKÎ•º ÏùòÎØ∏ÌïòÏßÄ ÏïäÎäîÎã§.
 void __fastcall TMod_PLC::BeginResultTransmission() { resultSentParts = 0; }
 bool __fastcall TMod_PLC::WasResultTransmitted()
 {
-    // IR(2), OCV(4) ∏µŒ ¿¸º€ »ƒ øœ∑·.
-    // ∫“∑Æƒ⁄µÂ ¿¸º€ ∫π±∏ Ω√ æ∆∑° ¡∂∞«(7) ªÁøÎ.
+    // IR(2), OCV(4) Î™®Îëê Ï†ÑÏÜ° ÌõÑ ÏôÑÎ£å.
+    // Î∂àÎüâÏΩîÎìú Ï†ÑÏÜ° Î≥µÍµ¨ Ïãú ÏïÑÎûò Ï°∞Í±¥(7) ÏÇ¨Ïö©.
     // return resultSentParts == 7;
     return resultSentParts == (2 | 4);
 }

@@ -50,7 +50,7 @@ void __fastcall TMeasureInfoForm::FormCreate(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::MakePanel()
 {
-    // ÇÑ Ã¤³ÎÀÇ µÎ Ç¥½ÃÃ¢Àº °°Àº ¼¿ ¾È¿¡ À§/¾Æ·¡·Î ¹èÄ¡ÇÑ´Ù.
+    // í•œ ì±„ë„ì˜ ë‘ í‘œì‹œì°½ì€ ê°™ì€ ì…€ ì•ˆì— ìœ„/ì•„ë˜ë¡œ ë°°ì¹˜í•œë‹¤.
     for(int index = 0; index < MAXCHANNEL; ++index)
     {
         const ChannelLayout::Rect r = ChannelLayout::ForChannel(
@@ -72,13 +72,13 @@ void __fastcall TMeasureInfoForm::MakePanel()
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::MakeUIPanel()
 {
-    // DFM¿¡ ³²Àº 16Ã¤³Î ±âÁØ Á¦¸ñÀº ¼û±â°í, ½ÇÁ¦ Çà/¿­ ¼ö·Î Ãà Á¦¸ñÀ» »ı¼ºÇÑ´Ù.
+    // DFMì— ë‚¨ì€ 16ì±„ë„ ê¸°ì¤€ ì œëª©ì€ ìˆ¨ê¸°ê³ , ì‹¤ì œ í–‰/ì—´ ìˆ˜ë¡œ ì¶• ì œëª©ì„ ìƒì„±í•œë‹¤.
     for(int i = 0; i < Panel2->ControlCount; ++i)
         Panel2->Controls[i]->Visible = false;
     Panel2->Caption = "";
     const int width = Panel2->ClientWidth;
     const int height = Panel2->ClientHeight;
-    // ¹è¿­ ¹øÈ£=¾È³» ¹øÈ£-1. Á¦¸ñ À§Ä¡¿Í Ã¤³Î À§Ä¡´Â µ¿ÀÏÇÑ ½ÃÀÛ ¸ğ¼­¸®¸¦ »ç¿ëÇÑ´Ù.
+    // ë°°ì—´ ë²ˆí˜¸=ì•ˆë‚´ ë²ˆí˜¸-1. ì œëª© ìœ„ì¹˜ì™€ ì±„ë„ ìœ„ì¹˜ëŠ” ë™ì¼í•œ ì‹œì‘ ëª¨ì„œë¦¬ë¥¼ ì‚¬ìš©í•œë‹¤.
     for(int column = 0; column < CELL_COLUMN_COUNT; ++column)
     {
         const ChannelLayout::Rect r = ChannelLayout::ColumnTitle(column, width, height);
@@ -93,7 +93,7 @@ void __fastcall TMeasureInfoForm::MakeUIPanel()
         SetUIOption(pUIy[row], r.left, r.top, r.width, r.height, row);
         pUIy[row]->Caption = row + 1;
     }
-    // ÃøÁ¤°ª/º¸Á¶°ª ¹ü·Êµµ µÎ ¾È³» ÃàÀÌ ¸¸³ª´Â ¸ğ¼­¸®·Î ÀÌµ¿ÇÑ´Ù.
+    // ì¸¡ì •ê°’/ë³´ì¡°ê°’ ë²”ë¡€ë„ ë‘ ì•ˆë‚´ ì¶•ì´ ë§Œë‚˜ëŠ” ëª¨ì„œë¦¬ë¡œ ì´ë™í•œë‹¤.
     const ChannelLayout::Rect corner = ChannelLayout::AxisCorner(width, height);
     const int legendHeight = (corner.height - 1) / 2;
     clir->SetBounds(corner.left, corner.top, corner.width, legendHeight);
@@ -124,7 +124,7 @@ void __fastcall TMeasureInfoForm::SetOption(TPanel *pnl, int nx, int ny, int nw,
 	pnl->BevelKind = bkNone;
 	pnl->BevelOuter = bvNone;
 	pnl->Tag = index;
-//	pnl->Hint = "Ã¤³Î : " + IntToStr(index+1) + "(" + IntToStr((index%16)+1) + "-" + IntToStr((index+16)/16)+ ")";
+//	pnl->Hint = "ì±„ë„ : " + IntToStr(index+1) + "(" + IntToStr((index%16)+1) + "-" + IntToStr((index+16)/16)+ ")";
 	pnl->Hint = "CH : " + IntToStr(index + 1) + " (" + IntToStr(ChannelLayout::RowNumber(index)) + "-" + IntToStr(ChannelLayout::ColumnNumber(index)) + ")";
 	pnl->ShowHint = true;
 	pnl->Caption = index+1;
@@ -160,7 +160,7 @@ void __fastcall TMeasureInfoForm::DisplayIrValue(int index, TColor clr, AnsiStri
 	if(index < 0 || index >= MAXCHANNEL) return;
 	pir[index]->Caption = caption;
 
-    // Ã¤³Î¹øÈ£¸¦ IR ÃøÁ¤°ªÀ¸·Î ±×·¡ÇÁ¿¡ ³ÖÁö ¾Ê´Â´Ù. Â÷Æ®µµ 0-based index.
+    // ì±„ë„ë²ˆí˜¸ë¥¼ IR ì¸¡ì •ê°’ìœ¼ë¡œ ê·¸ë˜í”„ì— ë„£ì§€ ì•ŠëŠ”ë‹¤. ì°¨íŠ¸ë„ 0-based index.
     if(index < IrChart->Series[0]->Count())
         IrChart->Series[0]->YValue[index] = measured ? BaseForm->StringToDouble(caption, 0) : 0;
 
@@ -327,7 +327,7 @@ void __fastcall TMeasureInfoForm::Panel35Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 {
-    // MSA´Â Æ®·¹ÀÌ À¯¹«¿Í ¹«°üÇÑ ¼öµ¿ÃøÁ¤ÀÌ´Ù. ÀúÀå/¸Ş½ÃÁö Ã³¸® Áß Å¸ÀÌ¸Ó ÀçÁøÀÔÀ» ¸·´Â´Ù.
+    // MSAëŠ” íŠ¸ë ˆì´ ìœ ë¬´ì™€ ë¬´ê´€í•œ ìˆ˜ë™ì¸¡ì •ì´ë‹¤. ì €ì¥/ë©”ì‹œì§€ ì²˜ë¦¬ ì¤‘ íƒ€ì´ë¨¸ ì¬ì§„ì…ì„ ë§‰ëŠ”ë‹¤.
     if(!msaTimer->Enabled) return;
     msaTimer->Enabled = false;
     try {
@@ -347,7 +347,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 		case 1:
 			if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE)){
 				Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
-				BaseForm->nForm[stage]->CmdStartMeasurement(); // ¼öµ¿ °æ·Î: Æ®·¹ÀÌ/½Ã¸®¾ó °Ë»ç ¾øÀÌ AMS ¿äÃ».
+				BaseForm->nForm[stage]->CmdStartMeasurement(); // ìˆ˜ë™ ê²½ë¡œ: íŠ¸ë ˆì´/ì‹œë¦¬ì–¼ ê²€ì‚¬ ì—†ì´ AMS ìš”ì²­.
 				nStep = 2;
 			}
 			else
@@ -356,7 +356,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 			}
 			break;
 		case 2:
-            // ÀÌÀü PROBE OPEN ÀÜ·ù ½ÅÈ£¸¸À¸·Î ¿Ï·á Ã³¸®ÇÏÁö ¾Ê´Â´Ù.
+            // ì´ì „ PROBE OPEN ì”ë¥˜ ì‹ í˜¸ë§Œìœ¼ë¡œ ì™„ë£Œ ì²˜ë¦¬í•˜ì§€ ì•ŠëŠ”ë‹¤.
             if(BaseForm->nForm[stage]->tray.amf &&
                BaseForm->nForm[stage]->IsMeasurementResultComplete() &&
                Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN))
@@ -369,7 +369,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 
 				if(msaCount >= msaTargetCount)
 				{
-                    nStep = -1; // ¿Ï·á È®Á¤ ÈÄ º¸°í¼­/¸Ş½ÃÁö Ã³¸®. Áßº¹ ÀúÀåÇÏÁö ¾Ê´Â´Ù.
+                    nStep = -1; // ì™„ë£Œ í™•ì • í›„ ë³´ê³ ì„œ/ë©”ì‹œì§€ ì²˜ë¦¬. ì¤‘ë³µ ì €ì¥í•˜ì§€ ì•ŠëŠ”ë‹¤.
                     MakeReportFile(msaFN, msaReportFN, msaCount);
 					BaseForm->nForm[stage]->WriteCommLog("IR/OCV STOP", "MSA COMPLETE");
 					msaTimer->Enabled = false;
@@ -389,7 +389,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 	}
     }
     catch(...) {
-        // ÆÄÀÏ/Åë½Å ¿¹¿Ü°¡ ³ªµµ ´ÙÀ½ È¸Â÷¸¦ ½ÃÀÛÇÏÁö ¾Ê´Â´Ù.
+        // íŒŒì¼/í†µì‹  ì˜ˆì™¸ê°€ ë‚˜ë„ ë‹¤ìŒ íšŒì°¨ë¥¼ ì‹œì‘í•˜ì§€ ì•ŠëŠ”ë‹¤.
         nStep = -1;
         BaseForm->nForm[stage]->StopMsaMeasurement();
         throw;
@@ -403,26 +403,26 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 {
     if(msaTimer->Enabled) return;
-    // ÁøÇà ÁßÀÎ ÃøÁ¤/°á°ú ÀúÀåÀ» »õ MSA ½ÃÀÛÀ¸·Î ÃÊ±âÈ­ÇÏÁö ¾Ê´Â´Ù.
+    // ì§„í–‰ ì¤‘ì¸ ì¸¡ì •/ê²°ê³¼ ì €ì¥ì„ ìƒˆ MSA ì‹œì‘ìœ¼ë¡œ ì´ˆê¸°í™”í•˜ì§€ ì•ŠëŠ”ë‹¤.
     if(BaseForm->nForm[stage]->tray.ams ||
        BaseForm->nForm[stage]->IsWaitingForResultSave()) return;
     msaTargetCount = Edit1->Text.ToIntDef(3);
     if(msaTargetCount < 1) msaTargetCount = 1;
-    Edit1->Text = IntToStr(msaTargetCount); // ½ÇÇà Áß ÀÔ·Â º¯°æÀº ´ÙÀ½ MSAºÎÅÍ Àû¿ë.
+    Edit1->Text = IntToStr(msaTargetCount); // ì‹¤í–‰ ì¤‘ ì…ë ¥ ë³€ê²½ì€ ë‹¤ìŒ MSAë¶€í„° ì ìš©.
 	nStep = -1;
 	msaCount = 0;
 	MSA_COUNT_CHECK->Caption = UiText("1/"+ Edit1->Text);
 
-    // msa ÀúÀå ÆÄÀÏ ¼³Á¤
+    // msa ì €ì¥ íŒŒì¼ ì„¤ì •
 	AnsiString dir;
 	dir = (AnsiString)MSA_PATH + Now().FormatString("yyyymmdd") + "\\" + pstage->Caption + "\\";
 	ForceDirectories((AnsiString)dir);
 	msaFN = dir + Now().FormatString("yymmddhhnnss") + ".csv";
 	msaReportFN = dir + Now().FormatString("yymmddhhnnss") + "_report.csv";
 
-    // PC ¼öµ¿¸ğµå·Î ¸í½ÃÀûÀ¸·Î ÀüÈ¯ÇÑ´Ù. »ı»ê ÀÚµ¿¸ğµåÀÇ PLC/Æ®·¹ÀÌ ÀÎÅÍ·ÏÀº ¼öÁ¤ÇÏÁö ¾Ê´Â´Ù.
+    // PC ìˆ˜ë™ëª¨ë“œë¡œ ëª…ì‹œì ìœ¼ë¡œ ì „í™˜í•œë‹¤. ìƒì‚° ìë™ëª¨ë“œì˜ PLC/íŠ¸ë ˆì´ ì¸í„°ë¡ì€ ìˆ˜ì •í•˜ì§€ ì•ŠëŠ”ë‹¤.
     BaseForm->nForm[stage]->btnManualClick(Sender);
-    probetimer->Enabled = false; // ÇÁ·Îºê ¿äÃ» ÇØÁ¦´Â MSA Å¸ÀÌ¸Ó°¡ ´Üµ¶À¸·Î ´ã´ç.
+    probetimer->Enabled = false; // í”„ë¡œë¸Œ ìš”ì²­ í•´ì œëŠ” MSA íƒ€ì´ë¨¸ê°€ ë‹¨ë…ìœ¼ë¡œ ë‹´ë‹¹.
     Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
     nStep = 0;
@@ -432,7 +432,7 @@ void __fastcall TMeasureInfoForm::advMSAStartClick(TObject *Sender)
 
 void __fastcall TMeasureInfoForm::advMSAStopClick(TObject *Sender)
 {
-    // ÀúÀå ´ë±â/Æ®·¹ÀÌ À¯¹«¿Í °ü°è¾øÀÌ Å¸ÀÌ¸ÓºÎÅÍ ¸ØÃß°í STP/ÇÁ·Îºê ¿­¸²À» ¿äÃ»ÇÑ´Ù.
+    // ì €ì¥ ëŒ€ê¸°/íŠ¸ë ˆì´ ìœ ë¬´ì™€ ê´€ê³„ì—†ì´ íƒ€ì´ë¨¸ë¶€í„° ë©ˆì¶”ê³  STP/í”„ë¡œë¸Œ ì—´ë¦¼ì„ ìš”ì²­í•œë‹¤.
     msaTimer->Enabled = false;
     nStep = -1;
     BaseForm->nForm[stage]->StopMsaMeasurement();
@@ -524,10 +524,10 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 	AnsiString tempvalue;
 
 	int nRepeat = 0;
-	//* ÆÄÀÏ ÀĞ±â
-	//* ÇÑÁÙ
+	//* íŒŒì¼ ì½ê¸°
+	//* í•œì¤„
 	TStringList *sList_line = new TStringList;
-	//* IR, OCV °ª  ÀĞ±â
+	//* IR, OCV ê°’  ì½ê¸°
 	TStringList *sList_value = new TStringList;
 	sList_line->LoadFromFile(fn_data);
 	for(int i = 1; i < sList_line->Count; i++){
@@ -581,7 +581,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 		ir += "," + FormatFloat("0.00", irMin[i]) + "," + FormatFloat("0.00", irMax[i]) + "," + FormatFloat("0.00", irMax[i]-irMin[i]) + "\n";
 	}
 
-	//* OCV min/max, OCV dev °è»ê
+	//* OCV min/max, OCV dev ê³„ì‚°
 	ocv = "Channel";
 	for(int i = 0; i < nTotalCount; i++){
 		ocv += ",OCV_" + IntToStr(i + 1);
@@ -613,7 +613,7 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 	}
 
 
-	//* ÆÄÀÏ ¾²±â
+	//* íŒŒì¼ ì“°ê¸°
 	//fn_report = ExtractFileName(fn_data) + "_report.csv";
 	if(FileExists(fn_report)){
 		DeleteFile(fn_report);

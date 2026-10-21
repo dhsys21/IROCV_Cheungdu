@@ -1,5 +1,5 @@
-// [»óÅÂ È­¸é] ÁøÇà »óÅÂ¡¤¿À·ù¡¤¿¬°á ÀÌ¹ÌÁö¡¤PLC Ç¥½Ãµî°ú È­¸é ÀüÈ¯.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [ìƒíƒœ í™”ë©´] ì§„í–‰ ìƒíƒœÂ·ì˜¤ë¥˜Â·ì—°ê²° ì´ë¯¸ì§€Â·PLC í‘œì‹œë“±ê³¼ í™”ë©´ ì „í™˜.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -130,7 +130,7 @@ void __fastcall TTotalForm::ResponseError(AnsiString param)
 void __fastcall TTotalForm::DisplayStageError(int err)
 {
 	AnsiString err1, err2, err3, err4;
-//	bool ErrorMode = true;   // false : ¾Ë¶÷¸ðµå true: ¿¡·¯¸ðµå
+//	bool ErrorMode = true;   // false : ì•ŒëžŒëª¨ë“œ true: ì—ëŸ¬ëª¨ë“œ
 	switch(err){
 		case BARCODE_ERROR:
 			 err1 = "Barcode ERROR";
@@ -195,7 +195,7 @@ void __fastcall TTotalForm::DisplayStageError(int err)
 		error4->Caption = UiText(err4);
 		ErrorTime->Caption = Now().FormatString("hh : nn : ss");
 		WriteErrorLog(err1 + " " + err2, err3, err4);
-		//* 2023 06 14 ¼³ºñ°¡ ¸ØÃèÀ» °æ¿ì ¿¡·¯
+		//* 2023 06 14 ì„¤ë¹„ê°€ ë©ˆì·„ì„ ê²½ìš° ì—ëŸ¬
         DisplayProcess(err1, err3, true);
 		//Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data, PC_D_IROCV_ERROR, 1);
 		//ShowPanelGroup(GrpError);
@@ -204,8 +204,8 @@ void __fastcall TTotalForm::DisplayStageError(int err)
 
 
 //---------------------------------------------------------------------------
-// »óÅÂ ÀÌ¹ÌÁö¡¤»óÅÂ Áö¼Ó ½Ã°£¡¤PLC TRAY/PROBE Ç¥½ÃµîÀ» °»½ÅÇÑ´Ù. ÀÚµ¿ °Ë»ç ´Ü°è´Â º¯°æÇÏÁö ¾Ê´Â´Ù.
-// µðÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ StatusTimerTimer. ¼³ºñ »óÅÂ¡¤¾Ë¶÷¡¤PLC Ç¥½Ã °»½Å´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìƒíƒœ ì´ë¯¸ì§€Â·ìƒíƒœ ì§€ì† ì‹œê°„Â·PLC TRAY/PROBE í‘œì‹œë“±ì„ ê°±ì‹ í•œë‹¤. ìžë™ ê²€ì‚¬ ë‹¨ê³„ëŠ” ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
+// ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì§„ìž…ì ì€ FormTotal.cppì˜ StatusTimerTimer. ì„¤ë¹„ ìƒíƒœÂ·ì•ŒëžŒÂ·PLC í‘œì‹œ ê°±ì‹ ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 {
     // Keep PLC mode monitoring alive while the automatic inspection timer is disabled.
@@ -276,13 +276,13 @@ void __fastcall TTotalForm::ProcessStageStatus(TObject *Sender)
 
     if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1) DisplayPlcSignal(pnlProbeClose, true);
     else DisplayPlcSignal(pnlProbeClose, false);
-    // ¼öµ¿ ´ë±â Áß¿¡µµ ½ÇÇàµÈ´Ù. ÀÚµ¿ Ç¥½Ã¿Í °æÇÕÇÏÁö ¾Êµµ·Ï ÀÚµ¿ Å¸ÀÌ¸Ó°¡ ²¨Áø °æ¿ì¸¸ °»½Å.
+    // ìˆ˜ë™ ëŒ€ê¸° ì¤‘ì—ë„ ì‹¤í–‰ëœë‹¤. ìžë™ í‘œì‹œì™€ ê²½í•©í•˜ì§€ ì•Šë„ë¡ ìžë™ íƒ€ì´ë¨¸ê°€ êº¼ì§„ ê²½ìš°ë§Œ ê°±ì‹ .
     if(!Timer_AutoInspection->Enabled && (bLocal || stage.arl == nLocal))
         CheckManualInspectionError();
 }
 
 //---------------------------------------------------------------------------
-// ¸ÞÀÎ/ÀçÃøÁ¤/¿À·ù ±×·ìÀ» ÀüÈ¯ÇÏ°í ¿À·ù È­¸é Ç¥½Ã °³¼ö¸¦ °»½ÅÇÑ´Ù.
+// ë©”ì¸/ìž¬ì¸¡ì •/ì˜¤ë¥˜ ê·¸ë£¹ì„ ì „í™˜í•˜ê³  ì˜¤ë¥˜ í™”ë©´ í‘œì‹œ ê°œìˆ˜ë¥¼ ê°±ì‹ í•œë‹¤.
 void __fastcall TTotalForm::ShowPanelGroup(TGroupBox *grp)
 {
 	if(grp->Visible == false){
@@ -323,7 +323,7 @@ void __fastcall TTotalForm::ShowPanelGroup(TGroupBox *grp)
 }
 
 //---------------------------------------------------------------------------
-// PLC ÀÔ·Â ½ÅÈ£ ON/OFF¸¦ Ç¥½Ãµî »ö»óÀ¸·Î ¹Ý¿µÇÑ´Ù.
+// PLC ìž…ë ¥ ì‹ í˜¸ ON/OFFë¥¼ í‘œì‹œë“± ìƒ‰ìƒìœ¼ë¡œ ë°˜ì˜í•œë‹¤.
 void __fastcall TTotalForm::DisplayPlcSignal(TAdvSmoothPanel *advPanel, bool bOn)
 {
     if(bOn)
@@ -341,7 +341,7 @@ void __fastcall TTotalForm::DisplayPlcSignal(TAdvSmoothPanel *advPanel, bool bOn
 }
 
 //---------------------------------------------------------------------------
-// ÀÔ·Â ¾ÏÈ£¸¦ È®ÀÎÇÑ µÚ ¼³Á¤ È­¸éÀÇ Á¢±ÙÀ» Çã¿ëÇÏ°Å³ª ¿À·ù ¹®±¸¸¦ Ç¥½ÃÇÑ´Ù.
+// ìž…ë ¥ ì•”í˜¸ë¥¼ í™•ì¸í•œ ë’¤ ì„¤ì • í™”ë©´ì˜ ì ‘ê·¼ì„ í—ˆìš©í•˜ê±°ë‚˜ ì˜¤ë¥˜ ë¬¸êµ¬ë¥¼ í‘œì‹œí•œë‹¤.
 void __fastcall TTotalForm::CheckPassword()
 {
     UnicodeString msg = Form_Language->msgIncorrectPwd;
@@ -355,15 +355,15 @@ void __fastcall TTotalForm::CheckPassword()
         pPassword->Visible = false;
 	}
 	else{
-		//MessageBox(Handle, L"Are you sure you¡¯re spelling your password correctly?", L"ERROR", MB_OK|MB_ICONERROR);
+		//MessageBox(Handle, L"Are you sure youâ€™re spelling your password correctly?", L"ERROR", MB_OK|MB_ICONERROR);
         MessageBox(Handle, msg.c_str(), L"ERROR", MB_OK|MB_ICONERROR);
 	}
 }
 
 //===========================================================================
-// ÀÚµ¿/¼öµ¿ ¿À·ù °Ë»ç: È£Ãâ ½ÃÁ¡°ú ¹ÝÈ¯°ªÀÇ »ç¿ë ¹æ½ÄÀº °¢ ¿îÀü ¸ðµå¿¡¼­ À¯ÁöÇÑ´Ù.
+// ìžë™/ìˆ˜ë™ ì˜¤ë¥˜ ê²€ì‚¬: í˜¸ì¶œ ì‹œì ê³¼ ë°˜í™˜ê°’ì˜ ì‚¬ìš© ë°©ì‹ì€ ê° ìš´ì „ ëª¨ë“œì—ì„œ ìœ ì§€í•œë‹¤.
 //===========================================================================
-// ÀÚµ¿ ÁøÇàÀ» ¸·´Â Åë½Å/PLC/¿îÀü ¸ðµå ¿À·ù¸¦ È®ÀÎÇÑ´Ù. trueÀÌ¸é ÇöÀç ´Ü°è¸¦ À¯ÁöÇÏ°í ´ë±âÇÑ´Ù.
+// ìžë™ ì§„í–‰ì„ ë§‰ëŠ” í†µì‹ /PLC/ìš´ì „ ëª¨ë“œ ì˜¤ë¥˜ë¥¼ í™•ì¸í•œë‹¤. trueì´ë©´ í˜„ìž¬ ë‹¨ê³„ë¥¼ ìœ ì§€í•˜ê³  ëŒ€ê¸°í•œë‹¤.
 bool __fastcall TTotalForm::CheckAutoInspectionError()
 {
     DisplayError("");
@@ -397,11 +397,11 @@ bool __fastcall TTotalForm::CheckAutoInspectionError()
     return true;
 }
 //---------------------------------------------------------------------------
-// ¼öµ¿¿¡¼­´Â ÀÚµ¿°Ë»ç Å¸ÀÌ¸Ó°¡ ¸ØÃß¹Ç·Î »óÅÂ Å¸ÀÌ¸Ó¿¡¼­ ¿À·ù Ç¥½Ã¸¸ °»½ÅÇÑ´Ù.
-// ¹ÝÈ¯°ªÀº Ç¥½Ã ¿©ºÎÀÌ¸ç ¼öµ¿ ÃøÁ¤/PLC Ãâ·ÂÀ» Á¤Áö½ÃÅ°´Â ÀÎÅÍ·ÏÀ¸·Î »ç¿ëÇÏÁö ¾Ê´Â´Ù.
+// ìˆ˜ë™ì—ì„œëŠ” ìžë™ê²€ì‚¬ íƒ€ì´ë¨¸ê°€ ë©ˆì¶”ë¯€ë¡œ ìƒíƒœ íƒ€ì´ë¨¸ì—ì„œ ì˜¤ë¥˜ í‘œì‹œë§Œ ê°±ì‹ í•œë‹¤.
+// ë°˜í™˜ê°’ì€ í‘œì‹œ ì—¬ë¶€ì´ë©° ìˆ˜ë™ ì¸¡ì •/PLC ì¶œë ¥ì„ ì •ì§€ì‹œí‚¤ëŠ” ì¸í„°ë¡ìœ¼ë¡œ ì‚¬ìš©í•˜ì§€ ì•ŠëŠ”ë‹¤.
 bool __fastcall TTotalForm::CheckManualInspectionError()
 {
-    // ÀúÀå ½ÇÆÐ/¿¹¿Ü Á¤ÁöÀÇ ¿øÀÎ ¸Þ½ÃÁö¸¦ ¼öµ¿ ¾È³»·Î µ¤¾î¾²Áö ¾Ê´Â´Ù.
+    // ì €ìž¥ ì‹¤íŒ¨/ì˜ˆì™¸ ì •ì§€ì˜ ì›ì¸ ë©”ì‹œì§€ë¥¼ ìˆ˜ë™ ì•ˆë‚´ë¡œ ë®ì–´ì“°ì§€ ì•ŠëŠ”ë‹¤.
     if(resultSaveStep == RESULT_ERROR || autoInspection.GetStep() == STEP_ERROR_STOP)
         return true;
 
@@ -421,7 +421,7 @@ bool __fastcall TTotalForm::CheckManualInspectionError()
             error = "IR/OCV is not in AutoMode";
     }
 
-    // ¿¬°á ½ÇÆÐ ¡æ PLC ¿À·ù ¡æ ¼öµ¿ ¾È³» ¼øÀ¸·Î Ç¥½ÃÇØ Áß¿äÇÑ ¿À·ù°¡ °¡·ÁÁöÁö ¾Ê´Â´Ù.
+    // ì—°ê²° ì‹¤íŒ¨ â†’ PLC ì˜¤ë¥˜ â†’ ìˆ˜ë™ ì•ˆë‚´ ìˆœìœ¼ë¡œ í‘œì‹œí•´ ì¤‘ìš”í•œ ì˜¤ë¥˜ê°€ ê°€ë ¤ì§€ì§€ ì•ŠëŠ”ë‹¤.
     DisplayError(error, !error.IsEmpty());
     return !error.IsEmpty();
 }

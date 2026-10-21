@@ -11,7 +11,7 @@
 #define NG_PATH                     APP_PATH"NGPP\\"
 
 //---------------------------------------------------------------------------
-//	Cell Serial ÀĞ±â
+//	Cell Serial ì½ê¸°
 //---------------------------------------------------------------------------
 const int nSTANDARD  	=   1;
 const int nCELLSERIAL   =   2;
@@ -24,7 +24,7 @@ const int nIR			=   2;
 const int nOCV			=   3;
 
 //---------------------------------------------------------------------------
-//	STEP Á¤º¸
+//	STEP ì •ë³´
 //---------------------------------------------------------------------------
 #define STEP_WAIT					0
 #define STEP_MEASURE				1
@@ -32,7 +32,7 @@ const int nOCV			=   3;
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-//	Channel °¹¼ö
+//	Channel ê°¯ìˆ˜
 //---------------------------------------------------------------------------
 #include "SiteConfig.h"
 
@@ -57,7 +57,7 @@ const char nRUN			= 5;
 const char nEND			= 6;
 const char nFinish 		= 7;
 const char nManual		= 8;
-const char nOpbox		= 9; 	// IMS ÇÁ·ÎÅäÄİ ¿Ü º°µµ »ı¼º
+const char nOpbox		= 9; 	// IMS í”„ë¡œí† ì½œ ì™¸ ë³„ë„ ìƒì„±
 const char nEmergency 	= 10;
 
 
@@ -77,7 +77,7 @@ const int nDefaultError = 40;
 
 const int IDN = 1;
 
-const int SIZ = 2;		// °Ë»ç °ü·Ã ¸í·É¾î
+const int SIZ = 2;		// ê²€ì‚¬ ê´€ë ¨ ëª…ë ¹ì–´
 const int AMS = 3;
 const int IR =  4;
 const int OCV = 5;
@@ -90,7 +90,7 @@ const int BCR = 11;
 const int DEV = 13;
 
 
-const int SAV = 20;     // ¼öµ¿ Á¶ÀÛ
+const int SAV = 20;     // ìˆ˜ë™ ì¡°ì‘
 const int LOD = 21;
 
 const int SEN = 40;
@@ -109,7 +109,7 @@ const int STA = 53;
 
 const int LRM = 60;
 const int REC = 61;
-const int RST = 62;		// ºñ»óÁ¤Áö ÇØÁ¦
+const int RST = 62;		// ë¹„ìƒì •ì§€ í•´ì œ
 const int REM = 63;
 const int CLR = 64;
 const int GSC = 65;
@@ -128,7 +128,7 @@ const int NA = 77;
 const int NO = 78;
 //const int CE = 79; /// value error
 
-// IMS º¸°í ¸Ş¼¼Áö
+// IMS ë³´ê³  ë©”ì„¸ì§€
 const int RESET = 0;
 const int EMERGENCY = 1;
 const int PROBE_ERROR = 4;
@@ -139,7 +139,7 @@ const int NO_ANSWER = 17;
 const int ACOUNT = 24;
 const int GPIB_ERROR = 50;
 const int BARCODE_ERROR = 51;
-// STAGE Á¤ÀÇ ¸Ş¼¼Áö
+// STAGE ì •ì˜ ë©”ì„¸ì§€
 const int OPBOX = 101;
 
 
@@ -183,9 +183,9 @@ typedef struct{
 	bool re_excute;
 	int cnt_error;
 	int cell[MAXCHANNEL];
-	// ÃÖÁ¾ ÆÇÁ¤(cell)°ú ´ÙÀ½ ÀçÃøÁ¤ Ç×¸ñÀ» ºĞ¸®ÇÑ´Ù: ºñÆ® 1=IR, 2=OCV.
+	// ìµœì¢… íŒì •(cell)ê³¼ ë‹¤ìŒ ì¬ì¸¡ì • í•­ëª©ì„ ë¶„ë¦¬í•œë‹¤: ë¹„íŠ¸ 1=IR, 2=OCV.
     int pendingItems[MAXCHANNEL];
-    int waitingChannel; // ÀÀ´ä ´ë±â Ã¤³Î. -1ÀÌ¸é ¿äÃ» ¾øÀ½.
+    int waitingChannel; // ì‘ë‹µ ëŒ€ê¸° ì±„ë„. -1ì´ë©´ ìš”ì²­ ì—†ìŒ.
     int waitingItem; // 1=IR, 2=OCV.
 	int re_index;
 }REMEASURE;
@@ -196,10 +196,10 @@ typedef struct{
 	double ir_max;
 	double ocv_min;
 	double ocv_max;
-    int closedProbeRemeasureMaxNgCount; // ´İÈû À¯Áö ÀçÃøÁ¤: NG 1~¼³Á¤°ª ÀÌÇÏ, 0=»ı·«.
-	int probeRemeasureCount; // ÇÁ·Îºê Àç°³Æó Ãß°¡ È½¼ö. 0=»ç¿ë ¾È ÇÔ, ÃÖÃÊ ÃøÁ¤ Á¦¿Ü.
+    int closedProbeRemeasureMaxNgCount; // ë‹«í˜ ìœ ì§€ ì¬ì¸¡ì •: NG 1~ì„¤ì •ê°’ ì´í•˜, 0=ìƒëµ.
+	int probeRemeasureCount; // í”„ë¡œë¸Œ ì¬ê°œí ì¶”ê°€ íšŸìˆ˜. 0=ì‚¬ìš© ì•ˆ í•¨, ìµœì´ˆ ì¸¡ì • ì œì™¸.
     int remeasure_alarm_cnt;
-    // [CELL SERIAL °øÅë] false=TRAY IN ¼ö½Å º¸°ü, true=»ó½Ã ¼ö½Å ÈÄ °á°ú ÀúÀå Á÷Àü ÀçÈ®ÀÎ.
+    // [CELL SERIAL ê³µí†µ] false=TRAY IN ìˆ˜ì‹  ë³´ê´€, true=ìƒì‹œ ìˆ˜ì‹  í›„ ê²°ê³¼ ì €ì¥ ì§ì „ ì¬í™•ì¸.
     bool cell_serial_continuous_read;
     AnsiString pwd;
 }CONFIG;

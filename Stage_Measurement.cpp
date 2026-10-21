@@ -1,5 +1,5 @@
-// [ÃøÁ¤¡¤ÀçÃøÁ¤] AMS/AMF ¹× IR/OCV Ã³¸®, ÀçÃøÁ¤ ¸ñ·Ï, °á°ú ¸¶°¨. Åë½Å ÇÁ·¹ÀÓÀº Stage_comm.cpp.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [ì¸¡ì •Â·ì¬ì¸¡ì •] AMS/AMF ë° IR/OCV ì²˜ë¦¬, ì¬ì¸¡ì • ëª©ë¡, ê²°ê³¼ ë§ˆê°. í†µì‹  í”„ë ˆì„ì€ Stage_comm.cpp.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -10,11 +10,11 @@
 #include "CellJudgment.h"
 
 //---------------------------------------------------------------------------
-// ¼öµ¿ ÃøÁ¤ ÃÊ±âÈ­: ³»ºÎ °ªÀº 0À¸·Î Áö¿ì°í È­¸éÀº ¼ö½Å Àü±îÁö °ø¶õÀ¸·Î Ç¥½ÃÇÑ´Ù.
+// ìˆ˜ë™ ì¸¡ì • ì´ˆê¸°í™”: ë‚´ë¶€ ê°’ì€ 0ìœ¼ë¡œ ì§€ìš°ê³  í™”ë©´ì€ ìˆ˜ì‹  ì „ê¹Œì§€ ê³µë€ìœ¼ë¡œ í‘œì‹œí•œë‹¤.
 void __fastcall TTotalForm::ResetMeasurementData()
 {
     measurementClock.Reset();
-    CancelResultSave(); // [CELL SERIAL °øÅë] ¿î¿µÀÚ ÃÊ±âÈ­ ÀÌÈÄ Áö¿¬ ÀúÀå ¹æÁö.
+    CancelResultSave(); // [CELL SERIAL ê³µí†µ] ìš´ì˜ì ì´ˆê¸°í™” ì´í›„ ì§€ì—° ì €ì¥ ë°©ì§€.
     resultSaveStep = RESULT_IDLE;
     showStartupChannelNumbers = false;
     for(int i = 0; i < MAXCHANNEL; ++i)
@@ -27,12 +27,12 @@ void __fastcall TTotalForm::ResetMeasurementData()
 }
 
 //---------------------------------------------------------------------------
-// ÀüÃ¼ ÃøÁ¤ ½ÃÀÛ: Ç¥½Ã¡¤¼ö½Å ÇÃ·¡±×¸¦ ÃÊ±âÈ­ÇÏ°í AMS ¸í·ÉÀ» ¿¹¾àÇÑ´Ù.
+// ì „ì²´ ì¸¡ì • ì‹œì‘: í‘œì‹œÂ·ìˆ˜ì‹  í”Œë˜ê·¸ë¥¼ ì´ˆê¸°í™”í•˜ê³  AMS ëª…ë ¹ì„ ì˜ˆì•½í•œë‹¤.
 void __fastcall TTotalForm::CmdStartMeasurement()
 {
     if(IsAutoInspectionBlocked()) return;
     if(IsWaitingForResultSave()) return;
-    resultSaveStep = RESULT_IDLE; // »õ ÃøÁ¤¿¡¸¸ ¸¶°¨ Áßº¹ ¹æÁö¸¦ ÇØÁ¦ÇÑ´Ù.
+    resultSaveStep = RESULT_IDLE; // ìƒˆ ì¸¡ì •ì—ë§Œ ë§ˆê° ì¤‘ë³µ ë°©ì§€ë¥¼ í•´ì œí•œë‹¤.
     showStartupChannelNumbers = false;
     InitializeCellDisplay();
     tray.ams = false;
@@ -43,11 +43,11 @@ void __fastcall TTotalForm::CmdStartMeasurement()
 }
 
 //---------------------------------------------------------------------------
-// AMF ¼ö½Å ÈÄ Ã³¸®: ¿îÀü ¸ğµå¿¡ µû¶ó °á°ú ¸¶°¨ ¶Ç´Â ±âÁ¸ ÀÚµ¿ °³º° ÀçÃøÁ¤À» ¼öÇàÇÑ´Ù.
+// AMF ìˆ˜ì‹  í›„ ì²˜ë¦¬: ìš´ì „ ëª¨ë“œì— ë”°ë¼ ê²°ê³¼ ë§ˆê° ë˜ëŠ” ê¸°ì¡´ ìë™ ê°œë³„ ì¬ì¸¡ì •ì„ ìˆ˜í–‰í•œë‹¤.
 void __fastcall TTotalForm::ProcessMeasurementCompleteResponse()
 {
     if(IsAutoInspectionBlocked()) return;
-    if(resultSaveStep != RESULT_IDLE || tray.rem_mode == 1) return; // Áßº¹ AMF·Î ÀçÃøÁ¤À» ´Ù½Ã ½ÃÀÛÇÏÁö ¾Ê´Â´Ù.
+    if(resultSaveStep != RESULT_IDLE || tray.rem_mode == 1) return; // ì¤‘ë³µ AMFë¡œ ì¬ì¸¡ì •ì„ ë‹¤ì‹œ ì‹œì‘í•˜ì§€ ì•ŠëŠ”ë‹¤.
 	if(bLocal == true){
 		FinishMeasurement();
         DisplayProcess("AutoInspection_Measure", " AMF - Measure finished ... ");
@@ -62,7 +62,7 @@ void __fastcall TTotalForm::ProcessMeasurementCompleteResponse()
 }
 
 //---------------------------------------------------------------------------
-// IR ÀÀ´ä ¹®ÀÚ¿­À» °ª/Ã¤³Î·Î ÇØ¼®ÇÏ°í ÀÏ¹İ ÃøÁ¤ ¶Ç´Â ±³Á¤ È­¸é¿¡ Àü´ŞÇÑ´Ù.
+// IR ì‘ë‹µ ë¬¸ìì—´ì„ ê°’/ì±„ë„ë¡œ í•´ì„í•˜ê³  ì¼ë°˜ ì¸¡ì • ë˜ëŠ” êµì • í™”ë©´ì— ì „ë‹¬í•œë‹¤.
 void __fastcall TTotalForm::ProcessIr(AnsiString param)
 {
 	AnsiString result;
@@ -99,7 +99,7 @@ void __fastcall TTotalForm::ProcessIr(AnsiString param)
 
 	if(CaliForm->stage != this->Tag)
 	{
-		InsertIrValue(channel, value, result); //ÀÏ¹İ°èÃø
+		InsertIrValue(channel, value, result); //ì¼ë°˜ê³„ì¸¡
 	}
 	else
 	{
@@ -121,7 +121,7 @@ void __fastcall TTotalForm::ProcessIr(AnsiString param)
 }
 
 //---------------------------------------------------------------------------
-// Ã¤³Î IR ¼ö½Å Ã³¸®: º¸Á¤¡¤ÆÇÁ¤¡¤¼ö½Å Ç¥½Ã¸¦ °»½ÅÇÑ´Ù. È­¸éÀº ¼ö½Å ¿©ºÎ¿Í ÇöÀç ÃøÁ¤°ªÀ¸·Î °»½ÅÇÑ´Ù.
+// ì±„ë„ IR ìˆ˜ì‹  ì²˜ë¦¬: ë³´ì •Â·íŒì •Â·ìˆ˜ì‹  í‘œì‹œë¥¼ ê°±ì‹ í•œë‹¤. í™”ë©´ì€ ìˆ˜ì‹  ì—¬ë¶€ì™€ í˜„ì¬ ì¸¡ì •ê°’ìœ¼ë¡œ ê°±ì‹ í•œë‹¤.
 void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString result)
 {
 	int index = pos-1;
@@ -134,15 +134,15 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 	tray.measure_result[index] = GetResult(result);
 
 
-	if(cell)   // ¼¿ÀÌ ÀÖÀ»¶§
+	if(cell)   // ì…€ì´ ìˆì„ë•Œ
 	{
         tray.original_value[index] = value;
 		tray.after_value[index] = tray.original_value[index] + BaseForm->DefaultOffset[this->Tag];
-		tray.after_value[index] = tray.after_value[index] + stage.ir_offset[index];    //°³º°º¸Á¤
+		tray.after_value[index] = tray.after_value[index] + stage.ir_offset[index];    //ê°œë³„ë³´ì •
 
 		if(tray.measure_result[index] == GO)
 		{
-            // ±Ô°İ ÆÇÁ¤Àº °øÅë ÆÇÁ¤ ÇÔ¼ö¸¦ »ç¿ëÇÏ´Â È­¸é/ÃÖÁ¾ Áı°è¿¡¼­ Ã³¸®ÇÑ´Ù.
+            // ê·œê²© íŒì •ì€ ê³µí†µ íŒì • í•¨ìˆ˜ë¥¼ ì‚¬ìš©í•˜ëŠ” í™”ë©´/ìµœì¢… ì§‘ê³„ì—ì„œ ì²˜ë¦¬í•œë‹¤.
             UpdateCellDisplay(index);
 		}
 		else
@@ -153,7 +153,7 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 		}
 
 	}
-	else{     // ¼¿ÀÌ ¾øÀ»¶§
+	else{     // ì…€ì´ ì—†ì„ë•Œ
 		if(tray.measure_result[index] == GO)
 		{
 			WriteCommLog("ETC", "OUTFLOW");
@@ -166,7 +166,7 @@ void __fastcall TTotalForm::InsertIrValue(int pos, float value, AnsiString resul
 }
 
 //---------------------------------------------------------------------------
-// ÀåºñÀÇ GO/HI/LO/CE µî ÆÇÁ¤ ¹®ÀÚ¸¦ ±âÁ¸ ³»ºÎ °á°ú ÄÚµå·Î º¯È¯ÇÑ´Ù.
+// ì¥ë¹„ì˜ GO/HI/LO/CE ë“± íŒì • ë¬¸ìë¥¼ ê¸°ì¡´ ë‚´ë¶€ ê²°ê³¼ ì½”ë“œë¡œ ë³€í™˜í•œë‹¤.
 int __fastcall TTotalForm::GetResult(AnsiString result)
 {
 	if(result == "GO") return GO;
@@ -181,7 +181,7 @@ int __fastcall TTotalForm::GetResult(AnsiString result)
 }
 
 //---------------------------------------------------------------------------
-// OCV ÀÀ´ä ¹®ÀÚ¿­À» °ª/Ã¤³Î·Î ÇØ¼®ÇÏ°í Ã¤³Î ÆÇÁ¤ ¹× ÇÊ¿ä ½Ã ´ÙÀ½ ÀçÃøÁ¤À» ÁøÇàÇÑ´Ù.
+// OCV ì‘ë‹µ ë¬¸ìì—´ì„ ê°’/ì±„ë„ë¡œ í•´ì„í•˜ê³  ì±„ë„ íŒì • ë° í•„ìš” ì‹œ ë‹¤ìŒ ì¬ì¸¡ì •ì„ ì§„í–‰í•œë‹¤.
 void __fastcall TTotalForm::ProcessOcv(AnsiString param)
 {
 	int channel = 0;
@@ -226,7 +226,7 @@ void __fastcall TTotalForm::ProcessOcv(AnsiString param)
 }
 
 //---------------------------------------------------------------------------
-// Ã¤³Î OCV ¼ö½Å Ã³¸®: ±Ô°İ ÆÇÁ¤¡¤È­¸éÀ» °»½ÅÇÑ´Ù.
+// ì±„ë„ OCV ìˆ˜ì‹  ì²˜ë¦¬: ê·œê²© íŒì •Â·í™”ë©´ì„ ê°±ì‹ í•œë‹¤.
 void __fastcall TTotalForm::InsertOcvValue(int pos, float value)
 {
     const int index = pos - 1;
@@ -238,18 +238,18 @@ void __fastcall TTotalForm::InsertOcvValue(int pos, float value)
 }
 
 //---------------------------------------------------------------------------
-// ÀüÃ¼ ÃøÁ¤ ÈÄ ÀçÃøÁ¤ ´ë»ó Áı°è. SiteConfig.hÀÇ °³¼ö Á¶°Ç¿¡ µû¶ó °³º° ÀçÃøÁ¤ ¶Ç´Â °á°ú ¸¶°¨ÇÑ´Ù.
+// ì „ì²´ ì¸¡ì • í›„ ì¬ì¸¡ì • ëŒ€ìƒ ì§‘ê³„. SiteConfig.hì˜ ê°œìˆ˜ ì¡°ê±´ì— ë”°ë¼ ê°œë³„ ì¬ì¸¡ì • ë˜ëŠ” ê²°ê³¼ ë§ˆê°í•œë‹¤.
 void __fastcall TTotalForm::SetRemeasureList()
 {
     SetRemeasureListAfter();
-    // 1¹ø: ÇÁ·Îºê¸¦ ´İÀº »óÅÂ¿¡¼­ ºÒ·® Ç×¸ñÀ» ÇÑ Â÷·Ê ÀçÃøÁ¤ÇÑ´Ù.
-    // ¼³Á¤Àº ÀÌ¹ø Æ®·¹ÀÌ ½ÃÀÛ ¶§ °íÁ¤. 0=»ı·«, N=NG 1~N°³(¼³Á¤°ª Æ÷ÇÔ)¸¸ ½ÇÇà.
-    // ÃÊ°ú ½Ã ¿©±â¼­´Â ÀüÃ¼ ÀçÃøÁ¤ÇÏÁö ¾Ê°í °á°ú ¸¶°¨À¸·Î ÀÌµ¿ÇÑ´Ù.
+    // 1ë²ˆ: í”„ë¡œë¸Œë¥¼ ë‹«ì€ ìƒíƒœì—ì„œ ë¶ˆëŸ‰ í•­ëª©ì„ í•œ ì°¨ë¡€ ì¬ì¸¡ì •í•œë‹¤.
+    // ì„¤ì •ì€ ì´ë²ˆ íŠ¸ë ˆì´ ì‹œì‘ ë•Œ ê³ ì •. 0=ìƒëµ, N=NG 1~Nê°œ(ì„¤ì •ê°’ í¬í•¨)ë§Œ ì‹¤í–‰.
+    // ì´ˆê³¼ ì‹œ ì—¬ê¸°ì„œëŠ” ì „ì²´ ì¬ì¸¡ì •í•˜ì§€ ì•Šê³  ê²°ê³¼ ë§ˆê°ìœ¼ë¡œ ì´ë™í•œë‹¤.
     const int maxNgCount = autoInspection.GetSetting().closedProbeRemeasureMaxNgCount;
     if(stage.arl == nAuto && retest.cnt_error > 0 &&
        retest.cnt_error <= maxNgCount)
     {
-        // 2¹ø Àç°³Æó È½¼ö°¡ 0ÀÌ¾îµµ ÀÌ ÀçÃøÁ¤Àº µ¶¸³ÀûÀ¸·Î ½ÇÇàÇÑ´Ù.
+        // 2ë²ˆ ì¬ê°œí íšŸìˆ˜ê°€ 0ì´ì–´ë„ ì´ ì¬ì¸¡ì •ì€ ë…ë¦½ì ìœ¼ë¡œ ì‹¤í–‰í•œë‹¤.
         PrepareRemeasureItems();
         tray.rem_mode = 1;
         ExecuteRemeasure();
@@ -258,7 +258,7 @@ void __fastcall TTotalForm::SetRemeasureList()
 }
 
 //---------------------------------------------------------------------------
-// °³º° ÀçÃøÁ¤ ÈÄ ÃÖÁ¾ ºÒ·® ¸ñ·ÏÀ» ´Ù½Ã Áı°èÇÑ´Ù. ÃøÁ¤ ¸í·ÉÀº º¸³»Áö ¾Ê´Â´Ù.
+// ê°œë³„ ì¬ì¸¡ì • í›„ ìµœì¢… ë¶ˆëŸ‰ ëª©ë¡ì„ ë‹¤ì‹œ ì§‘ê³„í•œë‹¤. ì¸¡ì • ëª…ë ¹ì€ ë³´ë‚´ì§€ ì•ŠëŠ”ë‹¤.
 int __fastcall TTotalForm::JudgeCellResult(int index)
 {
     if(tray.cell[index] != 1) return CELL_OK;
@@ -266,8 +266,8 @@ int __fastcall TTotalForm::JudgeCellResult(int index)
         config.ir_min, config.ir_max, config.ocv_min, config.ocv_max).result;
 }
 
-// ÇöÀç °ªÀ¸·Î ÃÖÁ¾ ÆÇÁ¤À» Àç°è»êÇÑ´Ù. Á¢ÃË > IR > OCV. ÀÌÀü ÆÇÁ¤°ªÀ» À¯ÁöÇÏÁö ¾Ê´Â´Ù.
-// »ı»ê ´©Àû Ã¤³Î »ç¿ë/ÀçÃøÁ¤ ¼ö´Â Ã¹ ÀüÃ¼ ÃøÁ¤¿¡¼­¸¸ Áõ°¡ÇÑ´Ù.
+// í˜„ì¬ ê°’ìœ¼ë¡œ ìµœì¢… íŒì •ì„ ì¬ê³„ì‚°í•œë‹¤. ì ‘ì´‰ > IR > OCV. ì´ì „ íŒì •ê°’ì„ ìœ ì§€í•˜ì§€ ì•ŠëŠ”ë‹¤.
+// ìƒì‚° ëˆ„ì  ì±„ë„ ì‚¬ìš©/ì¬ì¸¡ì • ìˆ˜ëŠ” ì²« ì „ì²´ ì¸¡ì •ì—ì„œë§Œ ì¦ê°€í•œë‹¤.
 void __fastcall TTotalForm::SetRemeasureListAfter()
 {
     retest.cnt_error = 0;
@@ -283,14 +283,14 @@ void __fastcall TTotalForm::SetRemeasureListAfter()
                 if(tray.first) ++acc_remeasure[i];
             }
         }
-        UpdateCellDisplay(i); // ÃÖÁ¾ Ç¥½Ãµµ ÃøÁ¤°ª/¼ö½Å »óÅÂ¿¡¼­ ´Ù½Ã ¸¸µç´Ù.
+        UpdateCellDisplay(i); // ìµœì¢… í‘œì‹œë„ ì¸¡ì •ê°’/ìˆ˜ì‹  ìƒíƒœì—ì„œ ë‹¤ì‹œ ë§Œë“ ë‹¤.
     }
     measurementNgCount = retest.cnt_error;
     tray.first = false;
 }
 
-// ºÒ·® ¼¿Àº ¿øÀÎ°ú °ü°è¾øÀÌ IR°ú OCV¸¦ ¸ğµÎ ÀçÃøÁ¤ÇÑ´Ù.
-// pendingItemsÀÇ 1/2´Â ¼Û½Å ¼ø¼­ °ü¸®¿ëÀÌ¸ç ºÒ·® ¿øÀÎ ºĞ·ù°¡ ¾Æ´Ï´Ù.
+// ë¶ˆëŸ‰ ì…€ì€ ì›ì¸ê³¼ ê´€ê³„ì—†ì´ IRê³¼ OCVë¥¼ ëª¨ë‘ ì¬ì¸¡ì •í•œë‹¤.
+// pendingItemsì˜ 1/2ëŠ” ì†¡ì‹  ìˆœì„œ ê´€ë¦¬ìš©ì´ë©° ë¶ˆëŸ‰ ì›ì¸ ë¶„ë¥˜ê°€ ì•„ë‹ˆë‹¤.
 void __fastcall TTotalForm::PrepareRemeasureItems()
 {
     retest.re_index = 0;
@@ -300,16 +300,16 @@ void __fastcall TTotalForm::PrepareRemeasureItems()
     {
         retest.pendingItems[i] = 0;
         if(tray.cell[i] != 1) continue;
-        if(JudgeCellResult(i) != CELL_OK) retest.pendingItems[i] = 3; // IR ´ÙÀ½ OCV.
+        if(JudgeCellResult(i) != CELL_OK) retest.pendingItems[i] = 3; // IR ë‹¤ìŒ OCV.
     }
 }
 
 //---------------------------------------------------------------------------
-// ÀçÃøÁ¤ ¸ñ·ÏÀÇ ´ÙÀ½ IR/OCV¸¦ ¿äÃ»ÇÑ´Ù. ´õ ¾øÀ¸¸é ÃÖÁ¾ ÆÇÁ¤°ú °á°ú ¸¶°¨À» ¼öÇàÇÑ´Ù.
+// ì¬ì¸¡ì • ëª©ë¡ì˜ ë‹¤ìŒ IR/OCVë¥¼ ìš”ì²­í•œë‹¤. ë” ì—†ìœ¼ë©´ ìµœì¢… íŒì •ê³¼ ê²°ê³¼ ë§ˆê°ì„ ìˆ˜í–‰í•œë‹¤.
 void __fastcall TTotalForm::ExecuteRemeasure()
 {
     if(IsAutoInspectionBlocked()) return;
-    if(retest.waitingChannel >= 0) return; // ¿äÃ»ÇÑ Ã¤³Î/Ç×¸ñ ÀÀ´ä Àü Áßº¹ ¸í·É ±İÁö.
+    if(retest.waitingChannel >= 0) return; // ìš”ì²­í•œ ì±„ë„/í•­ëª© ì‘ë‹µ ì „ ì¤‘ë³µ ëª…ë ¹ ê¸ˆì§€.
     for(int i = retest.re_index; i < MAXCHANNEL; ++i)
     {
         retest.re_index = i;
@@ -332,19 +332,19 @@ void __fastcall TTotalForm::ExecuteRemeasure()
 }
 
 //---------------------------------------------------------------------------
-// °á°ú ¸¶°¨: STP/ÇÁ·Îºê ¿­¸² ¿äÃ» ¡æ NG¡¤°á°ú ÄÚµå¡¤°ª¡¤ÆÄÀÏ ÀÛ¼º ¡æ COMPLETE ¡æ ÀÚµ¿ ´Ü°è ¿Ï·á ÅëÁö.
+// ê²°ê³¼ ë§ˆê°: STP/í”„ë¡œë¸Œ ì—´ë¦¼ ìš”ì²­ â†’ NGÂ·ê²°ê³¼ ì½”ë“œÂ·ê°’Â·íŒŒì¼ ì‘ì„± â†’ COMPLETE â†’ ìë™ ë‹¨ê³„ ì™„ë£Œ í†µì§€.
 void __fastcall TTotalForm::FinishMeasurement()
 {
     if(IsAutoInspectionBlocked()) return;
     measurementClock.Stop(GetTickCount());
-    // °°Àº AMF/Á¤Áö ÅëÁö°¡ ¹İº¹µÇ¾îµµ ÀúÀå/Áı°è¸¦ ´Ù½Ã ½ÇÇàÇÏÁö ¾Ê´Â´Ù.
+    // ê°™ì€ AMF/ì •ì§€ í†µì§€ê°€ ë°˜ë³µë˜ì–´ë„ ì €ì¥/ì§‘ê³„ë¥¼ ë‹¤ì‹œ ì‹¤í–‰í•˜ì§€ ì•ŠëŠ”ë‹¤.
     if(resultSaveStep != RESULT_IDLE) return;
     SetRemeasureListAfter();
     MakeData(1, "STP");
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
     WritePlcLog("FinishMeasurement", "IROCV PROBE OPEN = 1");
-    // ¼öµ¿ÃøÁ¤Àº CELL SERIAL ¾øÀÌ ÀúÀåÇÑ´Ù. ¼öµ¿ È­¸é(bLocal) ¹× ¼³ºñ Local ¸ğµå¸¦ Æ÷ÇÔ.
-    // ÀÚµ¿ÃøÁ¤ÀÇ ½Ã¸®¾ó ¿À·ù¸¦ °¨ÃßÁö ¾Êµµ·Ï °Ë»ç ½ÃÀÛ/¿Ï·á °æ·Î ÀÚÃ¼¸¦ ¿©±â¼­ ºĞ¸®ÇÑ´Ù.
+    // ìˆ˜ë™ì¸¡ì •ì€ CELL SERIAL ì—†ì´ ì €ì¥í•œë‹¤. ìˆ˜ë™ í™”ë©´(bLocal) ë° ì„¤ë¹„ Local ëª¨ë“œë¥¼ í¬í•¨.
+    // ìë™ì¸¡ì •ì˜ ì‹œë¦¬ì–¼ ì˜¤ë¥˜ë¥¼ ê°ì¶”ì§€ ì•Šë„ë¡ ê²€ì‚¬ ì‹œì‘/ì™„ë£Œ ê²½ë¡œ ìì²´ë¥¼ ì—¬ê¸°ì„œ ë¶„ë¦¬í•œë‹¤.
     const bool saveWithoutCellSerial = bLocal || stage.arl == nLocal;
     if(!saveWithoutCellSerial && cellSerialContinuousReadForTray)
         StartResultCellSerialRead();
@@ -356,7 +356,7 @@ void __fastcall TTotalForm::FinishMeasurement()
 }
 
 //---------------------------------------------------------------------------
-// MSA Á¾·á´Â °á°ú ¸¶°¨°ú ±¸ºĞÇÑ´Ù. Æ®·¹ÀÌ ¾øÀÌµµ Áß´Ü °¡´ÉÇÏ¸ç ¹Ì¿Ï·á °á°ú´Â ÀúÀåÇÏÁö ¾Ê´Â´Ù.
+// MSA ì¢…ë£ŒëŠ” ê²°ê³¼ ë§ˆê°ê³¼ êµ¬ë¶„í•œë‹¤. íŠ¸ë ˆì´ ì—†ì´ë„ ì¤‘ë‹¨ ê°€ëŠ¥í•˜ë©° ë¯¸ì™„ë£Œ ê²°ê³¼ëŠ” ì €ì¥í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void __fastcall TTotalForm::StopMsaMeasurement()
 {
     CancelResultSave();
@@ -370,16 +370,16 @@ void __fastcall TTotalForm::StopMsaMeasurement()
     retest.re_excute = false;
     tray.rem_mode = 0;
     tray.ams = false;
-    tray.amf = true; // ´Ê°Ô µµÂøÇÑ AMF·Î ÀúÀå/´ÙÀ½ È¸Â÷¸¦ Àç°³ÇÏÁö ¾Ê´Â´Ù.
+    tray.amf = true; // ëŠ¦ê²Œ ë„ì°©í•œ AMFë¡œ ì €ì¥/ë‹¤ìŒ íšŒì°¨ë¥¼ ì¬ê°œí•˜ì§€ ì•ŠëŠ”ë‹¤.
     Mod_PLC->SetValue(PC_D_IROCV_MEASURING, 0);
     Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
-    // ¼Û½Å Å¸ÀÌ¸ÓÀÇ ÀÚµ¿¸ğµå Â÷´Ü/±âÁ¸ AMS Àç½Ãµµ¿¡ ÀÇÁ¸ÇÏÁö ¾Ê°í Áï½Ã Á¤Áö ¿äÃ».
+    // ì†¡ì‹  íƒ€ì´ë¨¸ì˜ ìë™ëª¨ë“œ ì°¨ë‹¨/ê¸°ì¡´ AMS ì¬ì‹œë„ì— ì˜ì¡´í•˜ì§€ ì•Šê³  ì¦‰ì‹œ ì •ì§€ ìš”ì²­.
     SendData("STP");
 }
 
 //---------------------------------------------------------------------------
-// ÀÚµ¿=¸ğµåº° ½Ã¸®¾ó È®ÀÎ ÈÄ ÀúÀå. ¼öµ¿/»ó½Ã ¼ö½Å Å¸ÀÓ¾Æ¿ô=ID ¾øÀÌ ÀúÀå. PLC ¿Ï·á Ã³¸®´Â °øÅë.
+// ìë™=ëª¨ë“œë³„ ì‹œë¦¬ì–¼ í™•ì¸ í›„ ì €ì¥. ìˆ˜ë™/ìƒì‹œ ìˆ˜ì‹  íƒ€ì„ì•„ì›ƒ=ID ì—†ì´ ì €ì¥. PLC ì™„ë£Œ ì²˜ë¦¬ëŠ” ê³µí†µ.
 void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
 {
     if(resultSaveStep != RESULT_WRITE_FILE) return;
@@ -388,17 +388,17 @@ void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
     WriteIROCVValue();
     if(saveWithoutCellSerial)
     {
-        // ¼öµ¿/Å¸ÀÓ¾Æ¿ô °á°ú¿¡ ÀÌÀü Æ®·¹ÀÌ ID¸¦ ³ÖÁö ¾Ê´Â´Ù. Ä³½Ã º¹¿ø/PLC ÀĞ±âµµ »ı·«.
+        // ìˆ˜ë™/íƒ€ì„ì•„ì›ƒ ê²°ê³¼ì— ì´ì „ íŠ¸ë ˆì´ IDë¥¼ ë„£ì§€ ì•ŠëŠ”ë‹¤. ìºì‹œ ë³µì›/PLC ì½ê¸°ë„ ìƒëµ.
         for(int i = 0; i < MAXCHANNEL; ++i) tray.cell_serial[i] = "";
     }
     else if(!cellSerialContinuousReadForTray && !LoadTrayInfo(tray.trayid))
         ReadCellSerial();
-    // Âü°í¿ë CSV: ÃÖÃÊ 1È¸ + Àç½Ãµµ 1È¸. Àç½Ãµµ¿¡¼­ ÆÇÁ¤/»ı»ê ´©°è¸¦ ´Ù½Ã Ã³¸®ÇÏÁö ¾Ê´Â´Ù.
+    // ì°¸ê³ ìš© CSV: ìµœì´ˆ 1íšŒ + ì¬ì‹œë„ 1íšŒ. ì¬ì‹œë„ì—ì„œ íŒì •/ìƒì‚° ëˆ„ê³„ë¥¼ ë‹¤ì‹œ ì²˜ë¦¬í•˜ì§€ ì•ŠëŠ”ë‹¤.
     const bool fileSaved = WriteResultFile() || WriteResultFile();
     RecordOperationFileSave(fileSaved);
     if(!fileSaved)
         WritePlcLog("RESULT FILE WARNING", "Save failed twice; continue production: " + resultFileName);
-    // »õ °á°ú Àü¼ÛÀ» È®ÀÎÇÒ PC ³»ºÎ Ç¥½Ä. PLC ½ÅÈ£/ÇÁ·Î±×·¥Àº Ãß°¡ÇÏÁö ¾Ê´Â´Ù.
+    // ìƒˆ ê²°ê³¼ ì „ì†¡ì„ í™•ì¸í•  PC ë‚´ë¶€ í‘œì‹. PLC ì‹ í˜¸/í”„ë¡œê·¸ë¨ì€ ì¶”ê°€í•˜ì§€ ì•ŠëŠ”ë‹¤.
     Mod_PLC->BeginResultTransmission();
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     resultSaveStartTime = GetTickCount();
@@ -408,11 +408,11 @@ void __fastcall TTotalForm::WriteMeasurementResults(bool saveWithoutCellSerial)
 }
 
 //---------------------------------------------------------------------------
-// ÀüÃ¼ ÀçÃøÁ¤ ¿äÃ»: Æ®·¹ÀÌ ID¸¦ À¯ÁöÇÏ°í µ¥ÀÌÅÍ ÃÊ±âÈ­¡¤CELL DATA ÀçÀĞ±â ÈÄ ÇÁ·Îºê ´İÈûÀ» ±â´Ù¸°´Ù.
+// ì „ì²´ ì¬ì¸¡ì • ìš”ì²­: íŠ¸ë ˆì´ IDë¥¼ ìœ ì§€í•˜ê³  ë°ì´í„° ì´ˆê¸°í™”Â·CELL DATA ì¬ì½ê¸° í›„ í”„ë¡œë¸Œ ë‹«í˜ì„ ê¸°ë‹¤ë¦°ë‹¤.
 void __fastcall TTotalForm::StartFullRemeasure()
 {
     if(!PrepareAutoRemeasure()) return;
-    // °°Àº Æ®·¹ÀÌ: ½Ã¸®¾ó, ÆÄÀÏ¸í, »ı»ê ´©°è¿Í Àç°³Æó È½¼ö´Â Áö¿ìÁö ¾Ê´Â´Ù.
+    // ê°™ì€ íŠ¸ë ˆì´: ì‹œë¦¬ì–¼, íŒŒì¼ëª…, ìƒì‚° ëˆ„ê³„ì™€ ì¬ê°œí íšŸìˆ˜ëŠ” ì§€ìš°ì§€ ì•ŠëŠ”ë‹¤.
     ResetMeasurementData();
     memset(&retest, 0, sizeof(retest));
     retest.waitingChannel = -1;
@@ -424,7 +424,7 @@ void __fastcall TTotalForm::StartFullRemeasure()
 }
 
 //---------------------------------------------------------------------------
-// ¼±ÅÃ ÀçÃøÁ¤ ¿äÃ»: ±âÁ¸ ºÒ·® ¸ñ·ÏÀ» »ç¿ëÇÏ°í ÇÁ·Îºê ´İÈû È®ÀÎ ÈÄ Ã¤³Îº° ÀçÃøÁ¤À» ½ÃÀÛÇÑ´Ù.
+// ì„ íƒ ì¬ì¸¡ì • ìš”ì²­: ê¸°ì¡´ ë¶ˆëŸ‰ ëª©ë¡ì„ ì‚¬ìš©í•˜ê³  í”„ë¡œë¸Œ ë‹«í˜ í™•ì¸ í›„ ì±„ë„ë³„ ì¬ì¸¡ì •ì„ ì‹œì‘í•œë‹¤.
 void __fastcall TTotalForm::StartSelectedRemeasure()
 {
     if(!PrepareAutoRemeasure()) return;
@@ -437,11 +437,11 @@ void __fastcall TTotalForm::StartSelectedRemeasure()
 }
 
 //===========================================================================
-// °á°ú ¸¶°¨ ´ë±â: ½Ã¸®¾ó È®ÀÎ ¡æ ÆÄÀÏ ÀÛ¼º ¡æ PLC ¼Û½Å/1ÃÊ Áö¿¬ ¡æ ¿Ï·á.
+// ê²°ê³¼ ë§ˆê° ëŒ€ê¸°: ì‹œë¦¬ì–¼ í™•ì¸ â†’ íŒŒì¼ ì‘ì„± â†’ PLC ì†¡ì‹ /1ì´ˆ ì§€ì—° â†’ ì™„ë£Œ.
 //===========================================================================
 //---------------------------------------------------------------------------
-// [CELL SERIAL °øÅë] ¿äÃ» ÀÌÈÄ¿¡ ½ÃÀÛÇÑ 4,010¿öµå ÀüÃ¼ ¼ö½Å±îÁö °á°ú ÀúÀåÀ» º¸·ùÇÑ´Ù.
-// ÀÚµ¿ÃøÁ¤ Àü¿ë ½Ã¸®¾ó ´ë±â. ¼öµ¿ÃøÁ¤Àº FinishMeasurement¿¡¼­ ÀÌ °æ·Î¸¦ °Ç³Ê¶Ú´Ù.
+// [CELL SERIAL ê³µí†µ] ìš”ì²­ ì´í›„ì— ì‹œì‘í•œ 4,010ì›Œë“œ ì „ì²´ ìˆ˜ì‹ ê¹Œì§€ ê²°ê³¼ ì €ì¥ì„ ë³´ë¥˜í•œë‹¤.
+// ìë™ì¸¡ì • ì „ìš© ì‹œë¦¬ì–¼ ëŒ€ê¸°. ìˆ˜ë™ì¸¡ì •ì€ FinishMeasurementì—ì„œ ì´ ê²½ë¡œë¥¼ ê±´ë„ˆë›´ë‹¤.
 void __fastcall TTotalForm::StartResultCellSerialRead()
 {
     resultSaveStep = RESULT_WAIT_SERIAL;
@@ -454,13 +454,13 @@ void __fastcall TTotalForm::StartResultCellSerialRead()
 }
 
 //---------------------------------------------------------------------------
-// »ó½Ã ÀĞ±â Àü¿ë °á°ú °Ë»ç. ºÒÀÏÄ¡/Å¸ÀÓ¾Æ¿ôÀº ·Î±×¸¸ ³²±â°í ¿À·ùÃ¢ ¾øÀÌ ÀúÀåÇÑ´Ù.
-// ¿Ï·áº»Àº ±×´ë·Î »ç¿ëÇÏ°í, Å¸ÀÓ¾Æ¿ôÀº ÀÌÀü/ºÎºĞ µ¥ÀÌÅÍ¸¦ ¾²Áö ¾Êµµ·Ï ID¸¦ °ø¶õ ÀúÀåÇÑ´Ù.
+// ìƒì‹œ ì½ê¸° ì „ìš© ê²°ê³¼ ê²€ì‚¬. ë¶ˆì¼ì¹˜/íƒ€ì„ì•„ì›ƒì€ ë¡œê·¸ë§Œ ë‚¨ê¸°ê³  ì˜¤ë¥˜ì°½ ì—†ì´ ì €ì¥í•œë‹¤.
+// ì™„ë£Œë³¸ì€ ê·¸ëŒ€ë¡œ ì‚¬ìš©í•˜ê³ , íƒ€ì„ì•„ì›ƒì€ ì´ì „/ë¶€ë¶„ ë°ì´í„°ë¥¼ ì“°ì§€ ì•Šë„ë¡ IDë¥¼ ê³µë€ ì €ì¥í•œë‹¤.
 void __fastcall TTotalForm::CompleteResultCellSerialRead()
 {
     if(resultSaveStep != RESULT_WAIT_SERIAL) return;
     const bool complete = Mod_PLC->IsCellSerialReadComplete();
-    // ÀüÃ¼ ¼ö½Å ¿Ï·á ¶Ç´Â Á¦ÇÑ½Ã°£ °æ°úÀÏ ¶§¸¸ ÀúÀåÇÑ´Ù.
+    // ì „ì²´ ìˆ˜ì‹  ì™„ë£Œ ë˜ëŠ” ì œí•œì‹œê°„ ê²½ê³¼ì¼ ë•Œë§Œ ì €ì¥í•œë‹¤.
     if(!complete && static_cast<DWORD>(GetTickCount() - resultSaveStartTime) < RESULT_SERIAL_TIMEOUT_MS)
         return;
     Timer_ResultSave->Enabled = false;
@@ -476,15 +476,15 @@ void __fastcall TTotalForm::CompleteResultCellSerialRead()
     }
     else
         WritePlcLog("CELL SERIAL WARNING", "Final read timeout (10 seconds); save with empty CELL IDs");
-    // »ó½Ã ¸ğµå´Â .Tray Ä³½Ã¸¦ ÀúÀå/º¹¿øÇÏÁö ¾Ê´Â´Ù. ´Ù¸¥ ¿øÀÎÀÇ PLC ¿À·ùµµ ÇØÁ¦ÇÏÁö ¾Ê´Â´Ù.
+    // ìƒì‹œ ëª¨ë“œëŠ” .Tray ìºì‹œë¥¼ ì €ì¥/ë³µì›í•˜ì§€ ì•ŠëŠ”ë‹¤. ë‹¤ë¥¸ ì›ì¸ì˜ PLC ì˜¤ë¥˜ë„ í•´ì œí•˜ì§€ ì•ŠëŠ”ë‹¤.
     resultSaveStep = RESULT_WRITE_FILE;
     WriteMeasurementResults(!complete);
 }
 
 //---------------------------------------------------------------------------
-// [CELL SERIAL °øÅë] ¿Ï·á¸¦ ¸ÕÀú È®ÀÎÇÑ´Ù. »ó½Ã ÀĞ±â´Â 10ÃÊ ÃÊ°ú ½Ã ID ¾øÀÌ ÀúÀåÇÑ´Ù.
-// unsigned °æ°ú½Ã°£ °è»êÀº GetTickCountÀÇ ¾à 49ÀÏ ÁÖ±â ¼øÈ¯µµ Ã³¸®ÇÑ´Ù.
-// µğÀÚÀÌ³Ê ÀÌº¥Æ® ÁøÀÔÁ¡Àº FormTotal.cppÀÇ Timer_ResultSaveTimer. ½Ã¸®¾ó ¼ö½Å¡¤°á°ú ÀúÀå¡¤PLC ¿Ï·á ´ë±â´Â ÀÌ ÆÄÀÏ¿¡¼­ À¯ÁöÇÑ´Ù.
+// [CELL SERIAL ê³µí†µ] ì™„ë£Œë¥¼ ë¨¼ì € í™•ì¸í•œë‹¤. ìƒì‹œ ì½ê¸°ëŠ” 10ì´ˆ ì´ˆê³¼ ì‹œ ID ì—†ì´ ì €ì¥í•œë‹¤.
+// unsigned ê²½ê³¼ì‹œê°„ ê³„ì‚°ì€ GetTickCountì˜ ì•½ 49ì¼ ì£¼ê¸° ìˆœí™˜ë„ ì²˜ë¦¬í•œë‹¤.
+// ë””ìì´ë„ˆ ì´ë²¤íŠ¸ ì§„ì…ì ì€ FormTotal.cppì˜ Timer_ResultSaveTimer. ì‹œë¦¬ì–¼ ìˆ˜ì‹ Â·ê²°ê³¼ ì €ì¥Â·PLC ì™„ë£Œ ëŒ€ê¸°ëŠ” ì´ íŒŒì¼ì—ì„œ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
 {
     if(IsAutoInspectionBlocked()) return;
@@ -499,14 +499,14 @@ void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
         }
         else if(resultSaveStep == RESULT_WAIT_PLC_SEND)
         {
-            // Sleep ±İÁö: °°Àº UI ½º·¹µåÀÇ PLC ¼Û½Å Å¸ÀÌ¸Ó°¡ °è¼Ó ½ÇÇàµÇ¾î¾ß ÇÑ´Ù.
-            // 1ÃÊ + »õ °á°ú °¢ ºí·Ï ¼Û½Å È®ÀÎ. PLC ÀÀ´ä ½ÅÈ£¸¦ »õ·Î Ãß°¡ÇÏÁö ¾Ê´Â´Ù.
+            // Sleep ê¸ˆì§€: ê°™ì€ UI ìŠ¤ë ˆë“œì˜ PLC ì†¡ì‹  íƒ€ì´ë¨¸ê°€ ê³„ì† ì‹¤í–‰ë˜ì–´ì•¼ í•œë‹¤.
+            // 1ì´ˆ + ìƒˆ ê²°ê³¼ ê° ë¸”ë¡ ì†¡ì‹  í™•ì¸. PLC ì‘ë‹µ ì‹ í˜¸ë¥¼ ìƒˆë¡œ ì¶”ê°€í•˜ì§€ ì•ŠëŠ”ë‹¤.
             if(!Mod_PLC->IsResultConnectionReady())
-                resultSaveStartTime = GetTickCount(); // ÀçÁ¢¼Ó Á÷ÈÄ Áï½Ã COMPLETE¸¦ Ãâ·ÂÇÏÁö ¾Ê´Â´Ù.
+                resultSaveStartTime = GetTickCount(); // ì¬ì ‘ì† ì§í›„ ì¦‰ì‹œ COMPLETEë¥¼ ì¶œë ¥í•˜ì§€ ì•ŠëŠ”ë‹¤.
             else if(Mod_PLC->WasResultTransmitted() &&
                     static_cast<DWORD>(GetTickCount() - resultSaveStartTime) >= RESULT_COMPLETE_DELAY_MS)
             {
-                resultSaveStep = RESULT_COMPLETE; // Áßº¹ Å¸ÀÌ¸Ó/AMFº¸´Ù ¸ÕÀú ¿Ï·á »óÅÂ È®Á¤.
+                resultSaveStep = RESULT_COMPLETE; // ì¤‘ë³µ íƒ€ì´ë¨¸/AMFë³´ë‹¤ ë¨¼ì € ì™„ë£Œ ìƒíƒœ í™•ì •.
                 Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
                 WritePlcLog("FinishMeasurement", "PLC results sent; COMPLETE = 1");
                 SetAutoMeasurementComplete();
@@ -520,11 +520,11 @@ void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-// [CELL SERIAL °øÅë] ÃÊ±âÈ­/Àç½ÃÀÛ/°­Á¦ ¹èÃâ ÈÄ ´Ê°Ô µµÂøÇÑ ÀÀ´äÀÌ °á°ú¸¦ ÀúÀåÇÏÁö ¸øÇÏ°Ô ÇÑ´Ù.
+// [CELL SERIAL ê³µí†µ] ì´ˆê¸°í™”/ì¬ì‹œì‘/ê°•ì œ ë°°ì¶œ í›„ ëŠ¦ê²Œ ë„ì°©í•œ ì‘ë‹µì´ ê²°ê³¼ë¥¼ ì €ì¥í•˜ì§€ ëª»í•˜ê²Œ í•œë‹¤.
 void __fastcall TTotalForm::CancelResultSave()
 {
     Timer_ResultSave->Enabled = false;
-    // ÃÊ±âÈ­/°­Á¦ ¹èÃâ ÈÄ ´ÊÀº ½Ã¸®¾ó ÀÀ´äÀÌ³ª 1ÃÊ Å¸ÀÌ¸Ó°¡ ¿Ï·á¸¦ Ãâ·ÂÇÏÁö ¸øÇÏ°Ô ÇÑ´Ù.
+    // ì´ˆê¸°í™”/ê°•ì œ ë°°ì¶œ í›„ ëŠ¦ì€ ì‹œë¦¬ì–¼ ì‘ë‹µì´ë‚˜ 1ì´ˆ íƒ€ì´ë¨¸ê°€ ì™„ë£Œë¥¼ ì¶œë ¥í•˜ì§€ ëª»í•˜ê²Œ í•œë‹¤.
     resultSaveStep = RESULT_CANCELLED;
     Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
 }

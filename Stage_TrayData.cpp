@@ -1,5 +1,5 @@
-// [Æ®·¹ÀÌ µ¥ÀÌÅÍ] °Ë»ç µ¥ÀÌÅÍ ÃÊ±âÈ­, CELL SERIAL º¹»ç, .Tray ÀÓ½Ã ÆÄÀÏ ÀúÀå/º¹¿ø/»èÁ¦.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [íŠ¸ë ˆì´ ë°ì´í„°] ê²€ì‚¬ ë°ì´í„° ì´ˆê¸°í™”, CELL SERIAL ë³µì‚¬, .Tray ì„ì‹œ íŒŒì¼ ì €ì¥/ë³µì›/ì‚­ì œ.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -9,15 +9,15 @@
 #include "FormCalibration.h"
 
 //---------------------------------------------------------------------------
-// »õ Æ®·¹ÀÌ °Ë»ç µ¥ÀÌÅÍ ÃÊ±âÈ­: ¹®ÀÚ¿­/¼ıÀÚ/¹è¿­°ú ¼ö½Å Ç¥½Ã¸¦ Áö¿î´Ù. ÅõÀÔ ÀÌÈÄ È­¸éÀº °ø¶õÀÌ´Ù.
+// ìƒˆ íŠ¸ë ˆì´ ê²€ì‚¬ ë°ì´í„° ì´ˆê¸°í™”: ë¬¸ìì—´/ìˆ«ì/ë°°ì—´ê³¼ ìˆ˜ì‹  í‘œì‹œë¥¼ ì§€ìš´ë‹¤. íˆ¬ì… ì´í›„ í™”ë©´ì€ ê³µë€ì´ë‹¤.
 void __fastcall TTotalForm::InitializeTrayData()
 {
     measurementClock.Reset();
-    // [CELL SERIAL °øÅë] ÀÌÀü °á°ú ÀúÀå ´ë±â¸¦ Ãë¼ÒÇÏ°í ÀÌ¹ø Æ®·¹ÀÌÀÇ ¼ö½Å ¹æ½ÄÀ» È®Á¤ÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ì´ì „ ê²°ê³¼ ì €ì¥ ëŒ€ê¸°ë¥¼ ì·¨ì†Œí•˜ê³  ì´ë²ˆ íŠ¸ë ˆì´ì˜ ìˆ˜ì‹  ë°©ì‹ì„ í™•ì •í•œë‹¤.
     CancelResultSave();
     ApplyCellSerialReadMode();
-    // ¹®ÀÚ¿­Àº ´ëÀÔÀ¸·Î, ¼ıÀÚ/¹è¿­Àº ¸í½ÃÀûÀ¸·Î ÃÊ±âÈ­ÇÑ´Ù.
-    // ±¸Çü BCC32ÀÇ TRAY_INFO() ÀÓ½Ã °´Ã¼ ÃÊ±âÈ­¿¡ ÀÇÁ¸ÇÏÁö ¾Ê´Â´Ù.
+    // ë¬¸ìì—´ì€ ëŒ€ì…ìœ¼ë¡œ, ìˆ«ì/ë°°ì—´ì€ ëª…ì‹œì ìœ¼ë¡œ ì´ˆê¸°í™”í•œë‹¤.
+    // êµ¬í˜• BCC32ì˜ TRAY_INFO() ì„ì‹œ ê°ì²´ ì´ˆê¸°í™”ì— ì˜ì¡´í•˜ì§€ ì•ŠëŠ”ë‹¤.
     tray.ams = false;
     tray.amf = false;
     tray.trayid = "start";
@@ -46,7 +46,7 @@ void __fastcall TTotalForm::InitializeTrayData()
         tray.Cali_value[i] = 0;
         tray.measure_result[i] = 0;
     }
-    memset(&retest, 0, sizeof(retest)); // REMEASURE´Â ¼ıÀÚ/bool ¹è¿­¸¸ Æ÷ÇÔÇÑ´Ù.
+    memset(&retest, 0, sizeof(retest)); // REMEASUREëŠ” ìˆ«ì/bool ë°°ì—´ë§Œ í¬í•¨í•œë‹¤.
     retest.waitingChannel = -1;
     measurementNgCount = 0;
     InitializeCellDisplay();
@@ -57,7 +57,7 @@ void __fastcall TTotalForm::InitializeTrayData()
 }
 
 //---------------------------------------------------------------------------
-// ¼ö½Å ¹öÆÛÀÇ 400¼¿ ½Ã¸®¾óÀ» º¹»çÇÏ°í ºñ¾î ÀÖÁö ¾ÊÀº °³¼ö¸¦ ¹İÈ¯ÇÑ´Ù. ¿Ï·á ÆÇÁ¤Àº È£ÃâºÎ¿¡¼­ ÇÑ´Ù.
+// ìˆ˜ì‹  ë²„í¼ì˜ 400ì…€ ì‹œë¦¬ì–¼ì„ ë³µì‚¬í•˜ê³  ë¹„ì–´ ìˆì§€ ì•Šì€ ê°œìˆ˜ë¥¼ ë°˜í™˜í•œë‹¤. ì™„ë£Œ íŒì •ì€ í˜¸ì¶œë¶€ì—ì„œ í•œë‹¤.
 int __fastcall TTotalForm::ReadCellSerial()
 {
     int count = 0;
@@ -71,8 +71,8 @@ int __fastcall TTotalForm::ReadCellSerial()
 }
 
 //---------------------------------------------------------------------------
-// [CELL SERIAL °øÅë] false=TRAY IN º¸°ü, true=»ó½Ã ¼ö½Å + °á°ú Á÷Àü »õ ¼ö½Å.
-// ÇöÀç Æ®·¹ÀÌ¿¡ Àû¿ëÇÑ °ªÀº INI ¼³Á¤°ú ºĞ¸®ÇÏ¿© ¿îÀü µµÁß º¯°æÇÏÁö ¾Ê´Â´Ù.
+// [CELL SERIAL ê³µí†µ] false=TRAY IN ë³´ê´€, true=ìƒì‹œ ìˆ˜ì‹  + ê²°ê³¼ ì§ì „ ìƒˆ ìˆ˜ì‹ .
+// í˜„ì¬ íŠ¸ë ˆì´ì— ì ìš©í•œ ê°’ì€ INI ì„¤ì •ê³¼ ë¶„ë¦¬í•˜ì—¬ ìš´ì „ ë„ì¤‘ ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void __fastcall TTotalForm::ApplyCellSerialReadMode()
 {
     cellSerialContinuousReadForTray = config.cell_serial_continuous_read;
@@ -82,7 +82,7 @@ void __fastcall TTotalForm::ApplyCellSerialReadMode()
 }
 
 //---------------------------------------------------------------------------
-// Æ®·¹ÀÌ IDÀÇ .Tray ÆÄÀÏ¿¡¼­ ¼¿ ½Ã¸®¾óÀ» º¹¿øÇÑ´Ù. ÆÄÀÏÀÌ ¾øÀ¸¸é false.
+// íŠ¸ë ˆì´ IDì˜ .Tray íŒŒì¼ì—ì„œ ì…€ ì‹œë¦¬ì–¼ì„ ë³µì›í•œë‹¤. íŒŒì¼ì´ ì—†ìœ¼ë©´ false.
 bool __fastcall TTotalForm::LoadTrayInfo(AnsiString trayID)
 {
 	AnsiString filename;
@@ -109,7 +109,7 @@ bool __fastcall TTotalForm::LoadTrayInfo(AnsiString trayID)
 }
 
 //---------------------------------------------------------------------------
-// ÇöÀç Æ®·¹ÀÌÀÇ 400¼¿ ½Ã¸®¾óÀ» .Tray ÆÄÀÏ¿¡ ÀúÀåÇÑ´Ù.
+// í˜„ì¬ íŠ¸ë ˆì´ì˜ 400ì…€ ì‹œë¦¬ì–¼ì„ .Tray íŒŒì¼ì— ì €ì¥í•œë‹¤.
 void __fastcall TTotalForm::SaveTrayInfo(AnsiString trayID)
 {
 	ForceDirectories((UnicodeString)TRAY_PATH);
@@ -125,7 +125,7 @@ void __fastcall TTotalForm::SaveTrayInfo(AnsiString trayID)
 }
 
 //---------------------------------------------------------------------------
-// ¹èÃâ ¿Ï·áÇÑ Æ®·¹ÀÌÀÇ ÀÓ½Ã .Tray ÆÄÀÏÀ» »èÁ¦ÇÑ´Ù.
+// ë°°ì¶œ ì™„ë£Œí•œ íŠ¸ë ˆì´ì˜ ì„ì‹œ .Tray íŒŒì¼ì„ ì‚­ì œí•œë‹¤.
 void __fastcall TTotalForm::DeleteTrayInfo(AnsiString trayID)
 {
     DeleteFile((AnsiString)TRAY_PATH + trayID + ".Tray");

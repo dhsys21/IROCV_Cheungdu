@@ -1,5 +1,5 @@
-// [Ã¤³Î È­¸é] 400Ã¤³Î ÆÐ³Î »ý¼º, ¹øÈ£/ÃøÁ¤°ª Ç¥½Ã, ÆÇÁ¤ »ö»ó. ÆÇÁ¤ ·ÎÁ÷Àº Stage_Measurement.cpp.
-// ÀüÃ¼ ±¸Á¶ ¹× ¿À·ù ÃßÀû À§Ä¡: CODE_STRUCTURE.md
+// [ì±„ë„ í™”ë©´] 400ì±„ë„ íŒ¨ë„ ìƒì„±, ë²ˆí˜¸/ì¸¡ì •ê°’ í‘œì‹œ, íŒì • ìƒ‰ìƒ. íŒì • ë¡œì§ì€ Stage_Measurement.cpp.
+// ì „ì²´ êµ¬ì¡° ë° ì˜¤ë¥˜ ì¶”ì  ìœ„ì¹˜: CODE_STRUCTURE.md
 
 #include <vcl.h>
 #pragma hdrstop
@@ -11,7 +11,7 @@
 
 
 //---------------------------------------------------------------------------
-// ¸ðµç Ã¤³ÎÀÇ ¼ö½Å Ç¥½Ã¸¦ ÇØÁ¦ÇÑ´Ù. ½ÃÀÛ ¾È³»´Â ¹øÈ£, Æ®·¹ÀÌ ÅõÀÔ/ÃøÁ¤ ÀÌÈÄ ÃÊ±âÈ­´Â °ø¶õÀÌ´Ù.
+// ëª¨ë“  ì±„ë„ì˜ ìˆ˜ì‹  í‘œì‹œë¥¼ í•´ì œí•œë‹¤. ì‹œìž‘ ì•ˆë‚´ëŠ” ë²ˆí˜¸, íŠ¸ë ˆì´ íˆ¬ìž…/ì¸¡ì • ì´í›„ ì´ˆê¸°í™”ëŠ” ê³µëž€ì´ë‹¤.
 void __fastcall TTotalForm::InitializeCellDisplay()
 {
 	for(int i=0; i<MAXCHANNEL; ++i){
@@ -35,17 +35,17 @@ void __fastcall TTotalForm::InitializeCellDisplay()
 }
 
 //---------------------------------------------------------------------------
-// ÇöÀç Æ®·¹ÀÌ¸¦ ÃøÁ¤Á¤º¸ Ã¢¿¡ ¿¬°áÇÑ´Ù. Ã¢À» ´Ù½Ã ¿­¾îµµ ¼ö½Å°ª/¹Ì¼ö½Å °ø¶õ/½ÃÀÛ ¾È³» »óÅÂ¸¦ À¯ÁöÇÑ´Ù.
+// í˜„ìž¬ íŠ¸ë ˆì´ë¥¼ ì¸¡ì •ì •ë³´ ì°½ì— ì—°ê²°í•œë‹¤. ì°½ì„ ë‹¤ì‹œ ì—´ì–´ë„ ìˆ˜ì‹ ê°’/ë¯¸ìˆ˜ì‹  ê³µëž€/ì‹œìž‘ ì•ˆë‚´ ìƒíƒœë¥¼ ìœ ì§€í•œë‹¤.
 void __fastcall TTotalForm::InitializeMeasureForm()
 {
 
 	MeasureInfoForm->InitializeDisplayData();
 	MeasureInfoForm->stage = this->Tag;
-	MeasureInfoForm->display.cell = tray.cell;	// cell Á¤º¸
-	MeasureInfoForm->display.original_value = tray.original_value;	// º¸Á¤Àü °ª - ir
-	MeasureInfoForm->display.after_value = tray.after_value;		// º¸Á¤ÈÄ °ª - ir
+	MeasureInfoForm->display.cell = tray.cell;	// cell ì •ë³´
+	MeasureInfoForm->display.original_value = tray.original_value;	// ë³´ì •ì „ ê°’ - ir
+	MeasureInfoForm->display.after_value = tray.after_value;		// ë³´ì •í›„ ê°’ - ir
 	MeasureInfoForm->display.ocv_value = tray.ocv_value;			// ocv
-	MeasureInfoForm->display.measure_result = tray.measure_result;	// ir °á°ú
+	MeasureInfoForm->display.measure_result = tray.measure_result;	// ir ê²°ê³¼
 	MeasureInfoForm->pstage->Caption = lblTitle->Caption;
     for(int i = 0; i < MAXCHANNEL; ++i)
         UpdateCellDisplay(i);
@@ -58,10 +58,10 @@ void __fastcall TTotalForm::InitializeMeasureForm()
 }
 
 //---------------------------------------------------------------------------
-// SiteConfig.hÀÇ ½ÃÀÛ ¸ð¼­¸®/¹øÈ£ ÁøÇà ¹æÇâÀ¸·Î ¸ÞÀÎ Ã¤³Î ÆÐ³ÎÀ» »ý¼ºÇÑ´Ù.
+// SiteConfig.hì˜ ì‹œìž‘ ëª¨ì„œë¦¬/ë²ˆí˜¸ ì§„í–‰ ë°©í–¥ìœ¼ë¡œ ë©”ì¸ ì±„ë„ íŒ¨ë„ì„ ìƒì„±í•œë‹¤.
 void __fastcall TTotalForm::MakePanel()
 {
-    // ¸ÞÀÎ/»ó¼¼ È­¸é¿¡ µ¿ÀÏ ¹èÄ¡¸¦ Àû¿ëÇÑ´Ù. Tag/¹è¿­ Ã·ÀÚ´Â PLCÀÇ ¿ø·¡ Ã¤³Î ¼ø¼­¸¦ À¯ÁöÇÑ´Ù.
+    // ë©”ì¸/ìƒì„¸ í™”ë©´ì— ë™ì¼ ë°°ì¹˜ë¥¼ ì ìš©í•œë‹¤. Tag/ë°°ì—´ ì²¨ìžëŠ” PLCì˜ ì›ëž˜ ì±„ë„ ìˆœì„œë¥¼ ìœ ì§€í•œë‹¤.
     for(int index = 0; index < MAXCHANNEL; ++index)
     {
         const ChannelLayout::Rect r = ChannelLayout::ForChannel(
@@ -85,11 +85,11 @@ void __fastcall TTotalForm::MakePanel()
 }
 
 //---------------------------------------------------------------------------
-// ¼¿ À¯¹«/ÆÇÁ¤ »ö»ó °»½Å. IR¡¤OCV ¼ö½Å ¿©ºÎ¸¦ °¢°¢ È®ÀÎÇÏ¿© ½ÇÁ¦ °ª ¶Ç´Â ¹Ì¼ö½Å °ø¶õÀ» Ç¥½ÃÇÑ´Ù.
+// ì…€ ìœ ë¬´/íŒì • ìƒ‰ìƒ ê°±ì‹ . IRÂ·OCV ìˆ˜ì‹  ì—¬ë¶€ë¥¼ ê°ê° í™•ì¸í•˜ì—¬ ì‹¤ì œ ê°’ ë˜ëŠ” ë¯¸ìˆ˜ì‹  ê³µëž€ì„ í‘œì‹œí•œë‹¤.
 void __fastcall TTotalForm::UpdateCellDisplay(int index)
 {
     if(index < 0 || index >= MAXCHANNEL) return;
-    // »ö»óÀº °á°ú Ç¥½Ã Àü¿ë. ±âÁ¸ ÆÐ³Î »ö»ó°ú IR/OCV ¼ö½Å ¼ø¼­¿¡ ÀÇÁ¸ÇÏÁö ¾Ê´Â´Ù.
+    // ìƒ‰ìƒì€ ê²°ê³¼ í‘œì‹œ ì „ìš©. ê¸°ì¡´ íŒ¨ë„ ìƒ‰ìƒê³¼ IR/OCV ìˆ˜ì‹  ìˆœì„œì— ì˜ì¡´í•˜ì§€ ì•ŠëŠ”ë‹¤.
     TColor basic = clLine, irColor = clLine, ocvColor = clLine;
     AnsiString sir = "", socv = "";
     if(showStartupChannelNumbers)
@@ -142,7 +142,7 @@ void __fastcall TTotalForm::UpdateCellDisplay(int index)
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-// CELL DATAÀÇ ¼¿ À¯¹«¸¦ Ã¤³Î È­¸é¿¡ ¹Ý¿µÇÑ´Ù. ÃøÁ¤°ª ¼ö½Å ¿©ºÎ´Â º¯°æÇÏÁö ¾Ê´Â´Ù.
+// CELL DATAì˜ ì…€ ìœ ë¬´ë¥¼ ì±„ë„ í™”ë©´ì— ë°˜ì˜í•œë‹¤. ì¸¡ì •ê°’ ìˆ˜ì‹  ì—¬ë¶€ëŠ” ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
 void __fastcall TTotalForm::DisplayTrayInfo()
 {
 	

@@ -28,13 +28,13 @@ void __fastcall TForm_CellIdError::DisplayErrorMessage(int nStage)
 	if(!this->Visible)
 	{
 		Timer_BringToFront->Enabled = true;
-        // PLC ¿À·ù Ãâ·ÂÀº °Ë»ç Ã³¸®¿¡¼­ ´ã´çÇÑ´Ù. ÀÌ ÇÔ¼ö´Â È­¸é¸¸ Ç¥½ÃÇÑ´Ù.
+        // PLC ì˜¤ë¥˜ ì¶œë ¥ì€ ê²€ì‚¬ ì²˜ë¦¬ì—ì„œ ë‹´ë‹¹í•œë‹¤. ì´ í•¨ìˆ˜ëŠ” í™”ë©´ë§Œ í‘œì‹œí•œë‹¤.
 		SaveErrorLog(Label_Msg1->Caption, Label_Msg2->Caption, Label_Msg3->Caption);
 
 		this->Position = poMainFormCenter;
 		this->BringToFront();
 		this->Show();
-        // ¸ÞÀÎ Ã¢ Áß¾Ó À§Ä¡¸¦ À¯ÁöÇÑ´Ù. ÁÂÇ¥¸¦ ´Ù½Ã »©¼­ È­¸é ¹ÛÀ¸·Î ¹Ð¸®Áö ¾Ê°Ô ÇÑ´Ù.
+        // ë©”ì¸ ì°½ ì¤‘ì•™ ìœ„ì¹˜ë¥¼ ìœ ì§€í•œë‹¤. ì¢Œí‘œë¥¼ ë‹¤ì‹œ ë¹¼ì„œ í™”ë©´ ë°–ìœ¼ë¡œ ë°€ë¦¬ì§€ ì•Šê²Œ í•œë‹¤.
 	}
 	else this->BringToFront();
 }
@@ -46,7 +46,7 @@ void __fastcall TForm_CellIdError::Timer_BringToFrontTimer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_CellIdError::timerErrorOffTimer(TObject *Sender)
 {
-    // ÀÌÀü Ã¢ÀÇ ´Ý±â Å¸ÀÌ¸Ó¿¡¼­´Â PLC ¿À·ù¸¦ ÇØÁ¦ÇÏÁö ¾Ê´Â´Ù.
+    // ì´ì „ ì°½ì˜ ë‹«ê¸° íƒ€ì´ë¨¸ì—ì„œëŠ” PLC ì˜¤ë¥˜ë¥¼ í•´ì œí•˜ì§€ ì•ŠëŠ”ë‹¤.
     Timer_BringToFront->Enabled = false;
     timerErrorOff->Enabled = false;
     this->Close();

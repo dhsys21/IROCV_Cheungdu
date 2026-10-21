@@ -20,10 +20,10 @@ __fastcall TMod_PLCAscii::TMod_PLCAscii(TComponent* Owner)
     memset(pc_Interface_Volt_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_VOLTAGE_LEN * 2);
 	memset(pc_Interface_Curr_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_CURRENT_LEN * 2);
 
-	PLC_Write_Result = false; //voltage, current °ªÀº ÇÊ¿ä ½Ã¿¡¸¸ ¾²±â¸¦ ÇÑ´Ù.
+	PLC_Write_Result = false; //voltage, current ê°’ì€ í•„ìš” ì‹œì—ë§Œ ì“°ê¸°ë¥¼ í•œë‹¤.
 }
 //---------------------------------------------------------------------------
-//	Á¢¼Ó & ÇØÁ¦
+//	ì ‘ì† & í•´ì œ
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLCAscii::Connect(AnsiString ip, int port1, int port2)
 {
@@ -41,7 +41,7 @@ void __fastcall TMod_PLCAscii::Connect(AnsiString ip, int port1, int port2)
 	}
 	catch(...)
 	{
-		ShowMessage("PLC -> PC : Åë½Å ¼³Á¤ ½ÇÆĞ.");
+		ShowMessage("PLC -> PC : í†µì‹  ì„¤ì • ì‹¤íŒ¨.");
 	}
 }
 //---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ void __fastcall TMod_PLCAscii::PC_Initialization()
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// PC ¿µ¿ª Á¢¼Ó¹× µ¥ÀÌÅÍ ÀĞ¾î¿À±â ½ÃÀÛ
+// PC ì˜ì—­ ì ‘ì†ë° ë°ì´í„° ì½ì–´ì˜¤ê¸° ì‹œì‘
 void __fastcall TMod_PLCAscii::ClientSocket_PCConnect(TObject *Sender, TCustomWinSocket *Socket)
 {
     PC_Initialization();
@@ -101,28 +101,28 @@ void __fastcall TMod_PLCAscii::ClientSocket_PCRead(TObject *Sender, TCustomWinSo
 	while(pc_Read.Pos("D000"))
 	{
 		int index = pc_Read.Pos("D000");
-		if (index > 1) pc_Read.Delete(1, index - 1); // Çì´õ ¾Õ ºÒÇÊ¿ä µ¥ÀÌÅÍ Á¦°Å
+		if (index > 1) pc_Read.Delete(1, index - 1); // í—¤ë” ì• ë¶ˆí•„ìš” ë°ì´í„° ì œê±°
 
-		// ¾²±â ÀÀ´äÀº µ¥ÀÌÅÍºÎ ¾øÀÌ Çì´õ¸¸ ¿È (22ÀÚ¸®)
+		// ì“°ê¸° ì‘ë‹µì€ ë°ì´í„°ë¶€ ì—†ì´ í—¤ë”ë§Œ ì˜´ (22ìë¦¬)
 		if (pc_Read.Length() >= 22)
 		{
-			// Á¤»ó Á¾·á ÄÚµå("0000") È®ÀÎ
+			// ì •ìƒ ì¢…ë£Œ ì½”ë“œ("0000") í™•ì¸
 			if(pc_Read.SubString(19, 4) == "0000")
 			{
 				pc_ReadFlag = true;
 				pc_ReadCount = 0;
 			}
-			pc_Read.Delete(1, 22); // Ã³¸®µÈ ÀÀ´ä ÆĞÅ¶ Á¦°Å
+			pc_Read.Delete(1, 22); // ì²˜ë¦¬ëœ ì‘ë‹µ íŒ¨í‚· ì œê±°
 		}
 		else
 		{
-			break; // ÆĞÅ¶ÀÌ ¿ÏÀüÈ÷ ¼ö½ÅµÇÁö ¾ÊÀ½
+			break; // íŒ¨í‚·ì´ ì™„ì „íˆ ìˆ˜ì‹ ë˜ì§€ ì•ŠìŒ
 		}
 	}
 }
-// PC ¿µ¿ª Á¢¼Ó¹× µ¥ÀÌÅÍ ÀĞ¾î¿À±â ³¡
+// PC ì˜ì—­ ì ‘ì†ë° ë°ì´í„° ì½ì–´ì˜¤ê¸° ë
 //---------------------------------------------------------------------------
-// PLC ¿µ¿ª Á¢¼Ó¹× µ¥ÀÌÅÍ ÀĞ¾î¿À±â ½ÃÀÛ
+// PLC ì˜ì—­ ì ‘ì†ë° ë°ì´í„° ì½ì–´ì˜¤ê¸° ì‹œì‘
 void __fastcall TMod_PLCAscii::ClientSocket_PLCConnect(TObject *Sender, TCustomWinSocket *Socket)
 {
     PLC_Initialization();
@@ -147,19 +147,19 @@ void __fastcall TMod_PLCAscii::ClientSocket_PLCRead(TObject *Sender, TCustomWinS
 	plc_Read += Socket->ReceiveText();
     BaseForm->Memo1->Lines->Add(plc_Read);
 
-	// ÀÀ´ä ÇÁ·¹ÀÓ ½ÃÀÛ("D000") À§Ä¡ È®ÀÎ
+	// ì‘ë‹µ í”„ë ˆì„ ì‹œì‘("D000") ìœ„ì¹˜ í™•ì¸
 	int startPos = plc_Read.Pos("D000");
-	if (startPos == 0) return; // ¾ÆÁ÷ Çì´õ°¡ ¾øÀ½
-	if (startPos > 1) plc_Read.Delete(1, startPos - 1); // Çì´õ ¾ÕÀÇ ºÒÇÊ¿äÇÑ µ¥ÀÌÅÍ »èÁ¦
+	if (startPos == 0) return; // ì•„ì§ í—¤ë”ê°€ ì—†ìŒ
+	if (startPos > 1) plc_Read.Delete(1, startPos - 1); // í—¤ë” ì•ì˜ ë¶ˆí•„ìš”í•œ ë°ì´í„° ì‚­ì œ
 
-	// ÀÀ´ä ÇÁ·¹ÀÓ ±æÀÌ È®ÀÎ
-	// Çì´õ(18) + Á¾·áÄÚµå(4) = 22ÀÚ¸® ÃÖ¼Ò ±æÀÌ
+	// ì‘ë‹µ í”„ë ˆì„ ê¸¸ì´ í™•ì¸
+	// í—¤ë”(18) + ì¢…ë£Œì½”ë“œ(4) = 22ìë¦¬ ìµœì†Œ ê¸¸ì´
 	if (plc_Read.Length() < 22) return;
 
-	// Á¤»ó Á¾·á ÄÚµå("0000") È®ÀÎ
+	// ì •ìƒ ì¢…ë£Œ ì½”ë“œ("0000") í™•ì¸
 	if (plc_Read.SubString(19, 4) == "0000")
 	{
-		// ÀÀ´ä µ¥ÀÌÅÍ ±æÀÌ (ASCII ¹®ÀÚ °³¼ö)
+		// ì‘ë‹µ ë°ì´í„° ê¸¸ì´ (ASCII ë¬¸ì ê°œìˆ˜)
 		int dataLen = StrToInt("0x" + plc_Read.SubString(15, 4));
 		int totalLen = 22 + dataLen;
 
@@ -167,13 +167,13 @@ void __fastcall TMod_PLCAscii::ClientSocket_PLCRead(TObject *Sender, TCustomWinS
 		{
 			AnsiString data_part = plc_Read.SubString(23, dataLen);
 
-			// µ¥ÀÌÅÍ ÆÄ½Ì ¹× ÀúÀå
+			// ë°ì´í„° íŒŒì‹± ë° ì €ì¥
 			int num = 1;
 			for(int i = 0; i < PLC_D_INTERFACE_LEN; i++)
 			{
 				if (num + 3 <= data_part.Length())
 				{
-					// 4±ÛÀÚ(1¿öµå)¾¿ Àß¶ó¼­ 16Áø¼ö º¯È¯ ÈÄ ¹öÆÛ¿¡ ÀúÀå
+					// 4ê¸€ì(1ì›Œë“œ)ì”© ì˜ë¼ì„œ 16ì§„ìˆ˜ ë³€í™˜ í›„ ë²„í¼ì— ì €ì¥
 					AnsiString word_hex = data_part.SubString(num, 4);
 					int word_val = StrToInt("0x" + word_hex);
 					plc_Interface_Data[i][0] = word_val & 0xFF; // LSB
@@ -182,20 +182,20 @@ void __fastcall TMod_PLCAscii::ClientSocket_PLCRead(TObject *Sender, TCustomWinS
 				} else break;
 			}
 
-			plc_Read.Delete(1, totalLen); // Ã³¸®µÈ ÆĞÅ¶ »èÁ¦
+			plc_Read.Delete(1, totalLen); // ì²˜ë¦¬ëœ íŒ¨í‚· ì‚­ì œ
 		}
 	}
-	else // ¿¡·¯ ÀÀ´ä ¼ö½Å
+	else // ì—ëŸ¬ ì‘ë‹µ ìˆ˜ì‹ 
 	{
-		plc_Read = ""; // ¹öÆÛ ºñ¿ì±â
+		plc_Read = ""; // ë²„í¼ ë¹„ìš°ê¸°
 	}
 
 	plc_ReadFlag = true;
 	plc_ReadCount = 0;
 }
-// PLC ¿µ¿ª Á¢¼Ó¹× µ¥ÀÌÅÍ ÀĞ¾î¿À±â ³¡
+// PLC ì˜ì—­ ì ‘ì†ë° ë°ì´í„° ì½ì–´ì˜¤ê¸° ë
 //---------------------------------------------------------------------------
-// PLC Á¢¼Ó Å¸ÀÌ¸Ó ½ÃÀÛ
+// PLC ì ‘ì† íƒ€ì´ë¨¸ ì‹œì‘
 void __fastcall TMod_PLCAscii::Timer_PC_AutoConnectTimer(TObject *Sender)
 {
     ClientSocket_PC->Active = true;
@@ -207,38 +207,38 @@ void __fastcall TMod_PLCAscii::Timer_PLC_AutoConnectTimer(TObject *Sender)
     ClientSocket_PLC->Active = true;
 	Timer_PLC_AutoConnect->Enabled = false;
 }
-// PLC Á¢¼Ó Å¸ÀÌ¸Ó ³¡
+// PLC ì ‘ì† íƒ€ì´ë¨¸ ë
 //---------------------------------------------------------------------------
-// PC ¿µ¿ª µ¥ÀÌÅÍ ¿äÃ» ¹× ¾²±â
+// PC ì˜ì—­ ë°ì´í„° ìš”ì²­ ë° ì“°ê¸°
 AnsiString __fastcall TMod_PLCAscii::BuildAsciiReadCommand(int address, int devCode, int devLen)
 {
 	AnsiString command;
-	// ¼­ºêÇì´õ, PC¹øÈ£, ¿ä±¸´ë»ó ³×Æ®¿öÅ©/±¹¹øÈ£, IO¹øÈ£ µî
-	command = "5000"; // ¿äÃ» ÇÁ·¹ÀÓ
-	command += "00";  // ³×Æ®¿öÅ© ¹øÈ£
-	command += "FF";  // PLC ¹øÈ£
-	command += "03FF"; // ¿ä±¸´ë»ó I/O ¹øÈ£
-	command += "00";   // ¿ä±¸´ë»ó ±¹¹øÈ£
+	// ì„œë¸Œí—¤ë”, PCë²ˆí˜¸, ìš”êµ¬ëŒ€ìƒ ë„¤íŠ¸ì›Œí¬/êµ­ë²ˆí˜¸, IOë²ˆí˜¸ ë“±
+	command = "5000"; // ìš”ì²­ í”„ë ˆì„
+	command += "00";  // ë„¤íŠ¸ì›Œí¬ ë²ˆí˜¸
+	command += "FF";  // PLC ë²ˆí˜¸
+	command += "03FF"; // ìš”êµ¬ëŒ€ìƒ I/O ë²ˆí˜¸
+	command += "00";   // ìš”êµ¬ëŒ€ìƒ êµ­ë²ˆí˜¸
 
-	// ¿ä±¸ µ¥ÀÌÅÍ ±æÀÌ (CPU °¨½ÃÅ¸ÀÌ¸ÓºÎÅÍ ³¡±îÁöÀÇ ¹®ÀÚ¿­ ±æÀÌ)
-	// ±æÀÌ: 4(Å¸ÀÌ¸Ó) + 4(Ä¿¸Çµå) + 4(¼­ºêÄ¿¸Çµå) + 2(µğ¹ÙÀÌ½ºÄÚµå) + 6(½ÃÀÛÁÖ¼Ò) + 4(µğ¹ÙÀÌ½ºÁ¡¼ö) = 24
-	command += "0018"; // 24¸¦ 16Áø¼ö ¹®ÀÚ¿­·Î Ç¥Çö
+	// ìš”êµ¬ ë°ì´í„° ê¸¸ì´ (CPU ê°ì‹œíƒ€ì´ë¨¸ë¶€í„° ëê¹Œì§€ì˜ ë¬¸ìì—´ ê¸¸ì´)
+	// ê¸¸ì´: 4(íƒ€ì´ë¨¸) + 4(ì»¤ë§¨ë“œ) + 4(ì„œë¸Œì»¤ë§¨ë“œ) + 2(ë””ë°”ì´ìŠ¤ì½”ë“œ) + 6(ì‹œì‘ì£¼ì†Œ) + 4(ë””ë°”ì´ìŠ¤ì ìˆ˜) = 24
+	command += "0018"; // 24ë¥¼ 16ì§„ìˆ˜ ë¬¸ìì—´ë¡œ í‘œí˜„
 
-	// CPU °¨½Ã Å¸ÀÌ¸Ó
+	// CPU ê°ì‹œ íƒ€ì´ë¨¸
 	command += "0010"; // 250ms * 16 = 4000ms
 
-	// Ä¿¸Çµå (¿öµå ´ÜÀ§ ÀÏ°ı ÀĞ±â)
+	// ì»¤ë§¨ë“œ (ì›Œë“œ ë‹¨ìœ„ ì¼ê´„ ì½ê¸°)
 	command += "0401"; //
 
-	// ¼­ºêÄ¿¸Çµå (¿öµå)
+	// ì„œë¸Œì»¤ë§¨ë“œ (ì›Œë“œ)
 	command += "0000";
 
-	// µğ¹ÙÀÌ½º ÄÚµå ¹× ½ÃÀÛ ÁÖ¼Ò
-	command += "D*"; // µ¥ÀÌÅÍ ·¹Áö½ºÅÍ(D)¸¦ 16ºñÆ® ¿öµå·Î ÁöÁ¤
-	command += AnsiString().sprintf("%06d", address); // ½ÃÀÛ ÁÖ¼Ò 6ÀÚ¸®
+	// ë””ë°”ì´ìŠ¤ ì½”ë“œ ë° ì‹œì‘ ì£¼ì†Œ
+	command += "D*"; // ë°ì´í„° ë ˆì§€ìŠ¤í„°(D)ë¥¼ 16ë¹„íŠ¸ ì›Œë“œë¡œ ì§€ì •
+	command += AnsiString().sprintf("%06d", address); // ì‹œì‘ ì£¼ì†Œ 6ìë¦¬
 
-	// µğ¹ÙÀÌ½º Á¡¼ö (ÀĞÀ» ¿öµå °³¼ö)
-	command += AnsiString().sprintf("%04X", devLen); // ±æÀÌ¸¦ 16Áø¼ö 4ÀÚ¸®·Î
+	// ë””ë°”ì´ìŠ¤ ì ìˆ˜ (ì½ì„ ì›Œë“œ ê°œìˆ˜)
+	command += AnsiString().sprintf("%04X", devLen); // ê¸¸ì´ë¥¼ 16ì§„ìˆ˜ 4ìë¦¬ë¡œ
 
 	return command;
 }
@@ -257,19 +257,19 @@ void __fastcall TMod_PLCAscii::Timer_PC_WriteMsgTimer(TObject *Sender)
 				SetDouble(pc_Interface_Data, PC_D_HEART_BEAT, (int)!flag);
 			}
 
-			//* General Data (41000 ¹øÁö ¿µ¿ª) ¾²±â
+			//* General Data (41000 ë²ˆì§€ ì˜ì—­) ì“°ê¸°
 			AnsiString cmd_general = BuildAsciiWriteCommand(PC_D_INTERFACE_START_DEV_NUM, DEVCODE_D, PC_D_INTERFACE_LEN, pc_Interface_Data);
 			ClientSocket_PC->Socket->SendText(cmd_general);
-			Sleep(100); // PLC Ã³¸® ½Ã°£ ´ë±â
+			Sleep(100); // PLC ì²˜ë¦¬ ì‹œê°„ ëŒ€ê¸°
 
-			//* Voltage, Current Data ¾²±â
+			//* Voltage, Current Data ì“°ê¸°
 			if(PLC_Write_Result == true && GetPlcValue(PLC_D_PRE_COMPLETE) == 0){
-				// Voltage Data (41070 ¹øÁö ¿µ¿ª)
+				// Voltage Data (41070 ë²ˆì§€ ì˜ì—­)
 				AnsiString cmd_volt = BuildAsciiWriteCommand(PC_D_INTERFACE_VOLTAGE, DEVCODE_D, PC_D_INTERFACE_VOLTAGE_LEN, pc_Interface_Volt_Data);
 				ClientSocket_PC->Socket->SendText(cmd_volt);
 				Sleep(100);
 
-				// Current Data (42000 ¹øÁö ¿µ¿ª)
+				// Current Data (42000 ë²ˆì§€ ì˜ì—­)
 				AnsiString cmd_curr = BuildAsciiWriteCommand(PC_D_INTERFACE_CURRENT, DEVCODE_D, PC_D_INTERFACE_CURRENT_LEN, pc_Interface_Curr_Data);
 				ClientSocket_PC->Socket->SendText(cmd_curr);
 			}
@@ -293,44 +293,44 @@ void __fastcall TMod_PLCAscii::Timer_PC_WriteMsgTimer(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
-// PLC ¿µ¿ª µ¥ÀÌÅÍ ¿äÃ»
-// ASCII ¾²±â ¸í·É »ı¼º
+// PLC ì˜ì—­ ë°ì´í„° ìš”ì²­
+// ASCII ì“°ê¸° ëª…ë ¹ ìƒì„±
 AnsiString __fastcall TMod_PLCAscii::BuildAsciiWriteCommand(int address, int devCode, int devLen, unsigned char (*data)[2])
 {
 	AnsiString command;
-	// ¼­ºêÇì´õ, PC¹øÈ£, ¿ä±¸´ë»ó ³×Æ®¿öÅ©/±¹¹øÈ£, IO¹øÈ£ µî
-	command = "5000"; // ¿äÃ» ÇÁ·¹ÀÓ
-	command += "00";  // ³×Æ®¿öÅ© ¹øÈ£
-	command += "FF";  // PLC ¹øÈ£
-	command += "03FF"; // ¿ä±¸´ë»ó I/O ¹øÈ£
-	command += "00";   // ¿ä±¸´ë»ó ±¹¹øÈ£
+	// ì„œë¸Œí—¤ë”, PCë²ˆí˜¸, ìš”êµ¬ëŒ€ìƒ ë„¤íŠ¸ì›Œí¬/êµ­ë²ˆí˜¸, IOë²ˆí˜¸ ë“±
+	command = "5000"; // ìš”ì²­ í”„ë ˆì„
+	command += "00";  // ë„¤íŠ¸ì›Œí¬ ë²ˆí˜¸
+	command += "FF";  // PLC ë²ˆí˜¸
+	command += "03FF"; // ìš”êµ¬ëŒ€ìƒ I/O ë²ˆí˜¸
+	command += "00";   // ìš”êµ¬ëŒ€ìƒ êµ­ë²ˆí˜¸
 
-	// ¿ä±¸ µ¥ÀÌÅÍ ±æÀÌ (CPU °¨½ÃÅ¸ÀÌ¸Ó ~ ³¡±îÁö ±æÀÌ)
-	// ±âº» ±æÀÌ 24 + µ¥ÀÌÅÍ ±æÀÌ (¿öµå´ç 4±ÛÀÚ)
+	// ìš”êµ¬ ë°ì´í„° ê¸¸ì´ (CPU ê°ì‹œíƒ€ì´ë¨¸ ~ ëê¹Œì§€ ê¸¸ì´)
+	// ê¸°ë³¸ ê¸¸ì´ 24 + ë°ì´í„° ê¸¸ì´ (ì›Œë“œë‹¹ 4ê¸€ì)
 	int dataLength = 24 + (devLen * 4);
 	command += AnsiString().sprintf("%04X", dataLength);
 
-	// CPU °¨½Ã Å¸ÀÌ¸Ó
+	// CPU ê°ì‹œ íƒ€ì´ë¨¸
 	command += "0010"; //
 
-	// Ä¿¸Çµå (¿öµå ´ÜÀ§ ÀÏ°ı ¾²±â)
+	// ì»¤ë§¨ë“œ (ì›Œë“œ ë‹¨ìœ„ ì¼ê´„ ì“°ê¸°)
 	command += "1401"; //
 
-	// ¼­ºêÄ¿¸Çµå (¿öµå)
+	// ì„œë¸Œì»¤ë§¨ë“œ (ì›Œë“œ)
 	command += "0000";
 
-	// µğ¹ÙÀÌ½º ÄÚµå ¹× ½ÃÀÛ ÁÖ¼Ò
+	// ë””ë°”ì´ìŠ¤ ì½”ë“œ ë° ì‹œì‘ ì£¼ì†Œ
 	command += "D*";
 	command += AnsiString().sprintf("%06d", address);
 
-	// µğ¹ÙÀÌ½º Á¡¼ö (¾µ ¿öµå °³¼ö)
+	// ë””ë°”ì´ìŠ¤ ì ìˆ˜ (ì“¸ ì›Œë“œ ê°œìˆ˜)
 	command += AnsiString().sprintf("%04X", devLen);
 
-	// ¾µ µ¥ÀÌÅÍ
+	// ì“¸ ë°ì´í„°
 	for (int i = 0; i < devLen; i++)
 	{
-		// PLC´Â Little EndianÀÌ¹Ç·Î ÀúÀ§¹ÙÀÌÆ®(LSB) ¸ÕÀú
-		command += AnsiString().sprintf("%02X%02X", data[i][1], data[i][0]); // MSB, LSB ¼ø¼­·Î Àü¼Û
+		// PLCëŠ” Little Endianì´ë¯€ë¡œ ì €ìœ„ë°”ì´íŠ¸(LSB) ë¨¼ì €
+		command += AnsiString().sprintf("%02X%02X", data[i][1], data[i][0]); // MSB, LSB ìˆœì„œë¡œ ì „ì†¡
 	}
 
 	return command;
@@ -341,15 +341,15 @@ void __fastcall TMod_PLCAscii::Timer_PLC_WriteMsgTimer(TObject *Sender)
 	{
 		if(plc_ReadFlag)
 		{
-			// ASCII ÀĞ±â ¸í·É »ı¼º
+			// ASCII ì½ê¸° ëª…ë ¹ ìƒì„±
 			AnsiString command = BuildAsciiReadCommand(PLC_D_INTERFACE_START_DEV_NUM, DEVCODE_D, PLC_D_INTERFACE_LEN);
 
-			// ASCII ¸í·É Àü¼Û
+			// ASCII ëª…ë ¹ ì „ì†¡
 			ClientSocket_PLC->Socket->SendText(command);
 			plc_ReadFlag = false;
 			plc_ReadCount = 0;
 		}
-		else if(plc_ReadCount > 10) // 3ÃÊµ¿¾È ÀÀ´ä È®ÀÎ
+		else if(plc_ReadCount > 10) // 3ì´ˆë™ì•ˆ ì‘ë‹µ í™•ì¸
 		{
 			ClientSocket_PLC->Close();
 		}
@@ -361,7 +361,7 @@ void __fastcall TMod_PLCAscii::Timer_PLC_WriteMsgTimer(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
-//	PC ¿µ¿ª º¯°æ (PLC¿¡ º¯°æµÈ Header ¾²±â)
+//	PC ì˜ì—­ ë³€ê²½ (PLCì— ë³€ê²½ëœ Header ì“°ê¸°)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLCAscii::PC_DataChange(int subCommand, int address, int devCode, int devLen)
 {
@@ -380,7 +380,7 @@ void __fastcall TMod_PLCAscii::PC_DataChange(int subCommand, int address, int de
 	pc_Data.DevLen[1] = devLen / 256;
 }
 //---------------------------------------------------------------------------
-//	PLC ¿µ¿ª º¯°æ (PLC¿¡ º¯°æµÈ Header ¾²±â)
+//	PLC ì˜ì—­ ë³€ê²½ (PLCì— ë³€ê²½ëœ Header ì“°ê¸°)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLCAscii::PLC_DataChange(int subCommand, int address, int devCode, int devLen)
 {
@@ -411,7 +411,7 @@ void __fastcall TMod_PLCAscii::PLC_Recv_Interface(int nTag)
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//	µ¥ÀÌÅÍ ¾²±â & ÀĞ±â
+//	ë°ì´í„° ì“°ê¸° & ì½ê¸°
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC2::SetData(unsigned char (*data)[2], int column, int num, bool flag)
@@ -429,9 +429,9 @@ void __fastcall TMod_PLC2::SetDouble(unsigned char (*data)[2], int column, doubl
 //
 //	data[column][1] = temp / 256;
 //	data[column][0] = temp % 256;
-    short temp = static_cast<short>(value); // signed 16-bit Á¤¼ö·Î Çüº¯È¯
+    short temp = static_cast<short>(value); // signed 16-bit ì •ìˆ˜ë¡œ í˜•ë³€í™˜
 
-    data[column][0] = temp & 0xFF;         // LSB (ÀúÀå ¼ø¼­¿¡ µû¶ó ´Ù¸§)
+    data[column][0] = temp & 0xFF;         // LSB (ì €ì¥ ìˆœì„œì— ë”°ë¼ ë‹¤ë¦„)
     data[column][1] = (temp >> 8) & 0xFF;  // MSB
 }
 //---------------------------------------------------------------------------
@@ -481,10 +481,10 @@ AnsiString __fastcall TMod_PLC2::GetString(unsigned char (*data)[2], int column,
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-//	µ¥ÀÌÅÍ ¾²±â & ÀĞ±â
+//	ë°ì´í„° ì“°ê¸° & ì½ê¸°
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-// PLC ¸í·É¾î
+// PLC ëª…ë ¹ì–´
 //---------------------------------------------------------------------------
 double __fastcall TMod_PLC2::GetPlcValue(int plc_address)
 {
@@ -535,5 +535,5 @@ int __fastcall TMod_PLC2::GetCurrValue(int pc_address, int index)
     return (highWord << 16) | lowWord;
 }
 //---------------------------------------------------------------------------
-// PLC ¸í·É¾î
+// PLC ëª…ë ¹ì–´
 //---------------------------------------------------------------------------

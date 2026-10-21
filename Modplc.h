@@ -15,17 +15,17 @@
 #include <deque>
 
 //---------------------------------------------------------------------------
-//	µð¹ÙÀÌ½º ÄÚµå
+//	ë””ë°”ì´ìŠ¤ ì½”ë“œ
 //---------------------------------------------------------------------------
-const int DEVCODE_M			=	0x90;		//	³»ºÎ ¸±·¹ÀÌ
-const int DEVCODE_L			=	0x92;	  	//	·¡Ä¡ ¸±·¹ÀÌ
-const int DEVCODE_D			=	0xA8;		//	µ¥ÀÌÅÍ ·¹Áö½ºÅÍ
-const int DEVCODE_W			=	0xB4;		//	¸µÅ© ·¹Áö½ºÅÍ
+const int DEVCODE_M			=	0x90;		//	ë‚´ë¶€ ë¦´ë ˆì´
+const int DEVCODE_L			=	0x92;	  	//	ëž˜ì¹˜ ë¦´ë ˆì´
+const int DEVCODE_D			=	0xA8;		//	ë°ì´í„° ë ˆì§€ìŠ¤í„°
+const int DEVCODE_W			=	0xB4;		//	ë§í¬ ë ˆì§€ìŠ¤í„°
 //---------------------------------------------------------------------------
 
 
 //---------------------------------------------------------------------------
-//	Index ±¸ºÐ
+//	Index êµ¬ë¶„
 //---------------------------------------------------------------------------
 const int PLC_INDEX_INTERFACE[2]				=	{ 1, 2 };
 
@@ -34,13 +34,13 @@ const int PC_INDEX_INTERFACE					=		11;
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-//	½ÃÀÛ ¹øÁö
+//	ì‹œìž‘ ë²ˆì§€
 //---------------------------------------------------------------------------
 const int PLC_D_INTERFACE_START_DEV_NUM	 			=	44000;
 const int PLC_D_INTERFACE_LEN 						= 	100;
 
 const int PLC_D_CELL_SERIAL_NUM                     =	{145000};
-// PLC °ø°£Àº ½ÇÃ¤³Î ¼ö¿Í º°°³´Ù. 256Ã¤³Î »çÀÌÆ®°¡ 400Ã¤³Î PLC °ø°£À» ¾µ ¼öµµ ÀÖ´Ù.
+// PLC ê³µê°„ì€ ì‹¤ì±„ë„ ìˆ˜ì™€ ë³„ê°œë‹¤. 256ì±„ë„ ì‚¬ì´íŠ¸ê°€ 400ì±„ë„ PLC ê³µê°„ì„ ì“¸ ìˆ˜ë„ ìžˆë‹¤.
 const int PLC_D_CELL_SERIAL_CHANNEL_COUNT           =   400;
 typedef char CheckSerialChannelCapacity[(MAXCHANNEL <= PLC_D_CELL_SERIAL_CHANNEL_COUNT) ? 1 : -1];
 const int PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL       =   10;
@@ -68,7 +68,7 @@ const int PC_D_INTERFACE_IR_RESULT_LEN              =	400;
 
 
 //---------------------------------------------------------------------------
-// »ç¿ë Ã¤³ÎÀÌ PLC ¿¹¾à °ø°£À» ³ÑÀ¸¸é ÄÄÆÄÀÏ ´Ü°è¿¡¼­ ¹ß°ßÇÑ´Ù.
+// ì‚¬ìš© ì±„ë„ì´ PLC ì˜ˆì•½ ê³µê°„ì„ ë„˜ìœ¼ë©´ ì»´íŒŒì¼ ë‹¨ê³„ì—ì„œ ë°œê²¬í•œë‹¤.
 typedef char CheckIrCapacity[(MAXCHANNEL * 2 <= PC_D_INTERFACE_IR_LEN) ? 1 : -1];
 typedef char CheckOcvCapacity[(MAXCHANNEL * 2 <= PC_D_INTERFACE_OCV_LEN) ? 1 : -1];
 typedef char CheckResultCapacity[(MAXCHANNEL <= PC_D_INTERFACE_IR_RESULT_LEN) ? 1 : -1];
@@ -128,18 +128,18 @@ const int PC_D_IROCV_OCV_VALUE                   	=   0;
 //---------------------------------------------------------------------------
 typedef struct
 {
-	unsigned char SubHeader[2];			//	¼­ºê Çì´õ
-	unsigned char NetNum;		 		//	³×Æ®¿öÅ© ¹øÈ£
-	unsigned char PlcNum;	   			//	PLC ¹øÈ£
-	unsigned char ReqIONum[2];			//	IO ¹øÈ£
-	unsigned char ReqOfficeNum;	  		//	±¹ ¹øÈ£
-	unsigned char ReqDataLen[2];		//  ¿ä±¸ µ¥ÀÌÅÍ ±æÀÌ(CPU °¨½Ã Å¸ÀÌ¸Ó ~ µð¹ÙÀÌ½º ±æÀÌ)
-	unsigned char CpuTime[2];			//	CPU °¨½Ã Å¸ÀÌ¸Ó
-	unsigned char Command[2];			//	Ä¿¸Çµå
-	unsigned char SubCommand[2];		//	¼­ºê Ä¿¸Çµå (0 = ºñÆ®-16´ÜÀ§, ¿öµå-1´ÜÀ§ / 1 = ºñÆ®-1´ÜÀ§)
-	unsigned char StartDevNum[3];		//	¼±µÎ µð¹ÙÀÌ½º
-	unsigned char DevCode;  			//	µð¹ÙÀÌ½º ÄÚµå
-	unsigned char DevLen[2];			//	µð¹ÙÀÌ½º ±æÀÌ
+	unsigned char SubHeader[2];			//	ì„œë¸Œ í—¤ë”
+	unsigned char NetNum;		 		//	ë„¤íŠ¸ì›Œí¬ ë²ˆí˜¸
+	unsigned char PlcNum;	   			//	PLC ë²ˆí˜¸
+	unsigned char ReqIONum[2];			//	IO ë²ˆí˜¸
+	unsigned char ReqOfficeNum;	  		//	êµ­ ë²ˆí˜¸
+	unsigned char ReqDataLen[2];		//  ìš”êµ¬ ë°ì´í„° ê¸¸ì´(CPU ê°ì‹œ íƒ€ì´ë¨¸ ~ ë””ë°”ì´ìŠ¤ ê¸¸ì´)
+	unsigned char CpuTime[2];			//	CPU ê°ì‹œ íƒ€ì´ë¨¸
+	unsigned char Command[2];			//	ì»¤ë§¨ë“œ
+	unsigned char SubCommand[2];		//	ì„œë¸Œ ì»¤ë§¨ë“œ (0 = ë¹„íŠ¸-16ë‹¨ìœ„, ì›Œë“œ-1ë‹¨ìœ„ / 1 = ë¹„íŠ¸-1ë‹¨ìœ„)
+	unsigned char StartDevNum[3];		//	ì„ ë‘ ë””ë°”ì´ìŠ¤
+	unsigned char DevCode;  			//	ë””ë°”ì´ìŠ¤ ì½”ë“œ
+	unsigned char DevLen[2];			//	ë””ë°”ì´ìŠ¤ ê¸¸ì´
 } PLC_DATA;
 //---------------------------------------------------------------------------
 
@@ -149,18 +149,18 @@ typedef struct
 //---------------------------------------------------------------------------
 typedef struct
 {
-	unsigned char SubHeader[2];					//	¼­ºê Çì´õ
-	unsigned char NetNum;						//	³×Æ®¿öÅ© ¹øÈ£
-	unsigned char PlcNum;	    				//	PLC ¹øÈ£
-	unsigned char ReqIONum[2];					//	IO ¹øÈ£
-	unsigned char ReqOfficeNum;	  				//	±¹ ¹øÈ£
-	unsigned char ReqDataLen[2];				//  ¿ä±¸ µ¥ÀÌÅÍ ±æÀÌ(CPU °¨½Ã Å¸ÀÌ¸Ó ~ µð¹ÙÀÌ½º ±æÀÌ)
-	unsigned char CpuTime[2];					//	CPU °¨½Ã Å¸ÀÌ¸Ó
-	unsigned char Command[2];					//	Ä¿¸Çµå
-	unsigned char SubCommand[2];				//	¼­ºê Ä¿¸Çµå
-	unsigned char StartDevNum[3];				//	¼±µÎ µð¹ÙÀÌ½º
-	unsigned char DevCode;  					//	µð¹ÙÀÌ½º ÄÚµå
-	unsigned char DevLen[2];					//	µð¹ÙÀÌ½º ±æÀÌ
+	unsigned char SubHeader[2];					//	ì„œë¸Œ í—¤ë”
+	unsigned char NetNum;						//	ë„¤íŠ¸ì›Œí¬ ë²ˆí˜¸
+	unsigned char PlcNum;	    				//	PLC ë²ˆí˜¸
+	unsigned char ReqIONum[2];					//	IO ë²ˆí˜¸
+	unsigned char ReqOfficeNum;	  				//	êµ­ ë²ˆí˜¸
+	unsigned char ReqDataLen[2];				//  ìš”êµ¬ ë°ì´í„° ê¸¸ì´(CPU ê°ì‹œ íƒ€ì´ë¨¸ ~ ë””ë°”ì´ìŠ¤ ê¸¸ì´)
+	unsigned char CpuTime[2];					//	CPU ê°ì‹œ íƒ€ì´ë¨¸
+	unsigned char Command[2];					//	ì»¤ë§¨ë“œ
+	unsigned char SubCommand[2];				//	ì„œë¸Œ ì»¤ë§¨ë“œ
+	unsigned char StartDevNum[3];				//	ì„ ë‘ ë””ë°”ì´ìŠ¤
+	unsigned char DevCode;  					//	ë””ë°”ì´ìŠ¤ ì½”ë“œ
+	unsigned char DevLen[2];					//	ë””ë°”ì´ìŠ¤ ê¸¸ì´
 } PC_DATA;
 //---------------------------------------------------------------------------
 
@@ -203,18 +203,18 @@ private:	// User declarations
     void __fastcall ReadPlcCellSerialChunk(int index, int wordsToRead);
     int __fastcall GetCellSerialReadWords(int index);
     void __fastcall ResetCellSerialRead();
-    // [CELL SERIAL °øÅë] ÀÏ¹Ý µ¥ÀÌÅÍ ÀÀ´ä ÈÄ ¿äÃ»/»ó½Ã ¸ðµå¿¡ µû¶ó ´ÙÀ½ ÀÐ±â¸¦ ¿¹¾àÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ì¼ë°˜ ë°ì´í„° ì‘ë‹µ í›„ ìš”ì²­/ìƒì‹œ ëª¨ë“œì— ë”°ë¼ ë‹¤ìŒ ì½ê¸°ë¥¼ ì˜ˆì•½í•œë‹¤.
     void __fastcall PrepareCellSerialRead();
-    // [CELL SERIAL °øÅë] 1È¸ ºÐÇÒ ¼ö½ÅÀ» ½ÃÀÛÇÑ´Ù. ¿Ï·á ¹öÆÛ´Â ¸¶Áö¸· Á¶°¢±îÁö À¯ÁöÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] 1íšŒ ë¶„í•  ìˆ˜ì‹ ì„ ì‹œìž‘í•œë‹¤. ì™„ë£Œ ë²„í¼ëŠ” ë§ˆì§€ë§‰ ì¡°ê°ê¹Œì§€ ìœ ì§€í•œë‹¤.
     void __fastcall BeginCellSerialRead();
-    // [CELL SERIAL °øÅë] Á¶°¢ ¼ö½Å ÈÄ ÀüÃ¼ ¿Ï·á ½Ã¿¡¸¸ °ø°³ ¹öÆÛ¸¦ ±³Ã¼ÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ì¡°ê° ìˆ˜ì‹  í›„ ì „ì²´ ì™„ë£Œ ì‹œì—ë§Œ ê³µê°œ ë²„í¼ë¥¼ êµì²´í•œë‹¤.
     void __fastcall CompleteCellSerialChunk();
-    // [CELL SERIAL °øÅë] ¼³Á¤Àº ÀçÁ¢¼Ó ÈÄ¿¡µµ À¯ÁöÇÏ°í, ´ÙÀ½ ÀÏ¹Ý ÀÀ´äºÎÅÍ Àû¿ëÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ì„¤ì •ì€ ìž¬ì ‘ì† í›„ì—ë„ ìœ ì§€í•˜ê³ , ë‹¤ìŒ ì¼ë°˜ ì‘ë‹µë¶€í„° ì ìš©í•œë‹¤.
     bool cellSerialContinuousRead;
     void __fastcall ReportPlcReadError(AnsiString reason);
     AnsiString lastPlcReadError;
     DWORD lastPlcReadErrorTick;
-    // [CELL SERIAL °øÅë] ¼ö½Å Áß ÀÓ½Ã ¹öÆÛ¿Í »ç¿ë °¡´ÉÇÑ ¿Ï·á ¹öÆÛ¸¦ ºÐ¸®ÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ìˆ˜ì‹  ì¤‘ ìž„ì‹œ ë²„í¼ì™€ ì‚¬ìš© ê°€ëŠ¥í•œ ì™„ë£Œ ë²„í¼ë¥¼ ë¶„ë¦¬í•œë‹¤.
     unsigned char cellSerialReceiveData[PLC_D_CELL_SERIAL_LEN][2];
 
 	PLC_DATA plc_Data;
@@ -248,7 +248,7 @@ public:		// User declarations
 
 	void __fastcall SetData(unsigned char (*data)[2], int column, int num, bool flag);
 	void __fastcall SetDouble(unsigned char (*data)[2], int column, double value);
-	// ¹®ÀÚ¿­ ¾²±â È®Àå¿ë API. ÇöÀç È£ÃâÀÌ ¾ø´õ¶óµµ À¯ÁöÇÑ´Ù.
+	// ë¬¸ìžì—´ ì“°ê¸° í™•ìž¥ìš© API. í˜„ìž¬ í˜¸ì¶œì´ ì—†ë”ë¼ë„ ìœ ì§€í•œë‹¤.
 	void __fastcall SetString(unsigned char (*data)[2], int column, AnsiString msg);
 
 	int __fastcall GetData(unsigned char (*data)[2], int column, int num);
@@ -256,19 +256,19 @@ public:		// User declarations
 	AnsiString __fastcall GetString(unsigned char (*data)[2], int column, int count);
 
 //---------------------------------------------------------------------------
-// ¼ö½Å ¿Ï·áµÈ ½Ã¸®¾ó ¹öÆÛ Á¶È¸. Åë½Å ¿äÃ»Àº StartCellSerialRead()°¡ ´ã´çÇÑ´Ù.
+// ìˆ˜ì‹  ì™„ë£Œëœ ì‹œë¦¬ì–¼ ë²„í¼ ì¡°íšŒ. í†µì‹  ìš”ì²­ì€ StartCellSerialRead()ê°€ ë‹´ë‹¹í•œë‹¤.
     AnsiString __fastcall GetCellSerial(int plc_address, int index, int size);
     AnsiString __fastcall GetCellSerialTrayId(int plc_address, int size);
     double __fastcall GetCellSerialValue(int plc_address);
     void __fastcall StartCellSerialRead();
-    // [CELL SERIAL °øÅë] false=¸í½Ã ¿äÃ» ¶§¸¸, true=ÀÏ¹Ý µ¥ÀÌÅÍ¿Í ¹ø°¥¾Æ »ó½Ã ¼ö½Å.
+    // [CELL SERIAL ê³µí†µ] false=ëª…ì‹œ ìš”ì²­ ë•Œë§Œ, true=ì¼ë°˜ ë°ì´í„°ì™€ ë²ˆê°ˆì•„ ìƒì‹œ ìˆ˜ì‹ .
     void __fastcall SetCellSerialContinuousRead(bool enabled);
     bool __fastcall IsCellSerialReadComplete();
     bool __fastcall IsCellSerialReadActive();
 
     AnsiString __fastcall GetPlcValue(int plc_address, int size);
     double __fastcall GetPlcValue(int plc_address);
-    // PLC ºñÆ® ÀÐ±â È®Àå¿ë API.
+    // PLC ë¹„íŠ¸ ì½ê¸° í™•ìž¥ìš© API.
     int __fastcall GetPlcData(int plc_address, int bit_num);
     double __fastcall GetValue(int pc_address);
     void __fastcall SetValue(int pc_address, int value);
@@ -280,7 +280,7 @@ public:		// User declarations
     int __fastcall GetIrValue(int pc_address, int index);
     int __fastcall GetOcvValue(int pc_address, int index);
 
-    // PC ³»ºÎ Àü¼Û È®ÀÎ: »õ PLC ºñÆ® ¾øÀÌ °á°ú/IR/OCV °¢ ºí·ÏÀÇ ¼Û½Å ¿©ºÎ¸¦ ÃßÀûÇÑ´Ù.
+    // PC ë‚´ë¶€ ì „ì†¡ í™•ì¸: ìƒˆ PLC ë¹„íŠ¸ ì—†ì´ ê²°ê³¼/IR/OCV ê° ë¸”ë¡ì˜ ì†¡ì‹  ì—¬ë¶€ë¥¼ ì¶”ì í•œë‹¤.
     void __fastcall BeginResultTransmission();
     bool __fastcall WasResultTransmitted();
     bool __fastcall IsResultConnectionReady();

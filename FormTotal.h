@@ -112,7 +112,7 @@ typedef struct ExtInput
 	
 } TExtInput;
 
-typedef struct ExtOutput		// Bit Field ÀÌ¿ë
+typedef struct ExtOutput		// Bit Field ì´ìš©
 {
 	uint8_t OUT1_9: 1;				// 1-09
 	uint8_t OUT1_10: 1;				// 1-10
@@ -365,8 +365,8 @@ __published:	// IDE-managed Components
     TLabel *lblOpOutRequest;
     TPanel *pOpOutConfirmed;
     TLabel *lblOpOutConfirmed;
-    // IDE °ü¸® ¿µ¿ª: ÄÄÆ÷³ÍÆ® ¼±¾ðÀº À§¿¡, ÀÌº¥Æ® ÇÔ¼ö ¼±¾ðÀº ¾Æ·¡¿¡ ¸ðÀº´Ù.
-    // ÀÌº¥Æ® ¼±¾ð µÚ¿¡ ÄÄÆ÷³ÍÆ®¸¦ Ãß°¡ÇÏ¸é Æû µðÀÚÀÌ³Ê°¡ ÇØ¼®ÇÏÁö ¸øÇÒ ¼ö ÀÖ´Ù.
+    // IDE ê´€ë¦¬ ì˜ì—­: ì»´í¬ë„ŒíŠ¸ ì„ ì–¸ì€ ìœ„ì—, ì´ë²¤íŠ¸ í•¨ìˆ˜ ì„ ì–¸ì€ ì•„ëž˜ì— ëª¨ì€ë‹¤.
+    // ì´ë²¤íŠ¸ ì„ ì–¸ ë’¤ì— ì»´í¬ë„ŒíŠ¸ë¥¼ ì¶”ê°€í•˜ë©´ í¼ ë””ìžì´ë„ˆê°€ í•´ì„í•˜ì§€ ëª»í•  ìˆ˜ ìžˆë‹¤.
 	void __fastcall ClientConnect(TObject *Sender,
 		  TCustomWinSocket *Socket);
 	void __fastcall ClientDisconnect(TObject *Sender,
@@ -430,70 +430,70 @@ private:
     void __fastcall RecordOperationFileSave(bool saved);
     void __fastcall RecordOperationMeasurementStart();
     void __fastcall AppendOperationLog(AnsiString type, AnsiString message);
-    // µðÀÚÀÌ³Ê ÀÌº¥Æ® Á¤ÀÇ´Â ¹Ýµå½Ã FormTotal.cpp¿¡ µÐ´Ù. ¾Æ·¡´Â ¿ªÇÒº° ÆÄÀÏÀÇ ½ÇÁ¦ Ã³¸® ÇÔ¼ö.
-    // Stage_AutoInspection.cpp: ÀÚµ¿ÃøÁ¤ Å¸ÀÌ¸Ó Ã³¸®. Timer_AutoInspectionTimer¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // ë””ìžì´ë„ˆ ì´ë²¤íŠ¸ ì •ì˜ëŠ” ë°˜ë“œì‹œ FormTotal.cppì— ë‘”ë‹¤. ì•„ëž˜ëŠ” ì—­í• ë³„ íŒŒì¼ì˜ ì‹¤ì œ ì²˜ë¦¬ í•¨ìˆ˜.
+    // Stage_AutoInspection.cpp: ìžë™ì¸¡ì • íƒ€ì´ë¨¸ ì²˜ë¦¬. Timer_AutoInspectionTimerì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessAutoInspection(TObject *Sender);
-    // Stage_Measurement.cpp: ½Ã¸®¾ó ¼ö½Å¡¤°á°ú ÀúÀå¡¤PLC ¿Ï·á ´ë±â. Timer_ResultSaveTimer¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_Measurement.cpp: ì‹œë¦¬ì–¼ ìˆ˜ì‹ Â·ê²°ê³¼ ì €ìž¥Â·PLC ì™„ë£Œ ëŒ€ê¸°. Timer_ResultSaveTimerì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessResultSave(TObject *Sender);
-    // Stage_Form.cpp: ¼³ºñ »óÅÂ¡¤¾Ë¶÷¡¤PLC Ç¥½Ã °»½Å. StatusTimerTimer¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_Form.cpp: ì„¤ë¹„ ìƒíƒœÂ·ì•ŒëžŒÂ·PLC í‘œì‹œ ê°±ì‹ . StatusTimerTimerì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessStageStatus(TObject *Sender);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¿¬°á ¿Ï·á. ClientConnect¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ì—°ê²° ì™„ë£Œ. ClientConnectì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentConnected(TObject *Sender, TCustomWinSocket *Socket);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¿¬°á ÁøÇà. ClientConnecting¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ì—°ê²° ì§„í–‰. ClientConnectingì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentConnecting(TObject *Sender, TCustomWinSocket *Socket);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¼ÒÄÏ ¿À·ù. ClientError¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ì†Œì¼“ ì˜¤ë¥˜. ClientErrorì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentSocketError(TObject *Sender, TCustomWinSocket *Socket, TErrorEvent ErrorEvent, int &ErrorCode);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¿¬°á ÇØÁ¦. ClientDisconnect¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ì—°ê²° í•´ì œ. ClientDisconnectì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentDisconnected(TObject *Sender, TCustomWinSocket *Socket);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ÀçÁ¢¼Ó. ReContactTimerTimer¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ìž¬ì ‘ì†. ReContactTimerTimerì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentReconnect(TObject *Sender);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¼ö½Å ÇÁ·¹ÀÓ ºÐ¸®. ClientRead¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ìˆ˜ì‹  í”„ë ˆìž„ ë¶„ë¦¬. ClientReadì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentSocketRead(TObject *Sender, TCustomWinSocket *Socket);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¼ö½Å Å¥ Ã³¸®. rxTimerTimer¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ìˆ˜ì‹  í ì²˜ë¦¬. rxTimerTimerì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentReceiveQueue(TObject *Sender);
-    // Stage_comm.cpp: ÃøÁ¤Àåºñ ¼Û½Å Å¥ Ã³¸®. SendTimerTimer¿¡¼­ ÇÑ ¹ø È£ÃâÇÑ´Ù.
+    // Stage_comm.cpp: ì¸¡ì •ìž¥ë¹„ ì†¡ì‹  í ì²˜ë¦¬. SendTimerTimerì—ì„œ í•œ ë²ˆ í˜¸ì¶œí•œë‹¤.
     void __fastcall ProcessEquipmentSendQueue(TObject *Sender);
-    // [CELL SERIAL °øÅë] Æ®·¹ÀÌ ÃÊ±âÈ­ ½Ã È®Á¤ÇÑ ¸ðµå. °Ë»ç µµÁß ¼³Á¤ ÀúÀåÀ¸·Î ¹Ù²ÙÁö ¾Ê´Â´Ù.
+    // [CELL SERIAL ê³µí†µ] íŠ¸ë ˆì´ ì´ˆê¸°í™” ì‹œ í™•ì •í•œ ëª¨ë“œ. ê²€ì‚¬ ë„ì¤‘ ì„¤ì • ì €ìž¥ìœ¼ë¡œ ë°”ê¾¸ì§€ ì•ŠëŠ”ë‹¤.
     bool cellSerialContinuousReadForTray;
-    // Stage_Measurement.cpp: ÀÚµ¿/¼öµ¿ °øÅë °á°ú ¸¶°¨. »óÅÂ¿¡ µû¶ó ½Ã¸®¾ó/PLC Å¸ÀÌ¸Ó¸¦ ÁøÇàÇÑ´Ù.
-    TResultSaveStep resultSaveStep; // ÆÄÀÏ/½Ã¸®¾ó/PLC ¿Ï·á ´ë±â¸¦ ÇÑ »óÅÂ·Î °ü¸®.
-    DWORD resultSaveStartTime; // ÇöÀç ºñµ¿±â ´ë±â ½ÃÀÛ ½Ã°¢(ms).
-    AnsiString resultFileName; // °°Àº Æ®·¹ÀÌ ÀçÃøÁ¤Àº °°Àº ÆÄÀÏÀ» µ¤¾î¾´´Ù.
-    bool trayResultCounted; // »ý»ê Æ®·¹ÀÌ ¼ö´Â ÇÑ ¹ø¸¸ Áý°èÇÑ´Ù.
-    int countedFinalIrNg; // ÀçÃøÁ¤À¸·Î ¹Ù²ï ÃÖÁ¾ IR/Á¢ÃË NG ´©°è¸¦ º¸Á¤ÇÑ´Ù.
-    // [CELL SERIAL °øÅë] ÀúÀå ¼³Á¤À» ´ÙÀ½ Æ®·¹ÀÌ/´ë±â »óÅÂ¿¡ Àû¿ëÇÑ´Ù.
+    // Stage_Measurement.cpp: ìžë™/ìˆ˜ë™ ê³µí†µ ê²°ê³¼ ë§ˆê°. ìƒíƒœì— ë”°ë¼ ì‹œë¦¬ì–¼/PLC íƒ€ì´ë¨¸ë¥¼ ì§„í–‰í•œë‹¤.
+    TResultSaveStep resultSaveStep; // íŒŒì¼/ì‹œë¦¬ì–¼/PLC ì™„ë£Œ ëŒ€ê¸°ë¥¼ í•œ ìƒíƒœë¡œ ê´€ë¦¬.
+    DWORD resultSaveStartTime; // í˜„ìž¬ ë¹„ë™ê¸° ëŒ€ê¸° ì‹œìž‘ ì‹œê°(ms).
+    AnsiString resultFileName; // ê°™ì€ íŠ¸ë ˆì´ ìž¬ì¸¡ì •ì€ ê°™ì€ íŒŒì¼ì„ ë®ì–´ì“´ë‹¤.
+    bool trayResultCounted; // ìƒì‚° íŠ¸ë ˆì´ ìˆ˜ëŠ” í•œ ë²ˆë§Œ ì§‘ê³„í•œë‹¤.
+    int countedFinalIrNg; // ìž¬ì¸¡ì •ìœ¼ë¡œ ë°”ë€ ìµœì¢… IR/ì ‘ì´‰ NG ëˆ„ê³„ë¥¼ ë³´ì •í•œë‹¤.
+    // [CELL SERIAL ê³µí†µ] ì €ìž¥ ì„¤ì •ì„ ë‹¤ìŒ íŠ¸ë ˆì´/ëŒ€ê¸° ìƒíƒœì— ì ìš©í•œë‹¤.
     void __fastcall ApplyCellSerialReadMode();
-    // [CELL SERIAL °øÅë] °á°ú ÀúÀå¿ë »õ ÀüÃ¼ ¼ö½ÅÀ» ¿äÃ»ÇÏ°í Àü¿ë Å¸ÀÌ¸Ó·Î ¿Ï·á¸¦ ±â´Ù¸°´Ù.
+    // [CELL SERIAL ê³µí†µ] ê²°ê³¼ ì €ìž¥ìš© ìƒˆ ì „ì²´ ìˆ˜ì‹ ì„ ìš”ì²­í•˜ê³  ì „ìš© íƒ€ì´ë¨¸ë¡œ ì™„ë£Œë¥¼ ê¸°ë‹¤ë¦°ë‹¤.
     void __fastcall StartResultCellSerialRead();
-    // ÃÊ±âÈ­/°­Á¦ ¹èÃâ ½Ã ¸ðµç Áö¿¬ ÀúÀå¡¤¿Ï·á ½ÅÈ£¸¦ Ãë¼ÒÇÑ´Ù.
+    // ì´ˆê¸°í™”/ê°•ì œ ë°°ì¶œ ì‹œ ëª¨ë“  ì§€ì—° ì €ìž¥Â·ì™„ë£Œ ì‹ í˜¸ë¥¼ ì·¨ì†Œí•œë‹¤.
     void __fastcall CancelResultSave();
-    // »ó½Ã ÀÐ±â °á°ú °Ë»ç: °³¼ö ºÒÀÏÄ¡/Å¸ÀÓ¾Æ¿ôÀº ·Î±×¸¸ ±â·ÏÇÏ°í ¿À·ùÃ¢ ¾øÀÌ ÀúÀå.
+    // ìƒì‹œ ì½ê¸° ê²°ê³¼ ê²€ì‚¬: ê°œìˆ˜ ë¶ˆì¼ì¹˜/íƒ€ìž„ì•„ì›ƒì€ ë¡œê·¸ë§Œ ê¸°ë¡í•˜ê³  ì˜¤ë¥˜ì°½ ì—†ì´ ì €ìž¥.
     void __fastcall CompleteResultCellSerialRead();
-    // NG/PLC ¹öÆÛ/ÆÄÀÏ ÀÛ¼º. ¼öµ¿ ¶Ç´Â »ó½Ã ÀÐ±â Å¸ÀÓ¾Æ¿ôÀº true·Î È£ÃâÇØ ID ¾øÀÌ ÀúÀå.
-    // ½ÇÁ¦ COMPLETE´Â Timer_ResultSave¿¡¼­ Áö¿¬ Ãâ·ÂÇÑ´Ù.
+    // NG/PLC ë²„í¼/íŒŒì¼ ìž‘ì„±. ìˆ˜ë™ ë˜ëŠ” ìƒì‹œ ì½ê¸° íƒ€ìž„ì•„ì›ƒì€ trueë¡œ í˜¸ì¶œí•´ ID ì—†ì´ ì €ìž¥.
+    // ì‹¤ì œ COMPLETEëŠ” Timer_ResultSaveì—ì„œ ì§€ì—° ì¶œë ¥í•œë‹¤.
     void __fastcall WriteMeasurementResults(bool saveWithoutCellSerial = false);
-    // ÃøÁ¤°ª¸¸À¸·Î ÇöÀç ¼¿ ÆÇÁ¤. ÀÌÀü »ö»ó/ÀÌÀü ºÒ·®ÀÇ ¿µÇâÀ» ¹ÞÁö ¾Ê´Â´Ù.
+    // ì¸¡ì •ê°’ë§Œìœ¼ë¡œ í˜„ìž¬ ì…€ íŒì •. ì´ì „ ìƒ‰ìƒ/ì´ì „ ë¶ˆëŸ‰ì˜ ì˜í–¥ì„ ë°›ì§€ ì•ŠëŠ”ë‹¤.
     int __fastcall JudgeCellResult(int index);
-    // ºÒ·® ¼¿¸¶´Ù IR/OCV µÎ Ç×¸ñÀÇ ¿äÃ»À» ÁØºñÇÑ´Ù. ÃÖÁ¾ ÆÇÁ¤°ªÀº º¯°æÇÏÁö ¾Ê´Â´Ù.
+    // ë¶ˆëŸ‰ ì…€ë§ˆë‹¤ IR/OCV ë‘ í•­ëª©ì˜ ìš”ì²­ì„ ì¤€ë¹„í•œë‹¤. ìµœì¢… íŒì •ê°’ì€ ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
     void __fastcall PrepareRemeasureItems();
-    // ===== µ¥ÀÌÅÍ: ±âÁ¸ Á¢±Ù ¹üÀ§ À¯Áö =====
-    // ÇöÀç Ç¥½Ã ÁßÀÎ È­¸é ±×·ì.
+    // ===== ë°ì´í„°: ê¸°ì¡´ ì ‘ê·¼ ë²”ìœ„ ìœ ì§€ =====
+    // í˜„ìž¬ í‘œì‹œ ì¤‘ì¸ í™”ë©´ ê·¸ë£¹.
     TGroupBox *CurrentGrp;
-    // ¿À·ùÃ¢À» ´ÝÀ» ¶§ º¹±ÍÇÒ ÀÌÀü È­¸é ±×·ì.
+    // ì˜¤ë¥˜ì°½ì„ ë‹«ì„ ë•Œ ë³µê·€í•  ì´ì „ í™”ë©´ ê·¸ë£¹.
     TGroupBox *OldGrp;
-    // ÇöÀç ÀÚµ¿ °Ë»ç ´Ü°è/¼³Á¤: ¿ÜºÎ Æû¿¡¼­´Â Á÷Á¢ º¯°æÇÏÁö ¾Ê´Â´Ù.
+    // í˜„ìž¬ ìžë™ ê²€ì‚¬ ë‹¨ê³„/ì„¤ì •: ì™¸ë¶€ í¼ì—ì„œëŠ” ì§ì ‘ ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
     TAutoInspectionSequence autoInspection;
-    // ÀÚµ¿ÃøÁ¤ Ã³¸® ÇÔ¼ö ½ÇÇà Áß ¿©ºÎ. ¼³ºñÀÇ ÀüÃ¼ ÃøÁ¤ ±â°£À» ¶æÇÏÁö ¾Ê´Â´Ù.
+    // ìžë™ì¸¡ì • ì²˜ë¦¬ í•¨ìˆ˜ ì‹¤í–‰ ì¤‘ ì—¬ë¶€. ì„¤ë¹„ì˜ ì „ì²´ ì¸¡ì • ê¸°ê°„ì„ ëœ»í•˜ì§€ ì•ŠëŠ”ë‹¤.
     bool isAutoInspectionProcessing;
-    // ÇöÀç ´Ü°è¿¡¼­ ÀÐÀº Æ®·¹ÀÌ ID.
+    // í˜„ìž¬ ë‹¨ê³„ì—ì„œ ì½ì€ íŠ¸ë ˆì´ ID.
     AnsiString autoInspectionTrayId;
-    // Àåºñ ¼ö½Å ¹®ÀÚ¿­ Å¥.
+    // ìž¥ë¹„ ìˆ˜ì‹  ë¬¸ìžì—´ í.
     queue<string> rxq;
-    // Àåºñ ¼Û½Å ÇÁ·¹ÀÓ ±¸¼º ¹öÆÛ.
+    // ìž¥ë¹„ ì†¡ì‹  í”„ë ˆìž„ êµ¬ì„± ë²„í¼.
     vector<unsigned char> TxVector;
-    // ÇöÀç ¿¬°áµÈ Àåºñ ¼ÒÄÏ.
+    // í˜„ìž¬ ì—°ê²°ëœ ìž¥ë¹„ ì†Œì¼“.
     TCustomWinSocket *sock;
-    // ÇÁ·¹ÀÓ °æ°è¿¡ °ÉÄ£ ¹ÌÃ³¸® ¼ö½Å ¹®ÀÚ¿­.
+    // í”„ë ˆìž„ ê²½ê³„ì— ê±¸ì¹œ ë¯¸ì²˜ë¦¬ ìˆ˜ì‹  ë¬¸ìžì—´.
     std::string remainMsg;
     TMeasurementClock measurementClock;
     TColor clNoCell;
@@ -504,117 +504,117 @@ private:
     TColor clOcvCheck;
     TColor clBothCheck;
     TColor clMeasureFail;
-    // ½ÃÀÛ È­¸é ¾È³» ¹øÈ£ Ç¥½Ã. Æ®·¹ÀÌ ÅõÀÔ/ÃøÁ¤ ½ÃÀÛ ÀÌÈÄ¿¡´Â ¹Ì¼ö½Å Ç×¸ñÀ» °ø¶õÀ¸·Î À¯ÁöÇÑ´Ù.
+    // ì‹œìž‘ í™”ë©´ ì•ˆë‚´ ë²ˆí˜¸ í‘œì‹œ. íŠ¸ë ˆì´ íˆ¬ìž…/ì¸¡ì • ì‹œìž‘ ì´í›„ì—ëŠ” ë¯¸ìˆ˜ì‹  í•­ëª©ì„ ê³µëž€ìœ¼ë¡œ ìœ ì§€í•œë‹¤.
     bool showStartupChannelNumbers;
-    // IR ½ÇÁ¦ ¼ö½Å ¿©ºÎ: ¼ö½ÅÇÑ Ã¤³Î¸¸ ÃøÁ¤°ª Ç¥½Ã.
+    // IR ì‹¤ì œ ìˆ˜ì‹  ì—¬ë¶€: ìˆ˜ì‹ í•œ ì±„ë„ë§Œ ì¸¡ì •ê°’ í‘œì‹œ.
     bool irValueReceived[MAXCHANNEL];
-    // OCV ½ÇÁ¦ ¼ö½Å ¿©ºÎ: IR°ú º°µµ·Î ¼ö½ÅÇÑ Ã¤³Î¸¸ ÃøÁ¤°ª Ç¥½Ã.
+    // OCV ì‹¤ì œ ìˆ˜ì‹  ì—¬ë¶€: IRê³¼ ë³„ë„ë¡œ ìˆ˜ì‹ í•œ ì±„ë„ë§Œ ì¸¡ì •ê°’ í‘œì‹œ.
     bool ocvValueReceived[MAXCHANNEL];
-    // NG ¿À·ùÃ¢ ±âÁØ °³¼ö: Á¸Àç ¼¿ÀÇ IR/OCV/Á¢ÃË ºÒ·®¸¸ Áý°è.
+    // NG ì˜¤ë¥˜ì°½ ê¸°ì¤€ ê°œìˆ˜: ì¡´ìž¬ ì…€ì˜ IR/OCV/ì ‘ì´‰ ë¶ˆëŸ‰ë§Œ ì§‘ê³„.
     int measurementNgCount;
 
-    // Àåºñ ¼ö½Å ¸Þ½ÃÁö¿Í C++ Ã³¸® ÇÔ¼ö ¿¬°á
+    // ìž¥ë¹„ ìˆ˜ì‹  ë©”ì‹œì§€ì™€ C++ ì²˜ë¦¬ í•¨ìˆ˜ ì—°ê²°
     BEGIN_MESSAGE_MAP
     MESSAGE_HANDLER(COMM_RECEIVE,		TMessage, ProcessEquipmentMessage)
     END_MESSAGE_MAP(TForm)
 
     // ===== Stage_AutoInspection.cpp =====
-    // ¸ÞÀÎ È­¸é ¼öµ¿ ¹èÃâ: ÀçÃøÁ¤ ¸ñ·Ï Á¤¸®, °­Á¦ ¹èÃâ, PROBE CLOSE=0 / OPEN=1 / COMPLETE=1.
+    // ë©”ì¸ í™”ë©´ ìˆ˜ë™ ë°°ì¶œ: ìž¬ì¸¡ì • ëª©ë¡ ì •ë¦¬, ê°•ì œ ë°°ì¶œ, PROBE CLOSE=0 / OPEN=1 / COMPLETE=1.
     void __fastcall ProcessManualTrayOut();
-    // ÀÚµ¿ÃøÁ¤ ´ë±â ¼³Á¤ ÀÐ±â: ±âÁ¸ 200ms Å¸ÀÌ¸Ó È£Ãâ È½¼ö ´ÜÀ§¸¦ À¯ÁöÇÑ´Ù.
+    // ìžë™ì¸¡ì • ëŒ€ê¸° ì„¤ì • ì½ê¸°: ê¸°ì¡´ 200ms íƒ€ì´ë¨¸ í˜¸ì¶œ íšŸìˆ˜ ë‹¨ìœ„ë¥¼ ìœ ì§€í•œë‹¤.
     TAutoInspectionSetting __fastcall GetAutoInspectionSetting();
-    // PLC ½ÅÈ£¡¤¿îÀü ¿É¼Ç¡¤°Ë»ç ¼ö·®À» ÀÐ´Â´Ù. ½Ã¸®¾óÀº ÀüÃ¼ ¼ö½Å ¿Ï·á ÈÄ ¹öÆÛ¿¡¼­ ÀÐ´Â´Ù.
+    // PLC ì‹ í˜¸Â·ìš´ì „ ì˜µì…˜Â·ê²€ì‚¬ ìˆ˜ëŸ‰ì„ ì½ëŠ”ë‹¤. ì‹œë¦¬ì–¼ì€ ì „ì²´ ìˆ˜ì‹  ì™„ë£Œ í›„ ë²„í¼ì—ì„œ ì½ëŠ”ë‹¤.
     TAutoInspectionData __fastcall ReadAutoInspectionData();
-    // ´Ü°è ÆÇ´Ü¿¡¼­ ¹ÝÈ¯ÇÑ ¸í·ÉÀ» ÇÑ ¹ø ½ÇÇàÇÑ´Ù. ½ÇÁ¦ PLC Ãâ·Â¡¤ÃøÁ¤ ½ÃÀÛ¡¤¿À·ùÃ¢Àº ÀÌ°÷¿¡¼­ Ã³¸®ÇÑ´Ù.
+    // ë‹¨ê³„ íŒë‹¨ì—ì„œ ë°˜í™˜í•œ ëª…ë ¹ì„ í•œ ë²ˆ ì‹¤í–‰í•œë‹¤. ì‹¤ì œ PLC ì¶œë ¥Â·ì¸¡ì • ì‹œìž‘Â·ì˜¤ë¥˜ì°½ì€ ì´ê³³ì—ì„œ ì²˜ë¦¬í•œë‹¤.
     void __fastcall RunAutoInspectionCommand(TAutoInspectionCommand command,
         const TAutoInspectionData &data);
-    // ´Ü°è°¡ ¹Ù²ð ¶§ ÀÌÀü/´ÙÀ½ ´Ü°è¿Í ÀüÈ¯ ÀÌÀ¯¸¦ PLC ·Î±×¿¡ ±â·ÏÇÑ´Ù.
+    // ë‹¨ê³„ê°€ ë°”ë€” ë•Œ ì´ì „/ë‹¤ìŒ ë‹¨ê³„ì™€ ì „í™˜ ì´ìœ ë¥¼ PLC ë¡œê·¸ì— ê¸°ë¡í•œë‹¤.
     void __fastcall WriteAutoStepLog(TAutoInspectionStep previous, AnsiString reason);
-    // ÀÚµ¿ÃøÁ¤ ´Ü°è¿Í NG °³¼ö¸¦ ÃÊ±âÈ­ÇÑ´Ù. PLC Ãâ·Â°ú Æ®·¹ÀÌ µ¥ÀÌÅÍ ÃÊ±âÈ­´Â InitializeInspection¿¡¼­ ÇÑ´Ù.
+    // ìžë™ì¸¡ì • ë‹¨ê³„ì™€ NG ê°œìˆ˜ë¥¼ ì´ˆê¸°í™”í•œë‹¤. PLC ì¶œë ¥ê³¼ íŠ¸ë ˆì´ ë°ì´í„° ì´ˆê¸°í™”ëŠ” InitializeInspectionì—ì„œ í•œë‹¤.
     void __fastcall ResetAutoInspection();
     void __fastcall UpdateAutoInspectionMode();
     bool __fastcall IsAutoInspectionBlocked();
     void __fastcall ResetAutoInspectionForPlcMode();
     bool autoInspectionBlockedByPlc;
     unsigned long lastPlcAutoResetVersion;
-    // ¿îÀü ¸ðµå¿¡ µû¶ó PLC AUTO READY ½ÅÈ£ ¼³Á¤: ÀÚµ¿=1, ¼öµ¿=0. °ªÀÌ ¹Ù²ð ¶§¸¸ ±â·ÏÇÑ´Ù.
+    // ìš´ì „ ëª¨ë“œì— ë”°ë¼ PLC AUTO READY ì‹ í˜¸ ì„¤ì •: ìžë™=1, ìˆ˜ë™=0. ê°’ì´ ë°”ë€” ë•Œë§Œ ê¸°ë¡í•œë‹¤.
     void __fastcall SetAutoReadySignalToPLC();
-    // PLC CELL DATA 25¿öµåÀÇ ºñÆ®¸ÊÀ¸·Î 400¼¿ À¯¹«¿Í °³¼ö¸¦ ÀÐ´Â´Ù. Cycle ¸ðµå´Â Àü Ã¤³Î »ç¿ë.
+    // PLC CELL DATA 25ì›Œë“œì˜ ë¹„íŠ¸ë§µìœ¼ë¡œ 400ì…€ ìœ ë¬´ì™€ ê°œìˆ˜ë¥¼ ì½ëŠ”ë‹¤. Cycle ëª¨ë“œëŠ” ì „ ì±„ë„ ì‚¬ìš©.
     void __fastcall ReadAutoCellData();
-    // CELL SERIAL 4,010¿öµå ºÐÇÒ ¼ö½Å ½ÃÀÛ. º°µµ START/COMPLETE ÇÚµå¼ÎÀÌÅ©´Â »ç¿ëÇÏÁö ¾Ê´Â´Ù.
+    // CELL SERIAL 4,010ì›Œë“œ ë¶„í•  ìˆ˜ì‹  ì‹œìž‘. ë³„ë„ START/COMPLETE í•¸ë“œì…°ì´í¬ëŠ” ì‚¬ìš©í•˜ì§€ ì•ŠëŠ”ë‹¤.
     void __fastcall StartAutoCellSerialRead();
-    // PLC ÇÁ·Îºê ¿­¸² È®ÀÎ ÈÄ PCÀÇ PROBE OPEN ¿äÃ»À» 0À¸·Î ÇØÁ¦ÇÑ´Ù.
+    // PLC í”„ë¡œë¸Œ ì—´ë¦¼ í™•ì¸ í›„ PCì˜ PROBE OPEN ìš”ì²­ì„ 0ìœ¼ë¡œ í•´ì œí•œë‹¤.
     void __fastcall ClearProbeOpenSignalToPLC();
-    // ÇöÀç ´Ü°èÀÇ È­¸é ¹®±¸¿Í MEASURING ½ÅÈ£¸¦ °»½ÅÇÑ´Ù. ÇÁ·Îºê/¹èÃâ µ¿ÀÛÀ» »õ·Î ½ÃÀÛÇÏÁö ¾Ê´Â´Ù.
+    // í˜„ìž¬ ë‹¨ê³„ì˜ í™”ë©´ ë¬¸êµ¬ì™€ MEASURING ì‹ í˜¸ë¥¼ ê°±ì‹ í•œë‹¤. í”„ë¡œë¸Œ/ë°°ì¶œ ë™ìž‘ì„ ìƒˆë¡œ ì‹œìž‘í•˜ì§€ ì•ŠëŠ”ë‹¤.
     void __fastcall DisplayAutoInspectionStep();
-    // ¿¹¿Ü ¹ß»ý ´Ü°è¿Í ¿øÀÎÀ» ±â·ÏÇÏ°í PC ÀÚµ¿ ÁøÇàÀ» Á¤ÁöÇÑ´Ù. ¼³ºñ ºñ»óÁ¤Áö ¸í·ÉÀº ¾Æ´Ï´Ù.
+    // ì˜ˆì™¸ ë°œìƒ ë‹¨ê³„ì™€ ì›ì¸ì„ ê¸°ë¡í•˜ê³  PC ìžë™ ì§„í–‰ì„ ì •ì§€í•œë‹¤. ì„¤ë¹„ ë¹„ìƒì •ì§€ ëª…ë ¹ì€ ì•„ë‹ˆë‹¤.
     void __fastcall StopAutoInspectionOnError(AnsiString message);
-    // °á°ú Ã³¸® ÇÔ¼ö Á¾·á¸¦ ½ÃÄö½º¿¡ ¾Ë¸°´Ù. ÀÌÈÄ PLC ÇÁ·Îºê ¿­¸²À» È®ÀÎÇØ¾ß ÀÚµ¿ ¹èÃâÇÑ´Ù.
+    // ê²°ê³¼ ì²˜ë¦¬ í•¨ìˆ˜ ì¢…ë£Œë¥¼ ì‹œí€€ìŠ¤ì— ì•Œë¦°ë‹¤. ì´í›„ PLC í”„ë¡œë¸Œ ì—´ë¦¼ì„ í™•ì¸í•´ì•¼ ìžë™ ë°°ì¶œí•œë‹¤.
     void __fastcall SetAutoMeasurementComplete();
-    // ÀçÃøÁ¤ °¡´É ´Ü°èÀÎÁö È®ÀÎÇÏ°í ÀÌÀü ÃøÁ¤ ¿Ï·á/ÇÁ·Îºê ¿­¸² ¿äÃ»À» ÃÊ±âÈ­ÇÑ´Ù.
+    // ìž¬ì¸¡ì • ê°€ëŠ¥ ë‹¨ê³„ì¸ì§€ í™•ì¸í•˜ê³  ì´ì „ ì¸¡ì • ì™„ë£Œ/í”„ë¡œë¸Œ ì—´ë¦¼ ìš”ì²­ì„ ì´ˆê¸°í™”í•œë‹¤.
     bool __fastcall PrepareAutoRemeasure();
 
     // ===== Stage_Measurement.cpp =====
-    // ÀüÃ¼ ÀçÃøÁ¤ ¿äÃ»: Æ®·¹ÀÌ ID¸¦ À¯ÁöÇÏ°í µ¥ÀÌÅÍ ÃÊ±âÈ­¡¤CELL DATA ÀçÀÐ±â ÈÄ ÇÁ·Îºê ´ÝÈûÀ» ±â´Ù¸°´Ù.
+    // ì „ì²´ ìž¬ì¸¡ì • ìš”ì²­: íŠ¸ë ˆì´ IDë¥¼ ìœ ì§€í•˜ê³  ë°ì´í„° ì´ˆê¸°í™”Â·CELL DATA ìž¬ì½ê¸° í›„ í”„ë¡œë¸Œ ë‹«íž˜ì„ ê¸°ë‹¤ë¦°ë‹¤.
     void __fastcall StartFullRemeasure();
-    // ¼±ÅÃ ÀçÃøÁ¤ ¿äÃ»: ±âÁ¸ ºÒ·® ¸ñ·ÏÀ» »ç¿ëÇÏ°í ÇÁ·Îºê ´ÝÈû È®ÀÎ ÈÄ Ã¤³Îº° ÀçÃøÁ¤À» ½ÃÀÛÇÑ´Ù.
+    // ì„ íƒ ìž¬ì¸¡ì • ìš”ì²­: ê¸°ì¡´ ë¶ˆëŸ‰ ëª©ë¡ì„ ì‚¬ìš©í•˜ê³  í”„ë¡œë¸Œ ë‹«íž˜ í™•ì¸ í›„ ì±„ë„ë³„ ìž¬ì¸¡ì •ì„ ì‹œìž‘í•œë‹¤.
     void __fastcall StartSelectedRemeasure();
-    // IR ÀÀ´ä ¹®ÀÚ¿­À» °ª/Ã¤³Î·Î ÇØ¼®ÇÏ°í ÀÏ¹Ý ÃøÁ¤ ¶Ç´Â ±³Á¤ È­¸é¿¡ Àü´ÞÇÑ´Ù.
+    // IR ì‘ë‹µ ë¬¸ìžì—´ì„ ê°’/ì±„ë„ë¡œ í•´ì„í•˜ê³  ì¼ë°˜ ì¸¡ì • ë˜ëŠ” êµì • í™”ë©´ì— ì „ë‹¬í•œë‹¤.
     void __fastcall ProcessIr(AnsiString param);
-    // Ã¤³Î IR ¼ö½Å Ã³¸®: º¸Á¤¡¤ÆÇÁ¤¡¤¼ö½Å Ç¥½Ã¸¦ °»½ÅÇÑ´Ù. È­¸éÀº ¼ö½Å ¿©ºÎ¿Í ÇöÀç ÃøÁ¤°ªÀ¸·Î °»½ÅÇÑ´Ù.
+    // ì±„ë„ IR ìˆ˜ì‹  ì²˜ë¦¬: ë³´ì •Â·íŒì •Â·ìˆ˜ì‹  í‘œì‹œë¥¼ ê°±ì‹ í•œë‹¤. í™”ë©´ì€ ìˆ˜ì‹  ì—¬ë¶€ì™€ í˜„ìž¬ ì¸¡ì •ê°’ìœ¼ë¡œ ê°±ì‹ í•œë‹¤.
     void __fastcall InsertIrValue(int pos, float value, AnsiString result);
-    // OCV ÀÀ´ä ¹®ÀÚ¿­À» °ª/Ã¤³Î·Î ÇØ¼®ÇÏ°í Ã¤³Î ÆÇÁ¤ ¹× ÇÊ¿ä ½Ã ´ÙÀ½ ÀçÃøÁ¤À» ÁøÇàÇÑ´Ù.
+    // OCV ì‘ë‹µ ë¬¸ìžì—´ì„ ê°’/ì±„ë„ë¡œ í•´ì„í•˜ê³  ì±„ë„ íŒì • ë° í•„ìš” ì‹œ ë‹¤ìŒ ìž¬ì¸¡ì •ì„ ì§„í–‰í•œë‹¤.
     void __fastcall ProcessOcv(AnsiString param);
-    // Ã¤³Î OCV ¼ö½Å Ã³¸®: ±Ô°Ý ÆÇÁ¤¡¤È­¸éÀ» °»½ÅÇÑ´Ù.
+    // ì±„ë„ OCV ìˆ˜ì‹  ì²˜ë¦¬: ê·œê²© íŒì •Â·í™”ë©´ì„ ê°±ì‹ í•œë‹¤.
     void __fastcall InsertOcvValue(int pos, float value);
-    // ÀåºñÀÇ GO/HI/LO/CE µî ÆÇÁ¤ ¹®ÀÚ¸¦ ±âÁ¸ ³»ºÎ °á°ú ÄÚµå·Î º¯È¯ÇÑ´Ù.
+    // ìž¥ë¹„ì˜ GO/HI/LO/CE ë“± íŒì • ë¬¸ìžë¥¼ ê¸°ì¡´ ë‚´ë¶€ ê²°ê³¼ ì½”ë“œë¡œ ë³€í™˜í•œë‹¤.
     int __fastcall GetResult(AnsiString result);
 
     // ===== Stage_TrayData.cpp =====
-    // ¼ö½Å ¹öÆÛÀÇ 400¼¿ ½Ã¸®¾óÀ» º¹»çÇÏ°í ºñ¾î ÀÖÁö ¾ÊÀº °³¼ö¸¦ ¹ÝÈ¯ÇÑ´Ù. ¿Ï·á ÆÇÁ¤Àº È£ÃâºÎ¿¡¼­ ÇÑ´Ù.
+    // ìˆ˜ì‹  ë²„í¼ì˜ 400ì…€ ì‹œë¦¬ì–¼ì„ ë³µì‚¬í•˜ê³  ë¹„ì–´ ìžˆì§€ ì•Šì€ ê°œìˆ˜ë¥¼ ë°˜í™˜í•œë‹¤. ì™„ë£Œ íŒì •ì€ í˜¸ì¶œë¶€ì—ì„œ í•œë‹¤.
     int __fastcall ReadCellSerial();
-    // Æ®·¹ÀÌ IDÀÇ .Tray ÆÄÀÏ¿¡¼­ ¼¿ ½Ã¸®¾óÀ» º¹¿øÇÑ´Ù. ÆÄÀÏÀÌ ¾øÀ¸¸é false.
+    // íŠ¸ë ˆì´ IDì˜ .Tray íŒŒì¼ì—ì„œ ì…€ ì‹œë¦¬ì–¼ì„ ë³µì›í•œë‹¤. íŒŒì¼ì´ ì—†ìœ¼ë©´ false.
     bool __fastcall LoadTrayInfo(AnsiString trayID);
-    // ÇöÀç Æ®·¹ÀÌÀÇ 400¼¿ ½Ã¸®¾óÀ» .Tray ÆÄÀÏ¿¡ ÀúÀåÇÑ´Ù.
+    // í˜„ìž¬ íŠ¸ë ˆì´ì˜ 400ì…€ ì‹œë¦¬ì–¼ì„ .Tray íŒŒì¼ì— ì €ìž¥í•œë‹¤.
     void __fastcall SaveTrayInfo(AnsiString trayID);
-    // ¹èÃâ ¿Ï·áÇÑ Æ®·¹ÀÌÀÇ ÀÓ½Ã .Tray ÆÄÀÏÀ» »èÁ¦ÇÑ´Ù.
+    // ë°°ì¶œ ì™„ë£Œí•œ íŠ¸ë ˆì´ì˜ ìž„ì‹œ .Tray íŒŒì¼ì„ ì‚­ì œí•œë‹¤.
     void __fastcall DeleteTrayInfo(AnsiString trayID);
 
     // ===== Stage_CellDisplay.cpp =====
-    // ¼³ºñ ¹èÄ¡ Å¸ÀÔ¿¡ ¸ÂÃç ¸ÞÀÎ È­¸éÀÇ 400Ã¤³Î ÆÐ³ÎÀ» »ý¼ºÇÑ´Ù.
+    // ì„¤ë¹„ ë°°ì¹˜ íƒ€ìž…ì— ë§žì¶° ë©”ì¸ í™”ë©´ì˜ 400ì±„ë„ íŒ¨ë„ì„ ìƒì„±í•œë‹¤.
     void __fastcall MakePanel();
-    // ¼¿ À¯¹«/ÆÇÁ¤ »ö»ó °»½Å. ½ÃÀÛ ¾È³» ¹øÈ£/Æ®·¹ÀÌ ÅõÀÔ ÈÄ °ø¶õ/°¢°¢ ¼ö½ÅÇÑ ½ÇÁ¦ °ªÀ» Ç¥½ÃÇÑ´Ù.
+    // ì…€ ìœ ë¬´/íŒì • ìƒ‰ìƒ ê°±ì‹ . ì‹œìž‘ ì•ˆë‚´ ë²ˆí˜¸/íŠ¸ë ˆì´ íˆ¬ìž… í›„ ê³µëž€/ê°ê° ìˆ˜ì‹ í•œ ì‹¤ì œ ê°’ì„ í‘œì‹œí•œë‹¤.
     void __fastcall UpdateCellDisplay(int index);
-    // ¼ö½Å Ç¥½Ã ÃÊ±âÈ­. ÇÁ·Î±×·¥ ½ÃÀÛÀº ¹øÈ£, Æ®·¹ÀÌ ÅõÀÔ/ÃøÁ¤ ÀÌÈÄ´Â °ø¶õ.
+    // ìˆ˜ì‹  í‘œì‹œ ì´ˆê¸°í™”. í”„ë¡œê·¸ëž¨ ì‹œìž‘ì€ ë²ˆí˜¸, íŠ¸ë ˆì´ íˆ¬ìž…/ì¸¡ì • ì´í›„ëŠ” ê³µëž€.
     void __fastcall InitializeCellDisplay();
 
     // ===== Stage_comm.cpp =====
-    // Àåºñ ÀÀ´ä ºÐ±â: AMS/AMF/IR/OCV/¼¾¼­ »óÅÂ µîÀ» ÇØ´ç Ã³¸® ÇÔ¼ö·Î Àü´ÞÇÑ´Ù.
+    // ìž¥ë¹„ ì‘ë‹µ ë¶„ê¸°: AMS/AMF/IR/OCV/ì„¼ì„œ ìƒíƒœ ë“±ì„ í•´ë‹¹ ì²˜ë¦¬ í•¨ìˆ˜ë¡œ ì „ë‹¬í•œë‹¤.
     void __fastcall ProcessEquipmentMessage(TMessage& Msg);
     void __fastcall SendData(AnsiString Cmd, AnsiString Param="");
     void __fastcall MakeData(int tx_mode, AnsiString cmd="", AnsiString param="");
     int __fastcall ParseEquipmentMessage(AnsiString msg, AnsiString &param);
-    // ÀåºñÀÇ ·ÎÄÃ ÀçÃøÁ¤ ¿äÃ»À» Ã³¸®ÇÏ°í ±âÁ¸ ºÒ·® °³¼ö¿¡ µû¶ó ÀçÃøÁ¤ ¸ðµå¸¦ Á¤ÇÑ´Ù.
+    // ìž¥ë¹„ì˜ ë¡œì»¬ ìž¬ì¸¡ì • ìš”ì²­ì„ ì²˜ë¦¬í•˜ê³  ê¸°ì¡´ ë¶ˆëŸ‰ ê°œìˆ˜ì— ë”°ë¼ ìž¬ì¸¡ì • ëª¨ë“œë¥¼ ì •í•œë‹¤.
     void __fastcall ProcessOpBoxRemeasureRequest(bool frm = false);
-    // ¼¾¼­ ÀÔ·Â ÀÀ´äÀ» ÀúÀåÇÏ°í Àåºñ »óÅÂ º¯°æÀ» °¨ÁöÇÑ´Ù.
+    // ì„¼ì„œ ìž…ë ¥ ì‘ë‹µì„ ì €ìž¥í•˜ê³  ìž¥ë¹„ ìƒíƒœ ë³€ê²½ì„ ê°ì§€í•œë‹¤.
     void __fastcall ProcessSensorInput(AnsiString param);
-    // Àåºñ ¼¾¼­ Ãâ·Â ÀÀ´äÀ» ¼¾¼­ Ãâ·Â ¹öÆÛ¿¡ ÀúÀåÇÑ´Ù.
+    // ìž¥ë¹„ ì„¼ì„œ ì¶œë ¥ ì‘ë‹µì„ ì„¼ì„œ ì¶œë ¥ ë²„í¼ì— ì €ìž¥í•œë‹¤.
     void __fastcall ProcessSensorOutput(AnsiString param);
     int __fastcall SensorState(AnsiString cmd);
-    // Àåºñ »óÅÂ ÄÚµå º¯°æ¿¡ µû¸¥ ±âÁ¸ È­¸é/¸í·É Ã³¸®¸¦ ¼öÇàÇÑ´Ù.
+    // ìž¥ë¹„ ìƒíƒœ ì½”ë“œ ë³€ê²½ì— ë”°ë¥¸ ê¸°ì¡´ í™”ë©´/ëª…ë ¹ ì²˜ë¦¬ë¥¼ ìˆ˜í–‰í•œë‹¤.
     void __fastcall EquipStatus(int cmd);
-    // ÃÖÃÊ ¼¾¼­ ÀÀ´äÀÇ ¿îÀü »óÅÂ¸¦ ÃÊ±â È­¸é¿¡ ¹Ý¿µÇÑ´Ù.
+    // ìµœì´ˆ ì„¼ì„œ ì‘ë‹µì˜ ìš´ì „ ìƒíƒœë¥¼ ì´ˆê¸° í™”ë©´ì— ë°˜ì˜í•œë‹¤.
     void __fastcall InitEquipStatus(int cmd);
-    // ¿¹¾àµÈ Auto/Remote/Local ¿îÀü ¸ðµå¸¦ Àû¿ëÇÑ´Ù.
+    // ì˜ˆì•½ëœ Auto/Remote/Local ìš´ì „ ëª¨ë“œë¥¼ ì ìš©í•œë‹¤.
     void __fastcall ModChange();
 
     // ===== Stage_Form.cpp =====
-    // ¸ÞÀÎ/ÀçÃøÁ¤/¿À·ù ±×·ìÀ» ÀüÈ¯ÇÏ°í ¿À·ù È­¸é Ç¥½Ã °³¼ö¸¦ °»½ÅÇÑ´Ù.
+    // ë©”ì¸/ìž¬ì¸¡ì •/ì˜¤ë¥˜ ê·¸ë£¹ì„ ì „í™˜í•˜ê³  ì˜¤ë¥˜ í™”ë©´ í‘œì‹œ ê°œìˆ˜ë¥¼ ê°±ì‹ í•œë‹¤.
     void __fastcall ShowPanelGroup(TGroupBox *grp);
     void __fastcall RefreshStageStatusImage();
     void __fastcall DisplayProcess(AnsiString Status_Step, AnsiString msg, bool bError = false);
     void __fastcall DisplayError(AnsiString msg, bool bError = false);
-    // Stage_Form.cpp: ÀÚµ¿Àº trueÀÏ ¶§ ÁøÇà º¸·ù, ¼öµ¿Àº ¿À·ù Ç¥½Ã¸¸ ¼öÇàÇÑ´Ù.
+    // Stage_Form.cpp: ìžë™ì€ trueì¼ ë•Œ ì§„í–‰ ë³´ë¥˜, ìˆ˜ë™ì€ ì˜¤ë¥˜ í‘œì‹œë§Œ ìˆ˜í–‰í•œë‹¤.
     bool __fastcall CheckAutoInspectionError();
     bool __fastcall CheckManualInspectionError();
     void __fastcall ResponseError(AnsiString param);
@@ -625,12 +625,12 @@ private:
     bool __fastcall ValidateConnectionSettings(bool equipment, bool plc);
     void __fastcall ApplyConnectionSettings(bool equipment, bool plc);
     void __fastcall ReadCellInfo();
-    bool __fastcall WriteResultFile(); // ÆÄÀÏ ¾²±â 1È¸. ½ÇÆÐ ½Ã false, Àç½Ãµµ Á¤Ã¥Àº È£ÃâºÎ.
+    bool __fastcall WriteResultFile(); // íŒŒì¼ ì“°ê¸° 1íšŒ. ì‹¤íŒ¨ ì‹œ false, ìž¬ì‹œë„ ì •ì±…ì€ í˜¸ì¶œë¶€.
     void __fastcall WriteErrorLog(AnsiString title, AnsiString detail1, AnsiString detail2);
     void __fastcall ReadCalibrationOffsets();
 
 public:
-    // ===== µ¥ÀÌÅÍ: ±âÁ¸ Á¢±Ù ¹üÀ§ À¯Áö =====
+    // ===== ë°ì´í„°: ê¸°ì¡´ ì ‘ê·¼ ë²”ìœ„ ìœ ì§€ =====
     AnsiString PLC_IPADDRESS;
     int PLC_PCPORT;
     int PLC_PLCPORT;
@@ -647,82 +647,82 @@ public:
     int acc_finalng;
     int acc_cnt;
     AnsiString acc_init;
-    // ÇöÀç Æ®·¹ÀÌ °Ë»ç ½ÃÀÛ ½Ã°¢.
+    // í˜„ìž¬ íŠ¸ë ˆì´ ê²€ì‚¬ ì‹œìž‘ ì‹œê°.
     TDateTime m_dateTime;
     TExtInput  sensor;
     TExtOutput  sensor_out;
     SEND_DATA send;
     queue<string> q_cmd;
     queue<string> q_param;
-    // ÇöÀç Æ®·¹ÀÌÀÇ ÀçÃøÁ¤ ´ë»ó/ÁøÇà Á¤º¸.
+    // í˜„ìž¬ íŠ¸ë ˆì´ì˜ ìž¬ì¸¡ì • ëŒ€ìƒ/ì§„í–‰ ì •ë³´.
     REMEASURE retest;
     int senCnt;
     AnsiString OldSenCmd;
     AnsiString OldPLCStatus, PLCStatus, OldErrorCheckStatus;
-    // ¼öµ¿ ÃøÁ¤ ¿îÀü ¿©ºÎ.
+    // ìˆ˜ë™ ì¸¡ì • ìš´ì „ ì—¬ë¶€.
     bool bLocal;
 
     // ===== FormTotal.cpp =====
     __fastcall TTotalForm(TComponent* Owner);
 
     // ===== Stage_AutoInspection.cpp =====
-    // ÀÚµ¿ °Ë»ç ÀüÃ¼ ÃÊ±âÈ­: PLC Ãâ·Â ¡æ Æ®·¹ÀÌ µ¥ÀÌÅÍ ¡æ ´Ü°è ¼ø¼­·Î ÃÊ±âÈ­ÇÑ´Ù.
+    // ìžë™ ê²€ì‚¬ ì „ì²´ ì´ˆê¸°í™”: PLC ì¶œë ¥ â†’ íŠ¸ë ˆì´ ë°ì´í„° â†’ ë‹¨ê³„ ìˆœì„œë¡œ ì´ˆê¸°í™”í•œë‹¤.
     void __fastcall InitializeInspection();
-    // ÀÚµ¿ ¹èÃâ ÆÇ´Ü: Auto/ÇÁ·Îºê ¿­¸²/°á°ú ¿Ï·á¸¦ È®ÀÎÇÏ°í NG Á¶°Ç¿¡ µû¶ó ¿À·ù ´ë±â ¶Ç´Â ¹èÃâÇÑ´Ù.
+    // ìžë™ ë°°ì¶œ íŒë‹¨: Auto/í”„ë¡œë¸Œ ì—´ë¦¼/ê²°ê³¼ ì™„ë£Œë¥¼ í™•ì¸í•˜ê³  NG ì¡°ê±´ì— ë”°ë¼ ì˜¤ë¥˜ ëŒ€ê¸° ë˜ëŠ” ë°°ì¶œí•œë‹¤.
     void __fastcall ProcessAutoTrayOut();
-    // ¼öµ¿ ¶Ç´Â ¿î¿µÀÚ°¡ ½ÂÀÎÇÑ ¹èÃâ: NG¸¦ ´Ù½Ã °Ë»çÇÏÁö ¾Ê°í TRAY OUTÀ» ¿äÃ»ÇÑ´Ù.
+    // ìˆ˜ë™ ë˜ëŠ” ìš´ì˜ìžê°€ ìŠ¹ì¸í•œ ë°°ì¶œ: NGë¥¼ ë‹¤ì‹œ ê²€ì‚¬í•˜ì§€ ì•Šê³  TRAY OUTì„ ìš”ì²­í•œë‹¤.
     void __fastcall ForceTrayOut();
-    // NG ¿À·ùÃ¢ Restart: PLC¡¤Æ®·¹ÀÌ¡¤ÀÚµ¿ ´Ü°è¸¦ ÃÊ±âÈ­ÇÏ°í TRAY INºÎÅÍ ´Ù½Ã °Ë»çÇÑ´Ù.
+    // NG ì˜¤ë¥˜ì°½ Restart: PLCÂ·íŠ¸ë ˆì´Â·ìžë™ ë‹¨ê³„ë¥¼ ì´ˆê¸°í™”í•˜ê³  TRAY INë¶€í„° ë‹¤ì‹œ ê²€ì‚¬í•œë‹¤.
     void __fastcall RestartAutoInspection();
-    // ½Ã¸®¾ó ¿À·ùÃ¢ SAVE: ÇöÀç µ¥ÀÌÅÍ¸¦ ÀúÀåÇÏ°í ÇÁ·Îºê ´ÝÈû È®ÀÎ ´Ü°è·Î ÁøÇàÇÑ´Ù.
+    // ì‹œë¦¬ì–¼ ì˜¤ë¥˜ì°½ SAVE: í˜„ìž¬ ë°ì´í„°ë¥¼ ì €ìž¥í•˜ê³  í”„ë¡œë¸Œ ë‹«íž˜ í™•ì¸ ë‹¨ê³„ë¡œ ì§„í–‰í•œë‹¤.
     void __fastcall AcceptCellSerialData();
-    // ½Ã¸®¾ó ¿À·ùÃ¢ CANCEL: ´ë±â È½¼ö¸¦ ÃÊ±âÈ­ÇÏ°í 4,010¿öµå¸¦ Ã³À½ºÎÅÍ ´Ù½Ã ¼ö½ÅÇÑ´Ù.
+    // ì‹œë¦¬ì–¼ ì˜¤ë¥˜ì°½ CANCEL: ëŒ€ê¸° íšŸìˆ˜ë¥¼ ì´ˆê¸°í™”í•˜ê³  4,010ì›Œë“œë¥¼ ì²˜ìŒë¶€í„° ë‹¤ì‹œ ìˆ˜ì‹ í•œë‹¤.
     void __fastcall RetryCellSerialRead();
 
     // ===== Stage_Measurement.cpp =====
-    // ¼öµ¿ ÃøÁ¤ ÃÊ±âÈ­: ³»ºÎ °ªÀº 0, È­¸éÀº ¼ö½Å Àü±îÁö °ø¶õ.
+    // ìˆ˜ë™ ì¸¡ì • ì´ˆê¸°í™”: ë‚´ë¶€ ê°’ì€ 0, í™”ë©´ì€ ìˆ˜ì‹  ì „ê¹Œì§€ ê³µëž€.
     void __fastcall ResetMeasurementData();
-    // ÀüÃ¼ ÃøÁ¤ ½ÃÀÛ: Ç¥½Ã¡¤¼ö½Å ÇÃ·¡±×¸¦ ÃÊ±âÈ­ÇÏ°í AMS ¸í·ÉÀ» ¿¹¾àÇÑ´Ù.
+    // ì „ì²´ ì¸¡ì • ì‹œìž‘: í‘œì‹œÂ·ìˆ˜ì‹  í”Œëž˜ê·¸ë¥¼ ì´ˆê¸°í™”í•˜ê³  AMS ëª…ë ¹ì„ ì˜ˆì•½í•œë‹¤.
     void __fastcall CmdStartMeasurement();
-    // °á°ú ¸¶°¨: STP/ÇÁ·Îºê ¿­¸² ¿äÃ» ¡æ NG¡¤°á°ú ÄÚµå¡¤°ª¡¤ÆÄÀÏ ÀÛ¼º ¡æ COMPLETE ¡æ ÀÚµ¿ ´Ü°è ¿Ï·á ÅëÁö.
+    // ê²°ê³¼ ë§ˆê°: STP/í”„ë¡œë¸Œ ì—´ë¦¼ ìš”ì²­ â†’ NGÂ·ê²°ê³¼ ì½”ë“œÂ·ê°’Â·íŒŒì¼ ìž‘ì„± â†’ COMPLETE â†’ ìžë™ ë‹¨ê³„ ì™„ë£Œ í†µì§€.
     void __fastcall FinishMeasurement();
-    // MSA Áß´Ü: ÀúÀå/ÀÚµ¿¸ðµå ´ë±â¿Í ¹«°üÇÏ°Ô STP¿Í ÇÁ·Îºê ¿­¸²À» ¿äÃ»ÇÑ´Ù.
+    // MSA ì¤‘ë‹¨: ì €ìž¥/ìžë™ëª¨ë“œ ëŒ€ê¸°ì™€ ë¬´ê´€í•˜ê²Œ STPì™€ í”„ë¡œë¸Œ ì—´ë¦¼ì„ ìš”ì²­í•œë‹¤.
     void __fastcall StopMsaMeasurement();
     bool IsMeasurementResultComplete() const { return resultSaveStep == RESULT_COMPLETE; }
-    // [CELL SERIAL °øÅë] ¼öµ¿/MSA ¹Ýº¹ ÃøÁ¤µµ ÀÌÀü °á°ú ÀúÀå ´ë±â°¡ ³¡³­ µÚ ´ÙÀ½ ÃøÁ¤À» ½ÃÀÛÇÑ´Ù.
+    // [CELL SERIAL ê³µí†µ] ìˆ˜ë™/MSA ë°˜ë³µ ì¸¡ì •ë„ ì´ì „ ê²°ê³¼ ì €ìž¥ ëŒ€ê¸°ê°€ ëë‚œ ë’¤ ë‹¤ìŒ ì¸¡ì •ì„ ì‹œìž‘í•œë‹¤.
     bool IsWaitingForResultSave() const {
         return resultSaveStep == RESULT_WAIT_SERIAL ||
                resultSaveStep == RESULT_WRITE_FILE || resultSaveStep == RESULT_WAIT_PLC_SEND;
     }
-    // AMF ¼ö½Å ÈÄ Ã³¸®: ¿îÀü ¸ðµå¿¡ µû¶ó °á°ú ¸¶°¨ ¶Ç´Â ±âÁ¸ ÀÚµ¿ °³º° ÀçÃøÁ¤À» ¼öÇàÇÑ´Ù.
+    // AMF ìˆ˜ì‹  í›„ ì²˜ë¦¬: ìš´ì „ ëª¨ë“œì— ë”°ë¼ ê²°ê³¼ ë§ˆê° ë˜ëŠ” ê¸°ì¡´ ìžë™ ê°œë³„ ìž¬ì¸¡ì •ì„ ìˆ˜í–‰í•œë‹¤.
     void __fastcall ProcessMeasurementCompleteResponse();
-    // ÀçÃøÁ¤ ¸ñ·ÏÀÇ ´ÙÀ½ IR/OCV¸¦ ¿äÃ»ÇÑ´Ù. ´õ ¾øÀ¸¸é ÃÖÁ¾ ÆÇÁ¤°ú °á°ú ¸¶°¨À» ¼öÇàÇÑ´Ù.
+    // ìž¬ì¸¡ì • ëª©ë¡ì˜ ë‹¤ìŒ IR/OCVë¥¼ ìš”ì²­í•œë‹¤. ë” ì—†ìœ¼ë©´ ìµœì¢… íŒì •ê³¼ ê²°ê³¼ ë§ˆê°ì„ ìˆ˜í–‰í•œë‹¤.
     void __fastcall ExecuteRemeasure();
-    // ÀüÃ¼ ÃøÁ¤ ÈÄ ÀçÃøÁ¤ ´ë»ó Áý°è. SiteConfig.hÀÇ °³¼ö Á¶°Ç¿¡ µû¶ó °³º° ÀçÃøÁ¤ ¶Ç´Â °á°ú ¸¶°¨ÇÑ´Ù.
+    // ì „ì²´ ì¸¡ì • í›„ ìž¬ì¸¡ì • ëŒ€ìƒ ì§‘ê³„. SiteConfig.hì˜ ê°œìˆ˜ ì¡°ê±´ì— ë”°ë¼ ê°œë³„ ìž¬ì¸¡ì • ë˜ëŠ” ê²°ê³¼ ë§ˆê°í•œë‹¤.
     void __fastcall SetRemeasureList();
-    // °³º° ÀçÃøÁ¤ ÈÄ ÃÖÁ¾ ºÒ·® ¸ñ·ÏÀ» ´Ù½Ã Áý°èÇÑ´Ù. ÃøÁ¤ ¸í·ÉÀº º¸³»Áö ¾Ê´Â´Ù.
+    // ê°œë³„ ìž¬ì¸¡ì • í›„ ìµœì¢… ë¶ˆëŸ‰ ëª©ë¡ì„ ë‹¤ì‹œ ì§‘ê³„í•œë‹¤. ì¸¡ì • ëª…ë ¹ì€ ë³´ë‚´ì§€ ì•ŠëŠ”ë‹¤.
     void __fastcall SetRemeasureListAfter();
 
     // ===== Stage_PlcData.cpp =====
-    // PC¡æPLC °Ë»ç Ãâ·Â°ú °á°ú ¹öÆÛ ÃÊ±âÈ­. ±âÁ¸ ÁÖ¼Ò¡¤ÃÊ±â°ª¡¤Ãâ·Â ¼ø¼­¸¦ À¯ÁöÇÑ´Ù.
+    // PCâ†’PLC ê²€ì‚¬ ì¶œë ¥ê³¼ ê²°ê³¼ ë²„í¼ ì´ˆê¸°í™”. ê¸°ì¡´ ì£¼ì†ŒÂ·ì´ˆê¸°ê°’Â·ì¶œë ¥ ìˆœì„œë¥¼ ìœ ì§€í•œë‹¤.
     void __fastcall InitializePlcData();
-    // ÃÖÁ¾ ÆÇÁ¤À¸·Î PLC NG ºñÆ®/ÄÚµå/¼ö·®À» ÇÔ²² ÀÛ¼º. measurementNgCount´Â ½ÇÁ¦ ¼¿ÀÇ ºÒ·®¸¸ ¼¾´Ù.
+    // ìµœì¢… íŒì •ìœ¼ë¡œ PLC NG ë¹„íŠ¸/ì½”ë“œ/ìˆ˜ëŸ‰ì„ í•¨ê»˜ ìž‘ì„±. measurementNgCountëŠ” ì‹¤ì œ ì…€ì˜ ë¶ˆëŸ‰ë§Œ ì„¼ë‹¤.
     void __fastcall UpdatePlcResults();
-    // IR/OCV °ªÀ» PLC °á°ú ¹öÆÛ¿¡ ¾´´Ù. ÀÎÀÚ ¾ø´Â ÇÔ¼ö´Â ÃøÁ¤°ª, int ÀÎÀÚ´Â ÃÊ±âÈ­ °ªÀÌ´Ù.
+    // IR/OCV ê°’ì„ PLC ê²°ê³¼ ë²„í¼ì— ì“´ë‹¤. ì¸ìž ì—†ëŠ” í•¨ìˆ˜ëŠ” ì¸¡ì •ê°’, int ì¸ìžëŠ” ì´ˆê¸°í™” ê°’ì´ë‹¤.
     void __fastcall WriteIROCVValue();
-    // IR/OCV °ªÀ» PLC °á°ú ¹öÆÛ¿¡ ¾´´Ù. ÀÎÀÚ ¾ø´Â ÇÔ¼ö´Â ÃøÁ¤°ª, int ÀÎÀÚ´Â ÃÊ±âÈ­ °ªÀÌ´Ù.
+    // IR/OCV ê°’ì„ PLC ê²°ê³¼ ë²„í¼ì— ì“´ë‹¤. ì¸ìž ì—†ëŠ” í•¨ìˆ˜ëŠ” ì¸¡ì •ê°’, int ì¸ìžëŠ” ì´ˆê¸°í™” ê°’ì´ë‹¤.
     void __fastcall WriteIROCVValue(int initValue);
-    // ÇöÀç IR/OCV ±Ô°Ý »ó¡¤ÇÏÇÑÀ» ±âÁ¸ ¹èÀ²·Î PLC ¼³Á¤ ¹öÆÛ¿¡ ±â·ÏÇÑ´Ù.
+    // í˜„ìž¬ IR/OCV ê·œê²© ìƒÂ·í•˜í•œì„ ê¸°ì¡´ ë°°ìœ¨ë¡œ PLC ì„¤ì • ë²„í¼ì— ê¸°ë¡í•œë‹¤.
     void __fastcall WritePlcSpecifications();
 
     // ===== Stage_TrayData.cpp =====
-    // »õ Æ®·¹ÀÌ ÃÊ±âÈ­: ½Ã¸®¾ó ¸ðµå È®Á¤/Áö¿¬ ÀúÀå Ãë¼Ò, µ¥ÀÌÅÍ¿Í ¼ö½Å Ç¥½Ã ÃÊ±âÈ­.
+    // ìƒˆ íŠ¸ë ˆì´ ì´ˆê¸°í™”: ì‹œë¦¬ì–¼ ëª¨ë“œ í™•ì •/ì§€ì—° ì €ìž¥ ì·¨ì†Œ, ë°ì´í„°ì™€ ìˆ˜ì‹  í‘œì‹œ ì´ˆê¸°í™”.
     void __fastcall InitializeTrayData();
 
     // ===== Stage_CellDisplay.cpp =====
-    // ÃøÁ¤Á¤º¸ Ã¢ ÀçÇ¥½Ã. ¼ö½Å°ª°ú ¹Ì¼ö½Å °ø¶õ(ÇÁ·Î±×·¥ ½ÃÀÛ Àü¿¡´Â ¾È³» ¹øÈ£)À» À¯ÁöÇÑ´Ù.
+    // ì¸¡ì •ì •ë³´ ì°½ ìž¬í‘œì‹œ. ìˆ˜ì‹ ê°’ê³¼ ë¯¸ìˆ˜ì‹  ê³µëž€(í”„ë¡œê·¸ëž¨ ì‹œìž‘ ì „ì—ëŠ” ì•ˆë‚´ ë²ˆí˜¸)ì„ ìœ ì§€í•œë‹¤.
     void __fastcall InitializeMeasureForm();
-    // CELL DATAÀÇ ¼¿ À¯¹«¸¦ Ã¤³Î È­¸é¿¡ ¹Ý¿µÇÑ´Ù. ÃøÁ¤°ª ¼ö½Å ¿©ºÎ´Â º¯°æÇÏÁö ¾Ê´Â´Ù.
+    // CELL DATAì˜ ì…€ ìœ ë¬´ë¥¼ ì±„ë„ í™”ë©´ì— ë°˜ì˜í•œë‹¤. ì¸¡ì •ê°’ ìˆ˜ì‹  ì—¬ë¶€ëŠ” ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
     void __fastcall DisplayTrayInfo();
 
     // ===== Stage_comm.cpp =====
@@ -738,13 +738,13 @@ public:
     void __fastcall DisplayStatus(int status);
     void __fastcall DisplayStageError(int err);
     void __fastcall ProcessError(AnsiString err1, AnsiString err2,AnsiString err3,AnsiString err4);
-    // PLC ÀÔ·Â ½ÅÈ£ ON/OFF¸¦ Ç¥½Ãµî »ö»óÀ¸·Î ¹Ý¿µÇÑ´Ù.
+    // PLC ìž…ë ¥ ì‹ í˜¸ ON/OFFë¥¼ í‘œì‹œë“± ìƒ‰ìƒìœ¼ë¡œ ë°˜ì˜í•œë‹¤.
     void __fastcall DisplayPlcSignal(TAdvSmoothPanel *advPanel, bool bOn);
-    // ÀÔ·Â ¾ÏÈ£¸¦ È®ÀÎÇÑ µÚ ¼³Á¤ È­¸éÀÇ Á¢±ÙÀ» Çã¿ëÇÏ°Å³ª ¿À·ù ¹®±¸¸¦ Ç¥½ÃÇÑ´Ù.
+    // ìž…ë ¥ ì•”í˜¸ë¥¼ í™•ì¸í•œ ë’¤ ì„¤ì • í™”ë©´ì˜ ì ‘ê·¼ì„ í—ˆìš©í•˜ê±°ë‚˜ ì˜¤ë¥˜ ë¬¸êµ¬ë¥¼ í‘œì‹œí•œë‹¤.
     void __fastcall CheckPassword();
 
     // ===== Stage_log.cpp =====
-    // mapping.csv¿¡¼­ Àåºñ¡êÈ­¸é Ã¤³Î ¸ÅÇÎÀ» ÀÐ°í, ÆÄÀÏÀÌ ¾øÀ¸¸é ±âº» ¸ÅÇÎÀ» ¸¸µç´Ù.
+    // mapping.csvì—ì„œ ìž¥ë¹„â†”í™”ë©´ ì±„ë„ ë§¤í•‘ì„ ì½ê³ , íŒŒì¼ì´ ì—†ìœ¼ë©´ ê¸°ë³¸ ë§¤í•‘ì„ ë§Œë“ ë‹¤.
     void __fastcall ReadChannelMapping();
     void __fastcall ReadRemeasureInfo();
     void __fastcall WriteRemeasureInfo();

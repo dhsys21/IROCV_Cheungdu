@@ -79,7 +79,7 @@ void __fastcall TForm_PLCInterface::SetListViewPLC()
     //* CELL SERIAL DATA
     AddListView(ListView_PLC, "D" + IntToStr(PLC_D_CELL_SERIAL_NUM + PLC_D_IROCV_CELL_SERIAL_TRAYID), "CELL SERIAL TRAY ID");
 
-    // ½Ã¸®¾óÀº Ã¤³Î´ç 10¿öµå. ¿ä¾à/ÀüÃ¼ ¸ðµå ¸ðµÎ ½ÇÁ¦ Ã¤³ÎÀÇ ÁÖ¼Ò¸¦ Ç¥½ÃÇÑ´Ù.
+    // ì‹œë¦¬ì–¼ì€ ì±„ë„ë‹¹ 10ì›Œë“œ. ìš”ì•½/ì „ì²´ ëª¨ë“œ ëª¨ë‘ ì‹¤ì œ ì±„ë„ì˜ ì£¼ì†Œë¥¼ í‘œì‹œí•œë‹¤.
     for(int channel = 0; channel < MAXCHANNEL; channel += channelStep)
        AddListView(ListView_PLC, "D" + IntToStr(PLC_D_CELL_SERIAL_NUM + PLC_D_IROCV_CELL_SERIAL + channel * PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL), "CELL SERIAL #" + IntToStr(channel + 1));
 }
@@ -121,13 +121,13 @@ void __fastcall TForm_PLCInterface::SetListViewPC()
 		AddListView(ListView_PC, "D" + IntToStr(PC_D_INTERFACE_OCV + PC_D_IROCV_OCV_VALUE + channel * 2), "OCV VALUE #" + IntToStr(channel + 1));
 }
 //---------------------------------------------------------------------------
-// Ç¥½ÃÇÒ Ã¤³Î °£°Ý. PLC µ¥ÀÌÅÍ ÀÚÃ¼³ª ÀÐ±â/¾²±â Åë½Å ¹üÀ§´Â º¯°æÇÏÁö ¾Ê´Â´Ù.
+// í‘œì‹œí•  ì±„ë„ ê°„ê²©. PLC ë°ì´í„° ìžì²´ë‚˜ ì½ê¸°/ì“°ê¸° í†µì‹  ë²”ìœ„ëŠ” ë³€ê²½í•˜ì§€ ì•ŠëŠ”ë‹¤.
 int __fastcall TForm_PLCInterface::GetDisplayChannelStep()
 {
     return chkShowAll->Checked ? 1 : 20;
 }
 //---------------------------------------------------------------------------
-// Show all ÀüÈ¯: ¸ñ·Ï°ú °ªÀÇ Çà ¼ø¼­¸¦ ÇÔ²² ´Ù½Ã ¸¸µç´Ù. Å×½ºÆ® ÆÐ³Î Ç¥½Ã »óÅÂ´Â À¯ÁöÇÑ´Ù.
+// Show all ì „í™˜: ëª©ë¡ê³¼ ê°’ì˜ í–‰ ìˆœì„œë¥¼ í•¨ê»˜ ë‹¤ì‹œ ë§Œë“ ë‹¤. í…ŒìŠ¤íŠ¸ íŒ¨ë„ í‘œì‹œ ìƒíƒœëŠ” ìœ ì§€í•œë‹¤.
 void __fastcall TForm_PLCInterface::chkShowAllClick(TObject *Sender)
 {
     const bool timerEnabled = Timer_Update->Enabled;
@@ -171,7 +171,7 @@ void __fastcall TForm_PLCInterface::FormClose(TObject *Sender, TCloseAction &Act
 void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
 {
 	const int channelStep = GetDisplayChannelStep();
-	// ÀüÃ¼ Ç¥½Ã ½Ã¿¡µµ Çàº° Àç±×¸®±â¸¦ ¸ð¾Æ¼­ ½ºÅ©·Ñ Áß ±ôºýÀÓÀ» ÁÙÀÎ´Ù.
+	// ì „ì²´ í‘œì‹œ ì‹œì—ë„ í–‰ë³„ ìž¬ê·¸ë¦¬ê¸°ë¥¼ ëª¨ì•„ì„œ ìŠ¤í¬ë¡¤ ì¤‘ ê¹œë¹¡ìž„ì„ ì¤„ì¸ë‹¤.
 	ListView_PLC->Items->BeginUpdate();
 	ListView_PC->Items->BeginUpdate();
 	try
@@ -189,7 +189,7 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
         }
 
         Label4->Caption = UiText("CELL INFO. : ");
-        if(Mod_PLC->ClientSocket_PLC->Active)    //    PLC »óÅÂ
+        if(Mod_PLC->ClientSocket_PLC->Active)    //    PLC ìƒíƒœ
         {
             // PLC - IR/OCV
             index = 0;
@@ -220,7 +220,7 @@ void __fastcall TForm_PLCInterface::Timer_UpdateTimer(TObject *Sender)
                 ListView_PLC->Items->Item[index++]->SubItems->Strings[1] = Mod_PLC->GetCellSerial(PLC_D_IROCV_CELL_SERIAL, channel, PLC_D_CELL_SERIAL_WORDS_PER_CHANNEL);
         }
 
-        if(Mod_PLC->ClientSocket_PC->Active)    //    PC »óÅÂ
+        if(Mod_PLC->ClientSocket_PC->Active)    //    PC ìƒíƒœ
         {
             // PC - IR/OCV
             index = 0;
@@ -532,7 +532,7 @@ void __fastcall TForm_PLCInterface::btnWriteIrOcvValueClick(TObject *Sender)
 		? editIncrement->Text.Trim().ToIntDef(1) : 0;
 
 	// ir value 2 Word
-	// 2 Word :  value / (65536 / 2) => À­ ÁÖ¼Ò¿¡ ¾²±â, value % (65536 /2 ) => ¾Æ·¡ ÁÖ¼Ò¿¡ ¾²±â // herald 2017 11 30
+	// 2 Word :  value / (65536 / 2) => ìœ— ì£¼ì†Œì— ì“°ê¸°, value % (65536 /2 ) => ì•„ëž˜ ì£¼ì†Œì— ì“°ê¸° // herald 2017 11 30
 	for(int i = 0; i < MAXCHANNEL; i++)
 	{
 		int32_t ir_int = static_cast<int32_t>(ir_base * 100.0)

@@ -21,13 +21,13 @@ void __fastcall TForm_NgCountError::DisplayErrorMessage(AnsiString title, WideSt
 	{
 		Timer_BringToFront->Enabled = true;
 
-		// PLC ¿À·ù Ãâ·ÂÀº °Ë»ç Ã³¸®¿¡¼­ ´ã´çÇÑ´Ù. ÀÌ ÇÔ¼ö´Â È­¸é¸¸ Ç¥½ÃÇÑ´Ù.
+		// PLC ì˜¤ë¥˜ ì¶œë ¥ì€ ê²€ì‚¬ ì²˜ë¦¬ì—ì„œ ë‹´ë‹¹í•œë‹¤. ì´ í•¨ìˆ˜ëŠ” í™”ë©´ë§Œ í‘œì‹œí•œë‹¤.
 
 		Label_Title->Caption = UiText(title);
 		Label_Msg1->Caption = UiText(UnicodeString(msg1));
 		Label_Msg2->Caption = UiText(UnicodeString(msg2));
 
-        // Å©±â/±Û²Ã/ÁÙ¹Ù²Þ/¹öÆ° À§Ä¡´Â DFM¿¡¼­ ÇÔ²² °ü¸®ÇÑ´Ù.
+        // í¬ê¸°/ê¸€ê¼´/ì¤„ë°”ê¿ˆ/ë²„íŠ¼ ìœ„ì¹˜ëŠ” DFMì—ì„œ í•¨ê»˜ ê´€ë¦¬í•œë‹¤.
 
 		SaveErrorLog(title, msg1, msg2);
 
@@ -92,7 +92,7 @@ void __fastcall TForm_NgCountError::Timer_BringToFrontTimer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_NgCountError::timerErrorOffTimer(TObject *Sender)
 {
-    // ÀÌÀü Ã¢ÀÇ ´Ý±â Å¸ÀÌ¸Ó°¡ »õ °Ë»ç ¿À·ù¸¦ ÇØÁ¦ÇÏÁö ¾Êµµ·Ï È­¸é¸¸ Á¤¸®ÇÑ´Ù.
+    // ì´ì „ ì°½ì˜ ë‹«ê¸° íƒ€ì´ë¨¸ê°€ ìƒˆ ê²€ì‚¬ ì˜¤ë¥˜ë¥¼ í•´ì œí•˜ì§€ ì•Šë„ë¡ í™”ë©´ë§Œ ì •ë¦¬í•œë‹¤.
     Timer_BringToFront->Enabled = false;
     timerErrorOff->Enabled = false;
     Close();

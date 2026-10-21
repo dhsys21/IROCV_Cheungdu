@@ -20,27 +20,27 @@ void __fastcall TForm_Error::DisplayErrorMessage(AnsiString title, AnsiString ms
 	{
 		Timer_BringToFront->Enabled = true;
 
-		// PLC ¿À·ù Ãâ·ÂÀº °Ë»ç Ã³¸®¿¡¼­ ´ã´çÇÑ´Ù. ÀÌ ÇÔ¼ö´Â È­¸é¸¸ Ç¥½ÃÇÑ´Ù.
+		// PLC ì˜¤ë¥˜ ì¶œë ¥ì€ ê²€ì‚¬ ì²˜ë¦¬ì—ì„œ ë‹´ë‹¹í•œë‹¤. ì´ í•¨ìˆ˜ëŠ” í™”ë©´ë§Œ í‘œì‹œí•œë‹¤.
 
 		Label_Title->Caption = UiText(title);
 		Label_Msg1->Caption = UiText(msg1);
 		Label_Msg2->Caption = UiText(msg2);
 
-        // Å©±â/±Û²Ã/ÁÙ¹Ù²Þ/¹öÆ° À§Ä¡´Â DFM¿¡¼­ ÇÔ²² °ü¸®ÇÑ´Ù.
+        // í¬ê¸°/ê¸€ê¼´/ì¤„ë°”ê¿ˆ/ë²„íŠ¼ ìœ„ì¹˜ëŠ” DFMì—ì„œ í•¨ê»˜ ê´€ë¦¬í•œë‹¤.
 
 		SaveErrorLog(title, msg1, msg2);
 
 		this->Position = poMainFormCenter;
 		this->BringToFront();
 		this->Show();
-        // ¸ÞÀÎ Ã¢ Áß¾Ó À§Ä¡¸¦ À¯ÁöÇÑ´Ù.
+        // ë©”ì¸ ì°½ ì¤‘ì•™ ìœ„ì¹˜ë¥¼ ìœ ì§€í•œë‹¤.
 	}
 	else this->BringToFront();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm_Error::Button_OKClick(TObject *Sender)
 {
-	// Ã¢ ´Ý±â´Â ¿À·ù ÇØÁ¦°¡ ¾Æ´Ï´Ù. ¹èÃâ/Àç½ÃÀÛ ¼±ÅÃÀº °Ë»ç Ã³¸®·Î Àü´ÞÇÑ´Ù.
+	// ì°½ ë‹«ê¸°ëŠ” ì˜¤ë¥˜ í•´ì œê°€ ì•„ë‹ˆë‹¤. ë°°ì¶œ/ìž¬ì‹œìž‘ ì„ íƒì€ ê²€ì‚¬ ì²˜ë¦¬ë¡œ ì „ë‹¬í•œë‹¤.
 
 	Timer_BringToFront->Enabled = false;
 	this->Close();
@@ -108,7 +108,7 @@ void __fastcall TForm_Error::btnRestartClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm_Error::timerErrorOffTimer(TObject *Sender)
 {
-    // ÀÌÀü Ã¢ÀÇ ´Ý±â Å¸ÀÌ¸Ó°¡ »õ °Ë»ç ¿À·ù¸¦ ÇØÁ¦ÇÏÁö ¾Êµµ·Ï È­¸é¸¸ Á¤¸®ÇÑ´Ù.
+    // ì´ì „ ì°½ì˜ ë‹«ê¸° íƒ€ì´ë¨¸ê°€ ìƒˆ ê²€ì‚¬ ì˜¤ë¥˜ë¥¼ í•´ì œí•˜ì§€ ì•Šë„ë¡ í™”ë©´ë§Œ ì •ë¦¬í•œë‹¤.
     Timer_BringToFront->Enabled = false;
     timerErrorOff->Enabled = false;
     Close();

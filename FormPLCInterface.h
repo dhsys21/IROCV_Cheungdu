@@ -66,7 +66,7 @@ __published:	// IDE-managed Components
 	void __fastcall btnClearNgClick(TObject *Sender);
 	void __fastcall btnAllNgClick(TObject *Sender);
 private:	// User declarations
-    // ¸ñ·Ï »ı¼º°ú °ª °»½Å¿¡ °°Àº Ã¤³Î °£°İÀ» Àû¿ëÇÑ´Ù: ÀüÃ¼=1, ¿ä¾à=20.
+    // ëª©ë¡ ìƒì„±ê³¼ ê°’ ê°±ì‹ ì— ê°™ì€ ì±„ë„ ê°„ê²©ì„ ì ìš©í•œë‹¤: ì „ì²´=1, ìš”ì•½=20.
     int __fastcall GetDisplayChannelStep();
     void __fastcall SetListViewPLC();
 	void __fastcall SetListViewPC();

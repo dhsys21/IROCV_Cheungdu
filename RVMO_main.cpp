@@ -82,7 +82,7 @@ void __fastcall TBaseForm::MakePanel()
 		nForm[i]->Position = poDesigned;
 		nForm[i]->lblTitle->Caption = UiText("STAGE" + IntToStr(i + 1));
 		nForm[i]->Tag = i;
-		nForm[i]->Visible = true; 		// WM_SHOW ÀÌº¥Æ® ¹ß»ý
+		nForm[i]->Visible = true; 		// WM_SHOW ì´ë²¤íŠ¸ ë°œìƒ
 
 		i += 1;
         if(i > 0) nx += (nForm[i-1]->Width + 1);
@@ -126,7 +126,7 @@ void __fastcall TBaseForm::ClockTimerTimer(TObject *Sender)
     UpdateConnectionIndicator(AdvSmoothPanel_IROCV, equipmentConnected, pon->Color, poff->Color, "IR/OCV");
 
 	if(Now().FormatString("hhnn") == "0700") {
-		DeleteDay = 180;	// 12½Ã°¡ µÇ¸é DeleteDay¸¦ 180À¸·Î ÃÊ±âÈ­
+		DeleteDay = 180;	// 12ì‹œê°€ ë˜ë©´ DeleteDayë¥¼ 180ìœ¼ë¡œ ì´ˆê¸°í™”
 	}
 }
 //---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ void __fastcall TBaseForm::FileDeleteTimerTimer(TObject *Sender)
 {
 	TDateTime  dt;
 
-	// 1½Ã°£¿¡ ÆÄÀÏ ÇÏ³ª¾¿ »èÁ¦
+	// 1ì‹œê°„ì— íŒŒì¼ í•˜ë‚˜ì”© ì‚­ì œ
 
 	dt = Now() - DeleteDay;
 	switch(DeleteIndex){
@@ -267,7 +267,7 @@ void __fastcall TBaseForm::advPLCInterfaceShowClick(TObject *Sender)
 //---------------------------------------------------------------------------
 double __fastcall TBaseForm::Round(double val, int num)
 {
-    double factor = std::pow(10.0, num);  // ÀÚ¸®¼ö¿¡ µû¶ó ¹èÀ² º¯°æ
+    double factor = std::pow(10.0, num);  // ìžë¦¬ìˆ˜ì— ë”°ë¼ ë°°ìœ¨ ë³€ê²½
     return std::floor(val * factor + 0.5) / factor;
 }
 
@@ -321,7 +321,7 @@ void __fastcall TBaseForm::PasswordBtnClick(TObject *Sender)
 		Application->Terminate();
 	}
 	else{
-		MessageBox(Handle, UiText(L"Are you sure you¡¯re spelling your password correctly?").c_str(), UiText(L"ERROR").c_str(), MB_OK|MB_ICONERROR);
+		MessageBox(Handle, UiText(L"Are you sure youâ€™re spelling your password correctly?").c_str(), UiText(L"ERROR").c_str(), MB_OK|MB_ICONERROR);
 	}
 }
 //---------------------------------------------------------------------------

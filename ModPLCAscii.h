@@ -14,23 +14,23 @@
 
 
 //---------------------------------------------------------------------------
-//	µğ¹ÙÀÌ½º ÄÚµå
+//	ë””ë°”ì´ìŠ¤ ì½”ë“œ
 //---------------------------------------------------------------------------
-const int DEVCODE_M			=	0x90;		//	³»ºÎ ¸±·¹ÀÌ
-const int DEVCODE_L			=	0x92;	  	//	·¡Ä¡ ¸±·¹ÀÌ
-const int DEVCODE_D			=	0xA8;		//	µ¥ÀÌÅÍ ·¹Áö½ºÅÍ
-const int DEVCODE_W			=	0xB4;		//	¸µÅ© ·¹Áö½ºÅÍ
+const int DEVCODE_M			=	0x90;		//	ë‚´ë¶€ ë¦´ë ˆì´
+const int DEVCODE_L			=	0x92;	  	//	ë˜ì¹˜ ë¦´ë ˆì´
+const int DEVCODE_D			=	0xA8;		//	ë°ì´í„° ë ˆì§€ìŠ¤í„°
+const int DEVCODE_W			=	0xB4;		//	ë§í¬ ë ˆì§€ìŠ¤í„°
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-//	Index ±¸ºĞ
+//	Index êµ¬ë¶„
 //---------------------------------------------------------------------------
 const int PLC_INDEX_INTERFACE[1]				= { 1 };
 const int PC_INDEX_INTERFACE					=		11;
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-//	½ÃÀÛ ¹øÁö(ÅëÇÕ)
+//	ì‹œì‘ ë²ˆì§€(í†µí•©)
 //---------------------------------------------------------------------------
 const int PLC_D_INTERFACE_START_DEV_NUM	 			=	{40000};
 const int PLC_D_INTERFACE_LEN	 					= 	100;
@@ -151,7 +151,7 @@ public:		// User declarations
 	double __fastcall GetDouble(unsigned char (*data)[2], int column);
 	AnsiString __fastcall GetString(unsigned char (*data)[2], int column, int count);
 //---------------------------------------------------------------------------
-//  ½ÇÁ¦È£ÃâÇÔ¼ö
+//  ì‹¤ì œí˜¸ì¶œí•¨ìˆ˜
     AnsiString __fastcall GetPlcValue(int plc_address, int size);
     double __fastcall GetPlcValue(int plc_address);
     int __fastcall GetPlcData(int plc_address, int bit_num);
@@ -161,7 +161,7 @@ public:		// User declarations
     int __fastcall GetVoltValue(int pc_address, int index);
     int __fastcall GetCurrValue(int pc_address, int index);
 
-	bool PLC_Write_Result; //voltage, current °ªÀº ÇÊ¿ä ½Ã¿¡¸¸ ¾²±â¸¦ ÇÑ´Ù.
+	bool PLC_Write_Result; //voltage, current ê°’ì€ í•„ìš” ì‹œì—ë§Œ ì“°ê¸°ë¥¼ í•œë‹¤.
 	unsigned char plc_Interface_Data[PLC_D_INTERFACE_LEN][2];
 	unsigned char pc_Interface_Data[PC_D_INTERFACE_LEN][2];
     unsigned char pc_Interface_Volt_Data[PC_D_INTERFACE_VOLTAGE_LEN][2];

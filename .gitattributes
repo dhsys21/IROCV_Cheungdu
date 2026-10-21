@@ -1,8 +1,12 @@
-# Normalize line endings without transcoding CP949/UTF-8 source bytes.
+# C++Builder sources: CP949/CRLF locally, UTF-8/LF in Git (Git >= 2.18).
+# Commit this file together with `git add --renormalize -- '*.cpp' '*.h' '*.dfm'`.
 * text=auto
-*.cpp text eol=crlf
-*.h text eol=crlf
-*.dfm text eol=crlf
+*.cpp text eol=crlf working-tree-encoding=CP949
+*.h text eol=crlf working-tree-encoding=CP949
+*.dfm text eol=crlf working-tree-encoding=CP949
+# These existing files are UTF-8 locally; do not reinterpret them as CP949.
+ChannelLayout.h -working-tree-encoding
+FormCalibration.cpp -working-tree-encoding
 *.cbproj text eol=crlf
 *.rc text eol=crlf
 *.ini text eol=crlf

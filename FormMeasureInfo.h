@@ -145,7 +145,7 @@ __published:	// IDE-managed Components
 	void __fastcall FormShow(TObject *Sender);
 
 private:	// User declarations
-    int msaTargetCount; // MSA ½ÃÀÛ ¶§ È®Á¤ÇÑ ¹Ýº¹ È½¼ö.
+    int msaTargetCount; // MSA ì‹œìž‘ ë•Œ í™•ì •í•œ ë°˜ë³µ íšŸìˆ˜.
 	void __fastcall MakePanel();
 	void __fastcall MakeUIPanel();
 	void __fastcall SetOption(TPanel *pnl, int nx, int ny, int nw, int nh, int index);

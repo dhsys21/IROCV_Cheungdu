@@ -27,7 +27,7 @@ public:		// User declarations
     UnicodeString __fastcall Translate(const UnicodeString &text);
     void __fastcall LanguageChange(int LangIndex);
 
-    //* Message º¯¼ö
+    //* Message ë³€ìˆ˜
 	UnicodeString msgRst;
     UnicodeString msgRbt;
     UnicodeString msgTooManyNG;
