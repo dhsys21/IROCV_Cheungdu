@@ -117,7 +117,7 @@ foreach ($command in @('CMD_CELL_SERIAL_TIMEOUT', 'CMD_NG_ERROR')) {
 $force = [regex]::Match($autoSource, '(?ms)^void __fastcall TTotalForm::ForceTrayOut\(\).*?^\}').Value
 if ($force -notmatch 'SetValue\(PC_D_IROCV_ERROR, 0\)') { throw 'ForceTrayOut must clear error in controller' }
 $plcSource = [IO.File]::ReadAllText((Join-Path $SourceRoot 'Stage_PlcData.cpp'), $sourceEncoding)
-if ($sourceText -match 'WriteResultCode\(') { throw 'Obsolete second-pass PLC result writer remains' }
+if ($code -match 'WriteResultCode\(') { throw 'Obsolete second-pass PLC result writer remains' }
 $bad = [regex]::Match($plcSource, '(?ms)^void __fastcall TTotalForm::UpdatePlcResults\(\).*?^\}').Value
 if ($bad -notmatch 'SetResultCode\(PC_D_IROCV_RESULT_CODE \+ i, plcNg \? 1 : 0\)' -or
     $bad -match 'GetData\(') { throw 'PLC bit/code must share the same computed NG value' }

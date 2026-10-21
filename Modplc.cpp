@@ -293,12 +293,14 @@ void __fastcall TMod_PLC::Timer_PC_WriteMsgTimer(TObject *Sender)
                         ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));        // should comment for emulator
                         ClientSocket_PC->Socket->SendBuf(&pc_Interface_Data, sizeof(pc_Interface_Data));
 
-                        Sleep(30);
-                        PC_DataChange(0, PC_D_INTERFACE_IR_RESULT, DEVCODE_D, PC_D_INTERFACE_IR_RESULT_LEN);
-                        const int headerBytes = ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));
-                        const int dataBytes = ClientSocket_PC->Socket->SendBuf(&pc_Interface_Result_Code, sizeof(pc_Interface_Result_Code));
-                        if(headerBytes == static_cast<int>(sizeof(pc_Data)) && dataBytes == static_cast<int>(sizeof(pc_Interface_Result_Code)))
-                            resultSentParts |= 1;
+                        // 불량코드(D47000~D47399) 전송 미사용.
+                        // 재사용 시 아래 주석 해제 및 WasResultTransmitted() 조건 복구.
+                        // Sleep(30);
+                        // PC_DataChange(0, PC_D_INTERFACE_IR_RESULT, DEVCODE_D, PC_D_INTERFACE_IR_RESULT_LEN);
+                        // const int headerBytes = ClientSocket_PC->Socket->SendBuf(&pc_Data, sizeof(pc_Data));
+                        // const int dataBytes = ClientSocket_PC->Socket->SendBuf(&pc_Interface_Result_Code, sizeof(pc_Interface_Result_Code));
+                        // if(headerBytes == static_cast<int>(sizeof(pc_Data)) && dataBytes == static_cast<int>(sizeof(pc_Interface_Result_Code)))
+                        //     resultSentParts |= 1;
 
                         currentWriteTask = nIR;
                         break;
@@ -776,7 +778,13 @@ int __fastcall TMod_PLC::GetOcvValue(int pc_address, int index)
 // 최종 버퍼 준비 직후 호출. 이후 세 블록이 각각 실제 송신된 경우만 완료 지연을 끝낸다.
 // TCP 송신 확인이며 PLC 내부 반영 ACK를 의미하지 않는다.
 void __fastcall TMod_PLC::BeginResultTransmission() { resultSentParts = 0; }
-bool __fastcall TMod_PLC::WasResultTransmitted() { return resultSentParts == 7; }
+bool __fastcall TMod_PLC::WasResultTransmitted()
+{
+    // IR(2), OCV(4) 모두 전송 후 완료.
+    // 불량코드 전송 복구 시 아래 조건(7) 사용.
+    // return resultSentParts == 7;
+    return resultSentParts == (2 | 4);
+}
 bool __fastcall TMod_PLC::IsResultConnectionReady()
 {
     return ClientSocket_PC->Active && ClientSocket_PC->Socket->Connected &&

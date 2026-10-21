@@ -2,6 +2,8 @@
 
 This is the independent `dhsys21/IROCV_Cheungdu` repository. Inspect git status before edits, preserve unrelated changes, and keep commits separate from PRECHARGER. Do not commit IDE-local state or build outputs.
 
+For future GitHub uploads, format commit subjects as `YYYY-MM-DD Ver.YYMMDD NNN - summary`, using the Asia/Seoul upload date and this application's BaseForm.Caption version. Do not rewrite previously uploaded commits just to apply this naming rule.
+
 Register new production cpp files as CppCompile and headers/resources in the cbproj; add required files to Git. Keep IROCV.cpp ASCII-only with form headers and USEFORM names matching DFM roots. Never give rc resources Form metadata. After staging, run TestProjectFiles.ps1 -RequireTracked before committing. A source/form check also runs automatically before builds.
 
 For every application code/UI modification batch, update `BaseForm.Caption` in `RVMO_main.dfm` as `IR/OCV (Ver.YYMMDD NNN)` using the Asia/Seoul date. Start at 001 on a new day; increment the three-digit revision for subsequent batches. Keep the version visible at design time. Third-party control Version properties are not the application version.

@@ -69,6 +69,22 @@ void __fastcall TTotalForm::WriteIROCVValue(int initValue)
         Mod_PLC->SetOcvValue(PC_D_IROCV_OCV_VALUE, i, initValue);
 }
 
+// 추후 복구용 불량코드. 현재 PLC 전송 안 함.
+// 복구 시 채널별 nCode 초기값과 MAXCHANNEL 확인.
+// 함수 선언 후 UpdatePlcResults() 뒤에서 호출하고, 전송부와 완료 조건도 복구.
+// void __fastcall TTotalForm::WriteResultCode()
+// {
+//     int nCode;
+//     for(int i = 0; i < 400; i++)
+//     {
+//         if(retest.cell[i] == 2) nCode = 5;         // IR 규격 불량
+//         else if(retest.cell[i] == 3) nCode = 4;    // OCV 규격 불량
+//         else if(retest.cell[i] == 4) nCode = 6;    // IR 접촉 불량(999)
+//
+//         Mod_PLC->SetResultCode(PC_D_IROCV_RESULT_CODE + i, nCode);
+//     }
+// }
+
 //---------------------------------------------------------------------------
 // 최종 판정으로 PLC NG 비트·결과 코드·수량을 한 번에 작성한다(OK=0, NG=1).
 // measurementNgCount는 실제 셀의 불량만 센다. PLC 결과 버퍼를 다시 읽어 판정하지 않는다.
