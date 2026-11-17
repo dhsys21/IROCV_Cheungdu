@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <AppType>Application</AppType>
         <MainSource>IROCV.cpp</MainSource>
-        <PreBuildEvent>powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\TestProjectFiles.ps1"</PreBuildEvent>
+        <PreBuildEvent>powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\TestProjectFiles.ps1&quot;</PreBuildEvent>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -135,14 +135,21 @@
         <AppEnableHighDPI>true</AppEnableHighDPI>
     </PropertyGroup>
     <ItemGroup>
-        <None Include="TestProjectFiles.ps1" />
-        <None Include="ModPLCAscii.cpp" />
         <CppCompile Include="AutoInspectionSequence.cpp">
             <DependentOn>AutoInspectionSequence.h</DependentOn>
             <BuildOrder>19</BuildOrder>
         </CppCompile>
+        <None Include="CellJudgment.h">
+            <BuildOrder>10</BuildOrder>
+        </None>
+        <None Include="ChannelLayout.h">
+            <BuildOrder>17</BuildOrder>
+        </None>
         <None Include="DEFINE.h">
             <BuildOrder>10</BuildOrder>
+        </None>
+        <None Include="EquipmentFrames.h">
+            <BuildOrder>16</BuildOrder>
         </None>
         <CppCompile Include="FormCalibration.cpp">
             <Form>CaliForm</Form>
@@ -162,8 +169,6 @@
             <DependentOn>FormError.h</DependentOn>
             <BuildOrder>15</BuildOrder>
         </CppCompile>
-        <ResourceCompile Include="Languages.rc" />
-        <CppCompile Include="LanguageSupport.cpp" />
         <CppCompile Include="FormLanguage.cpp">
             <Form>Form_Language</Form>
             <FormType>dfm</FormType>
@@ -207,6 +212,15 @@
             <BuildOrder>1</BuildOrder>
             <PCH>true</PCH>
         </PCHCompile>
+        <ResourceCompile Include="Languages.rc">
+            <BuildOrder>24</BuildOrder>
+        </ResourceCompile>
+        <CppCompile Include="LanguageSupport.cpp">
+            <BuildOrder>26</BuildOrder>
+        </CppCompile>
+        <None Include="Lang_En.ini"/>
+        <None Include="Lang_Ko.ini"/>
+        <None Include="Lang_Zh.ini"/>
         <None Include="Mdfunc.h">
             <BuildOrder>13</BuildOrder>
         </None>
@@ -214,6 +228,9 @@
             <BuildOrder>14</BuildOrder>
             <IgnorePath>true</IgnorePath>
         </LibFiles>
+        <None Include="MeasurementClock.h">
+            <BuildOrder>12</BuildOrder>
+        </None>
         <CppCompile Include="Modplc.cpp">
             <Form>Mod_PLC</Form>
             <FormType>dfm</FormType>
@@ -221,8 +238,23 @@
             <DependentOn>Modplc.h</DependentOn>
             <BuildOrder>5</BuildOrder>
         </CppCompile>
+        <None Include="ModPLCAscii.cpp">
+            <BuildOrder>27</BuildOrder>
+        </None>
+        <None Include="ModPLCAscii.h">
+            <BuildOrder>11</BuildOrder>
+        </None>
+        <None Include="OperationView.h">
+            <BuildOrder>13</BuildOrder>
+        </None>
+        <None Include="OperationViewState.h">
+            <BuildOrder>15</BuildOrder>
+        </None>
         <None Include="OperationViewStateTests.cpp">
             <BuildOrder>26</BuildOrder>
+        </None>
+        <None Include="PlcAutoMode.h">
+            <BuildOrder>14</BuildOrder>
         </None>
         <CppCompile Include="RVMO_main.cpp">
             <Form>BaseForm</Form>
@@ -260,17 +292,18 @@
         <CppCompile Include="Stage_TrayData.cpp">
             <BuildOrder>24</BuildOrder>
         </CppCompile>
+        <None Include="TestProjectFiles.ps1"/>
         <FormResources Include="RVMO_main.dfm"/>
-        <FormResources Include="Modplc.dfm"/>
-        <FormResources Include="FormCellIdError.dfm"/>
         <FormResources Include="FormError.dfm"/>
+        <FormResources Include="FormCellIdError.dfm"/>
         <FormResources Include="FormLanguage.dfm"/>
         <FormResources Include="FormCalibration.dfm"/>
         <FormResources Include="FormMeasureInfo.dfm"/>
-        <FormResources Include="FormTotal.dfm"/>
-        <FormResources Include="FormNgCountError.dfm"/>
+        <FormResources Include="Modplc.dfm"/>
         <FormResources Include="FormPLCInterface.dfm"/>
+        <FormResources Include="FormNgCountError.dfm"/>
         <FormResources Include="FormRemeasure.dfm"/>
+        <FormResources Include="FormTotal.dfm"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -282,17 +315,6 @@
             <Key>Cfg_1</Key>
             <CfgParent>Base</CfgParent>
         </BuildConfiguration>
-        <None Include="CellJudgment.h" />
-        <None Include="ChannelLayout.h" />
-        <None Include="EquipmentFrames.h" />
-        <None Include="Lang_En.ini" />
-        <None Include="Lang_Ko.ini" />
-        <None Include="Lang_Zh.ini" />
-        <None Include="MeasurementClock.h" />
-        <None Include="ModPLCAscii.h" />
-        <None Include="OperationView.h" />
-        <None Include="OperationViewState.h" />
-        <None Include="PlcAutoMode.h" />
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>CPlusPlusBuilder.Personality.12</Borland.Personality>
@@ -422,12 +444,27 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployClass Name="ProjectiOSDeviceResourceRules">
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXResource">
@@ -806,27 +843,12 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="DependencyModule">
-                    <Platform Name="Win32">
-                        <Operation>0</Operation>
-                        <Extensions>.dll;.bpl</Extensions>
-                    </Platform>
+                <DeployClass Name="ProjectiOSDeviceResourceRules">
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="iOSSimulator">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>

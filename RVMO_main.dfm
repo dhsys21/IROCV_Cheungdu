@@ -2,13 +2,13 @@ object BaseForm: TBaseForm
   Left = 0
   Top = 0
   Width = 1920
-  Height = 1040
+  Height = 1035
   HorzScrollBar.Range = 1130
   HorzScrollBar.Visible = False
   VertScrollBar.Range = 300
   VertScrollBar.Visible = False
   BorderIcons = [biSystemMenu, biMinimize]
-  Caption = 'IR/OCV (Ver.261021 002)'
+  Caption = 'IR/OCV (Ver.261117 001)'
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
