@@ -391,6 +391,13 @@ void TOperationView::SetCurrent(UnicodeString title, UnicodeString detail, bool 
 void TOperationView::Refresh()
 {
     TTotalForm *f = stageForm;
+    // Show the saved IR/OCV limits from the same configuration used for judgment.
+    f->grpOperationCurrent->Caption = UiText("CURRENT OPERATION") +
+        L"   IR: " + FormatFloat(L"0.0#", f->config.ir_min) + L"~" +
+        FormatFloat(L"0.0#", f->config.ir_max) + L" m\x03A9" +
+        L"   OCV: " + FormatFloat(L"0.#", f->config.ocv_min) + L"~" +
+        FormatFloat(L"0.#", f->config.ocv_max) + L" mV";
+
     const bool plcConnected = Connected(Mod_PLC->ClientSocket_PC) && Connected(Mod_PLC->ClientSocket_PLC);
     const bool valid = plcConnected && Mod_PLC->plcAutoMode.IsValid();
     const bool local = f->bLocal || f->stage.arl == nLocal;
