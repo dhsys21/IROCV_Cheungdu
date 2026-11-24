@@ -47,6 +47,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
     lastPlcAutoResetVersion = 0;
     Timer_AutoInspection->Enabled = false;
     cellSerialContinuousReadForTray = false;
+    skipCellSerialForTray = false;
     resultSaveStep = RESULT_IDLE;
     resultSaveStartTime = 0;
     trayResultCounted = false;

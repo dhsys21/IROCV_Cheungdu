@@ -69,16 +69,17 @@ public:
     }
     bool GetData(unsigned char (*data)[2],int word,int bit){return (data[word][bit/8]&(1<<(bit%8)))!=0;}
     void SetResultCode(int address,int value){resultCodes[address]=value;}
-    bool CellSerialReadRequested,CellSerialReadActive,CellSerialReadComplete,cellSerialContinuousRead,plc_ReadFlag;
+    bool CellSerialReadRequested,CellSerialReadActive,CellSerialReadComplete,cellSerialContinuousRead,cellSerialReadSuppressed,plc_ReadFlag;
     unsigned char plc_Interface_Cell_Serial[4010][2],cellSerialReceiveData[4010][2];
     AnsiString plc_Read,plc_Read_Temp;
     AnsiString lastPlcReadError;
     DWORD lastPlcReadErrorTick;
     void __fastcall ReportPlcReadError(AnsiString reason);
-    TMod_PLC():cellSerialContinuousRead(false),standardReads(0),plc_ReadFlag(false),plc_ReadCount(0){memset(pc,0,sizeof(pc));memset(pc_Interface_Data,0,sizeof(pc_Interface_Data));connected=true;transmitted=false;ResetCellSerialRead();}
+    TMod_PLC():cellSerialContinuousRead(false),cellSerialReadSuppressed(false),standardReads(0),plc_ReadFlag(false),plc_ReadCount(0){memset(pc,0,sizeof(pc));memset(pc_Interface_Data,0,sizeof(pc_Interface_Data));connected=true;transmitted=false;ResetCellSerialRead();}
     void __fastcall ResetCellSerialRead();
     void __fastcall StartCellSerialRead();
     void __fastcall SetCellSerialContinuousRead(bool enabled);
+    void __fastcall SetCellSerialReadSuppressed(bool suppressed);
     void __fastcall BeginCellSerialRead();
     void __fastcall PrepareCellSerialRead();
     void __fastcall CompleteCellSerialChunk();
@@ -124,7 +125,7 @@ public:
     int Tag,filesSaved,trayFilesSaved,testSerialCount,reads,stops,serialWarnings;
     int fileAttempts,failFileAttempts,completeNotifications,measurementNgCount,acc_totaltray,acc_finalng;
     int acc_totaluse[MAXCHANNEL],acc_remeasure[MAXCHANNEL],chReverseMap[MAXCHANNEL+1];
-    bool cellSerialContinuousReadForTray,trayResultCounted,bLocal,fileContainedSerial;
+    bool cellSerialContinuousReadForTray,skipCellSerialForTray,trayResultCounted,bLocal,fileContainedSerial;
     int trayFileLoads;
     int countedFinalIrNg;
     TResultSaveStep resultSaveStep;
@@ -140,7 +141,7 @@ public:
     struct {int cell[MAXCHANNEL],pendingItems[MAXCHANNEL],waitingChannel,waitingItem,re_index,cnt_error;bool re_excute;}retest;
     bool irValueReceived[MAXCHANNEL],ocvValueReceived[MAXCHANNEL];
     TTotalForm():Tag(0),filesSaved(0),trayFilesSaved(0),testSerialCount(MAXCHANNEL),reads(0),stops(0),
-      cellSerialContinuousReadForTray(false),resultSaveStep(RESULT_IDLE),
+      cellSerialContinuousReadForTray(false),skipCellSerialForTray(false),resultSaveStep(RESULT_IDLE),
       resultSaveStartTime(0),Timer_ResultSave(&timer),Panel_State(&statePanel){
         showStartupChannelNumbers=false;serialWarnings=0;
         bLocal=false;fileContainedSerial=false;trayFileLoads=0;
@@ -307,8 +308,27 @@ int main(){
     receive(p,100,0);receive(p,0,0,false,0xC051);
     check(!p.IsCellSerialReadComplete());
     serialRound(p,77,true);
+    receive(p,100,0);check(p.currentReadTask==nCELLSERIAL);
+    p.plc_ReadFlag=false;
+    p.SetCellSerialReadSuppressed(true);
+    check(p.currentReadTask==nCELLSERIAL); // 이미 보낸 응답의 종류는 유지한다.
+    receive(p,820,42,true);
+    check(p.currentReadTask==nSTANDARD&&!p.IsCellSerialReadComplete());
+    p.StartCellSerialRead();
+    receive(p,100,0);
+    check(p.currentReadTask==nSTANDARD&&!p.IsCellSerialReadActive());
+    p.SetCellSerialReadSuppressed(false);
+    serialRound(p,55,true);
     p.SetCellSerialContinuousRead(false);receive(p,100,0);
     check(p.currentReadTask==nSTANDARD); // 단일 수신 모드는 요청 없이 새 주기를 시작하지 않는다.
+
+    TTotalForm test;
+    test.bLocal=false;test.stage.arl=nAuto;test.cellSerialContinuousReadForTray=true;
+    test.skipCellSerialForTray=true;test.tray.cell_serial[0]="OLD";
+    test.FinishMeasurement();
+    check(test.resultSaveStep==RESULT_WAIT_PLC_SEND&&test.filesSaved==1);
+    check(test.tray.cell_serial[0].IsEmpty()&&test.trayFileLoads==0&&test.reads==0);
+    check(!plc.CellSerialReadRequested);
 
     TTotalForm f;
     clockTime=0;

@@ -56,6 +56,7 @@ __fastcall TMod_PLC::TMod_PLC(TComponent* Owner)
 	memset(pc_Interface_Ocv_Data, 0, sizeof(unsigned char) * PC_D_INTERFACE_OCV_LEN * 2);
     lastPlcReadErrorTick = 0;
     resultSentParts = 0;
+    cellSerialReadSuppressed = false;
     cellSerialContinuousRead = false; // [CELL SERIAL 공통] 기존 TRAY IN 수신이 기본값.
     ResetCellSerialRead();
     currentWriteTask = nPCDATA;
@@ -127,6 +128,7 @@ void __fastcall TMod_PLC::ResetCellSerialRead()
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::StartCellSerialRead()
 {
+    if(cellSerialReadSuppressed) return; // 테스트모드
     // [CELL SERIAL 공통] 지금 요청한 이후의 완전한 1회 수신만 완료로 인정한다.
     // 이미 진행 중인 이전 회차는 다음 응답에서 버리고 처음부터 다시 읽는다.
     CellSerialReadComplete = false;
@@ -138,6 +140,14 @@ void __fastcall TMod_PLC::StartCellSerialRead()
 void __fastcall TMod_PLC::SetCellSerialContinuousRead(bool enabled)
 {
     cellSerialContinuousRead = enabled;
+}
+//---------------------------------------------------------------------------
+void __fastcall TMod_PLC::SetCellSerialReadSuppressed(bool suppressed)
+{
+    if(cellSerialReadSuppressed == suppressed) return;
+    cellSerialReadSuppressed = suppressed;
+    // 테스트모드: 수신 대기 중인 응답의 종류는 그대로 두고 다음 시리얼 요청을 막는다.
+    if(suppressed && plc_ReadFlag) ResetCellSerialRead();
 }
 //---------------------------------------------------------------------------
 // [CELL SERIAL 공통] 수신용 버퍼만 지운다. 상시 수신 중 완료 버퍼는 계속 조회할 수 있다.
@@ -153,6 +163,12 @@ void __fastcall TMod_PLC::BeginCellSerialRead()
 // [CELL SERIAL 공통] 일반 데이터는 상시 모드에서도 매 조각 사이에 읽어 PLC 신호 갱신을 유지한다.
 void __fastcall TMod_PLC::PrepareCellSerialRead()
 {
+    if(cellSerialReadSuppressed)
+    {
+        if(CellSerialReadRequested || CellSerialReadActive || CellSerialReadComplete)
+            ResetCellSerialRead();
+        return;
+    }
     if(CellSerialReadRequested || (cellSerialContinuousRead && !CellSerialReadActive))
         BeginCellSerialRead();
     else
@@ -162,6 +178,11 @@ void __fastcall TMod_PLC::PrepareCellSerialRead()
 // [CELL SERIAL 공통] 820×4+730=4,010워드가 모두 모인 뒤에만 결과/화면용 버퍼를 교체한다.
 void __fastcall TMod_PLC::CompleteCellSerialChunk()
 {
+    if(cellSerialReadSuppressed)
+    {
+        ResetCellSerialRead();
+        return;
+    }
     if(CellSerialReadRequested)
     {
         BeginCellSerialRead();

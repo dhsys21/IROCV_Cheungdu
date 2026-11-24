@@ -74,6 +74,7 @@ struct TAutoInspectionData
     bool bypass; // BYPASS 사용 여부
     bool trayIdReady; // 트레이 ID 읽기 성공 여부
     bool cycleMode; // 공운전모드
+    bool skipCellSerial; // 테스트모드
     bool cellSerialContinuousRead; // 이번 트레이 설정: true이면 결과 저장 때만 시리얼 검사
     bool serialComplete; // 분할 수신 전체 완료 여부(PLC 핸드셰이크 비트가 아님)
     bool probeClosed; // PLC 프로브 닫힘 확인

@@ -12,6 +12,7 @@ struct TObject {};
 const int nAuto=0,nLocal=2;
 const int PC_D_IROCV_TRAY_OUT=3, PC_D_IROCV_COMPLETE=8;
 struct Timer {bool Enabled;Timer():Enabled(false){}};
+struct CheckBox {bool Checked;CheckBox():Checked(false){}};
 struct Socket {bool Connected;Socket():Connected(true){}};
 struct Client {bool Active;struct Socket socket,*Socket;Client():Active(true),Socket(&socket){}};
 struct TMod_PLC {
@@ -19,10 +20,12 @@ struct TMod_PLC {
     Client pc,plc;Client *ClientSocket_PC,*ClientSocket_PLC;
     int complete,probeClose,probeOpen,trayOut;
     int pc_Interface_Data[9];
-    TMod_PLC():ClientSocket_PC(&pc),ClientSocket_PLC(&plc),complete(0),probeClose(0),probeOpen(0),trayOut(0){
+    bool cellSerialReadSuppressed;
+    TMod_PLC():ClientSocket_PC(&pc),ClientSocket_PLC(&plc),complete(0),probeClose(0),probeOpen(0),trayOut(0),cellSerialReadSuppressed(false){
         memset(pc_Interface_Data,0,sizeof(pc_Interface_Data));
     }
     void SetDouble(int *data,int address,int value){data[address]=value;}
+    void SetCellSerialReadSuppressed(bool suppressed){cellSerialReadSuppressed=suppressed;}
     double GetValue(int address){return pc_Interface_Data[address];}
     void __fastcall SetValue(int pc_address,int value);
     bool __fastcall IsPlcAutoMode();
@@ -39,11 +42,14 @@ struct TTotalForm {
     std::queue<std::string>q_cmd,q_param;
     std::string autoInspectionTrayId,message;
     Sequence autoInspection;
+    CheckBox testBox;
+    CheckBox *cbtest;
+    bool skipCellSerialForTray;
     bool bLocal,autoInspectionBlockedByPlc;
     unsigned long lastPlcAutoResetVersion;
     int resultSaveStep,resets,clears,cancels,logs,nFinishStep,nResponseCount;
     TTotalForm():Timer_AutoInspection(&automatic),Timer_FinishCharging(&finish),
-        bLocal(false),autoInspectionBlockedByPlc(true),lastPlcAutoResetVersion(0),
+        cbtest(&testBox),skipCellSerialForTray(false),bLocal(false),autoInspectionBlockedByPlc(true),lastPlcAutoResetVersion(0),
         resultSaveStep(RESULT_IDLE),resets(0),clears(0),cancels(0),logs(0),nFinishStep(4),nResponseCount(5) {
         stage.arl=nAuto;memset(&tray,0,sizeof(tray));memset(&send,0,sizeof(send));memset(&retest,0,sizeof(retest));
     }
@@ -87,6 +93,17 @@ int main(){
     CHECK(initial.automatic.Enabled);CHECK(initial.autoInspection.step==STEP_WAIT_TRAY_IN);
     CHECK(initial.resultSaveStep==RESULT_CANCELLED); // 새 주기 전에는 지연된 COMPLETE를 출력하지 않는다.
     CHECK(!initial.IsAutoInspectionBlocked());
+
+    initial.cbtest->Checked=true;
+    initial.UpdateAutoInspectionMode();
+    CHECK(initial.skipCellSerialForTray && plc.cellSerialReadSuppressed);
+    initial.autoInspection.step=STEP_READ_TRAY_ID;
+    initial.cbtest->Checked=false;
+    initial.UpdateAutoInspectionMode();
+    CHECK(initial.skipCellSerialForTray && plc.cellSerialReadSuppressed);
+    initial.autoInspection.step=STEP_WAIT_TRAY_IN;
+    initial.UpdateAutoInspectionMode();
+    CHECK(!initial.skipCellSerialForTray && !plc.cellSerialReadSuppressed);
 
     // 시리얼·프로브·NG·오류 대기를 포함한 모든 자동 단계의 수동 전환.
     for(int step=STEP_WAIT_TRAY_IN;step<=STEP_ERROR_STOP;++step){

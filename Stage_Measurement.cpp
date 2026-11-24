@@ -345,7 +345,8 @@ void __fastcall TTotalForm::FinishMeasurement()
     WritePlcLog("FinishMeasurement", "IROCV PROBE OPEN = 1");
     // 수동측정은 CELL SERIAL 없이 저장한다. 수동 화면(bLocal) 및 설비 Local 모드를 포함.
     // 자동측정의 시리얼 오류를 감추지 않도록 검사 시작/완료 경로 자체를 여기서 분리한다.
-    const bool saveWithoutCellSerial = bLocal || stage.arl == nLocal;
+    // 테스트모드: 결과는 정상 저장하되 셀 시리얼 읽기와 캐시 사용을 생략한다.
+    const bool saveWithoutCellSerial = bLocal || stage.arl == nLocal || skipCellSerialForTray;
     if(!saveWithoutCellSerial && cellSerialContinuousReadForTray)
         StartResultCellSerialRead();
     else

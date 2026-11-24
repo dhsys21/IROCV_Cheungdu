@@ -211,6 +211,7 @@ private:	// 사용자 선언
     void __fastcall CompleteCellSerialChunk();
     // [CELL SERIAL 공통] 설정은 재접속 후에도 유지하고, 다음 일반 응답부터 적용한다.
     bool cellSerialContinuousRead;
+    bool cellSerialReadSuppressed;
     void __fastcall ReportPlcReadError(AnsiString reason);
     AnsiString lastPlcReadError;
     DWORD lastPlcReadErrorTick;
@@ -263,6 +264,7 @@ public:		// 사용자 선언
     void __fastcall StartCellSerialRead();
     // [CELL SERIAL 공통] false=명시 요청 때만, true=일반 데이터와 번갈아 상시 수신.
     void __fastcall SetCellSerialContinuousRead(bool enabled);
+    void __fastcall SetCellSerialReadSuppressed(bool suppressed);
     bool __fastcall IsCellSerialReadComplete();
     bool __fastcall IsCellSerialReadActive();
 

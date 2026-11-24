@@ -16,6 +16,7 @@ function Read-TestMethods([string]$file, [string]$className, [string[]]$names) {
 }
 $plcMethods = Read-TestMethods 'Modplc.cpp' 'TMod_PLC' @(
     'ResetCellSerialRead','StartCellSerialRead','SetCellSerialContinuousRead',
+    'SetCellSerialReadSuppressed',
     'BeginCellSerialRead','PrepareCellSerialRead','CompleteCellSerialChunk',
     'IsCellSerialReadComplete','IsCellSerialReadActive','GetCellSerialReadWords',
     'ReadPlcCellSerialChunk','ReportPlcReadError','ClientSocket_PLCRead')

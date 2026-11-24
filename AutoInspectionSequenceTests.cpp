@@ -377,8 +377,30 @@ static void CycleModeUsesOnlyTrayAndProbeSignals()
     CHECK(sequence.RunAutoStep(data) == CMD_TRAY_IN);
 }
 
+static void TestModeMeasuresWithoutCellSerial()
+{
+    Fixture f;
+    f.data.skipCellSerial = true;
+    f.data.trayIn = true;
+    f.data.trayIdReady = true;
+    f.data.cellCount = 1;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_IN);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_READ_TRAY_ID);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_READ_CELL_DATA);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_PROBE_CLOSE);
+    CHECK(f.seq.GetStep() == STEP_WAIT_PROBE_CLOSE);
+    f.data.probeClosed = true;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_MEASURE_START);
+    CHECK(f.seq.SetMeasureComplete());
+    f.data.probeOpen = true;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_OUT);
+}
+
 int main()
 {
+    TestModeMeasuresWithoutCellSerial();
     CycleModeUsesOnlyTrayAndProbeSignals();
     // 두 설정은 독립적이며 TRAY IN 후 고정한다.
     Fixture settings;

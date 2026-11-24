@@ -2942,7 +2942,7 @@ object TotalForm: TTotalForm
       Left = 107
       Top = 6
       Width = 65
-      Height = 36
+      Height = 20
       Caption = 'Cycle'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlue
@@ -2953,6 +2953,20 @@ object TotalForm: TTotalForm
       ParentShowHint = False
       ShowHint = False
       TabOrder = 11
+    end
+    object cbtest: TCheckBox
+      Left = 107
+      Top = 26
+      Width = 65
+      Height = 20
+      Caption = 'Test'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlue
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 15
     end
     object chkBypass: TCheckBox
       Left = 478

@@ -68,6 +68,7 @@ void __fastcall TTotalForm::UpdateAutoInspectionMode()
     const unsigned long version = Mod_PLC->plcAutoMode.GetResetVersion();
     if(!(stage.arl == nAuto && !bLocal))
     {
+        Mod_PLC->SetCellSerialReadSuppressed(false);
         // PC 수동·로컬 검사의 독립적인 측정·저장 동작을 유지한다.
         Timer_AutoInspection->Enabled = false;
         lastPlcAutoResetVersion = version;
@@ -85,6 +86,11 @@ void __fastcall TTotalForm::UpdateAutoInspectionMode()
     lastPlcAutoResetVersion = version;
     autoInspectionBlockedByPlc = !plcAuto;
     Timer_AutoInspection->Enabled = plcAuto;
+
+    // 테스트모드: 새 트레이 대기 중에만 체크 상태를 반영한다.
+    if(autoInspection.GetStep() == STEP_WAIT_TRAY_IN)
+        skipCellSerialForTray = plcAuto && cbtest->Checked;
+    Mod_PLC->SetCellSerialReadSuppressed(skipCellSerialForTray);
 
     if(!plcAuto)
         DisplayError("PLC manual or mode data unavailable. Automatic inspection is disabled.", true);
@@ -221,6 +227,7 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
     data.autoMode = stage.arl == nAuto;
     data.bypass = chkBypass->Checked;
     data.cycleMode = cbCycle->Checked; // 공운전모드
+    data.skipCellSerial = skipCellSerialForTray; // 테스트모드
     data.cellSerialContinuousRead = cellSerialContinuousReadForTray;
     data.cellCount = tray.cell_count;
     data.ngCount = measurementNgCount;

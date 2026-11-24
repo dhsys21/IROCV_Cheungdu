@@ -414,7 +414,9 @@ void TOperationView::Refresh()
     const bool serialWaiting = step == STEP_WAIT_CELL_SERIAL || f->resultSaveStep == RESULT_WAIT_SERIAL;
     int chunks = Mod_PLC->CellSerialReadRequested ? 0 :
         Mod_PLC->IsCellSerialReadComplete() ? PLC_D_CELL_SERIAL_READCOUNT : Mod_PLC->CellSerialIndex;
-    AnsiString serialText = AnsiString("CELL SERIAL: ") + (f->cellSerialContinuousReadForTray ? "AT RESULT SAVE" : "BEFORE MEASURE");
+    const AnsiString serialMode = f->skipCellSerialForTray ? "TEST (SKIPPED)" :
+        (f->cellSerialContinuousReadForTray ? "AT RESULT SAVE" : "BEFORE MEASURE");
+    AnsiString serialText = "CELL SERIAL: " + serialMode;
     serialLabel->Caption = UiText(serialText);
     serialLabel->Hint = serialWaiting ? UiText(AnsiString("RECEIVED ") + IntToStr(chunks) + "/" + IntToStr(PLC_D_CELL_SERIAL_READCOUNT) + " BLOCKS") : UnicodeString();
     serialLabel->ShowHint = serialWaiting;

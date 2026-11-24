@@ -244,6 +244,7 @@ __published:	// IDE 관리 컴포넌트
 	TPanel *Panel16;
 	TLabel *lblTrayInfo;
 	TCheckBox *cbCycle; // 공운전모드
+	TCheckBox *cbtest; // 테스트모드: 셀 시리얼 미수신
 	TCheckBox *chkBypass;
 	TPanel *Panel6;
 	TPanel *Panel3;
@@ -455,6 +456,7 @@ private:
     void __fastcall ProcessEquipmentSendQueue(TObject *Sender);
     // [CELL SERIAL 공통] 트레이 초기화 시 확정한 모드. 검사 도중 설정 저장으로 바꾸지 않는다.
     bool cellSerialContinuousReadForTray;
+    bool skipCellSerialForTray;
     // Stage_Measurement.cpp: 자동/수동 공통 결과 마감. 상태에 따라 시리얼/PLC 타이머를 진행한다.
     TResultSaveStep resultSaveStep; // 파일/시리얼/PLC 완료 대기를 한 상태로 관리.
     DWORD resultSaveStartTime; // 현재 비동기 대기 시작 시각(ms).

@@ -79,6 +79,10 @@ foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog'
 $cycle = $nodes.cbCycle.Props
 if($cycle.Caption -ne "'Cycle'" -or $cycle.Visible -eq 'False' -or $cycle.Checked -eq 'True' -or
    $cycle.Left -ne '107' -or $cycle.Top -ne '6'){throw 'Cycle checkbox design or default state'}
+$testBox = $nodes.cbtest.Props
+if($nodes.cbtest.Parent -ne 'pback' -or $testBox.Caption -ne "'Test'" -or $testBox.Checked -eq 'True' -or
+   $testBox.Left -ne $cycle.Left -or [int]$testBox.Top -lt [int]$cycle.Top + [int]$cycle.Height -or
+   [int]$testBox.Top + [int]$testBox.Height -gt 49){throw 'Test checkbox must fit below Cycle and default unchecked'}
 $cali = $nodes.localCali.Props
 if([int]$cycle.Left + [int]$cycle.Width -gt [int]$cali.Left -or [int]$cali.Width -lt 120){
  throw 'Cycle and CALIBRATION must fit side by side'
