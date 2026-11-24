@@ -20,7 +20,6 @@ void __fastcall TTotalForm::InitializePlcData()
 	Mod_PLC->SetValue(PC_D_IROCV_ERROR, 0);
 
 	Mod_PLC->SetValue(PC_D_IROCV_NG_ALARM, 0);
-    Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 0);
     Mod_PLC->SetValue(PC_D_IROCV_REMEASURE, 0);
 	Mod_PLC->SetValue(PC_D_IROCV_NG_COUNT, 0);
 

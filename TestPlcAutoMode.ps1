@@ -14,6 +14,7 @@ function Method([string]$file,[string]$class,[string]$name){
 }
 $isIROCV=Test-Path (Join-Path $PSScriptRoot 'IROCV.cbproj')
 $methods=@(Method 'ModPLC.cpp' 'TMod_PLC' 'IsPlcAutoMode')
+$methods+=Method 'ModPLC.cpp' 'TMod_PLC' 'SetValue'
 foreach($name in @('UpdateAutoInspectionMode','IsAutoInspectionBlocked','ResetAutoInspectionForPlcMode')){
     $methods+=Method 'Stage_AutoInspection.cpp' 'TTotalForm' $name
 }
@@ -58,7 +59,7 @@ try{
     if($LASTEXITCODE -ne 0){throw 'PLC mode test build failed'}
     & .\PlcAutoModeTests.exe
     if($LASTEXITCODE -ne 0){throw 'PLC mode tests failed'}
-    'PASS: startup, status/auto/result callbacks, PC mode selection and receive/disconnect wiring'
+    'PASS: startup, status/auto/result callbacks, PC mode selection, receive/disconnect and tray-out outputs'
     "Test artifacts: $dir"
 }finally{Pop-Location}
 

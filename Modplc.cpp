@@ -720,6 +720,13 @@ double __fastcall TMod_PLC::GetCellSerialValue(int plc_address)
 //---------------------------------------------------------------------------
 void __fastcall TMod_PLC::SetValue(int pc_address, int value)
 {
+    // TRAY OUT(D45003)과 WRITE COMPLETE(D45008)는 배출 요청 및 해제 시 함께 갱신한다.
+    if(pc_address == PC_D_IROCV_TRAY_OUT)
+        SetDouble(pc_Interface_Data, PC_D_IROCV_COMPLETE, value);
+    // 배출 완료나 초기화로 TRAY OUT을 해제할 때까지 READ COMPLETE 응답이 두 신호를 분리하지 않게 한다.
+    else if(pc_address == PC_D_IROCV_COMPLETE && GetValue(PC_D_IROCV_TRAY_OUT) != 0)
+        return;
+
     SetDouble(pc_Interface_Data,  pc_address, value);
 }
 //---------------------------------------------------------------------------

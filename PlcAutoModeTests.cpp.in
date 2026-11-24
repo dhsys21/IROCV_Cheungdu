@@ -10,6 +10,7 @@
 #include "MeasurementClock.h"
 struct TObject {};
 const int nAuto=0,nLocal=2;
+const int PC_D_IROCV_TRAY_OUT=3, PC_D_IROCV_COMPLETE=8;
 struct Timer {bool Enabled;Timer():Enabled(false){}};
 struct Socket {bool Connected;Socket():Connected(true){}};
 struct Client {bool Active;struct Socket socket,*Socket;Client():Active(true),Socket(&socket){}};
@@ -17,7 +18,13 @@ struct TMod_PLC {
     TPlcAutoModeState plcAutoMode;
     Client pc,plc;Client *ClientSocket_PC,*ClientSocket_PLC;
     int complete,probeClose,probeOpen,trayOut;
-    TMod_PLC():ClientSocket_PC(&pc),ClientSocket_PLC(&plc),complete(0),probeClose(0),probeOpen(0),trayOut(0){}
+    int pc_Interface_Data[9];
+    TMod_PLC():ClientSocket_PC(&pc),ClientSocket_PLC(&plc),complete(0),probeClose(0),probeOpen(0),trayOut(0){
+        memset(pc_Interface_Data,0,sizeof(pc_Interface_Data));
+    }
+    void SetDouble(int *data,int address,int value){data[address]=value;}
+    double GetValue(int address){return pc_Interface_Data[address];}
+    void __fastcall SetValue(int pc_address,int value);
     bool __fastcall IsPlcAutoMode();
 } plc,*Mod_PLC=&plc;
 struct Sequence {int step;Sequence():step(STEP_WAIT_TRAY_IN){}int GetStep(){return step;}};
@@ -55,6 +62,20 @@ int checks=0;
 void Online(){plc=TMod_PLC();plc.ClientSocket_PC=&plc.pc;plc.ClientSocket_PLC=&plc.plc;}
 int main(){
     CHECK(PLC_AUTO_MODE_VALUE==1);
+    // 결과 전송 완료는 배출 없이도 알릴 수 있다.
+    plc.SetValue(PC_D_IROCV_COMPLETE,1);
+    CHECK(plc.GetValue(PC_D_IROCV_TRAY_OUT)==0 && plc.GetValue(PC_D_IROCV_COMPLETE)==1);
+    plc.SetValue(PC_D_IROCV_COMPLETE,0);
+    CHECK(plc.GetValue(PC_D_IROCV_COMPLETE)==0);
+
+    // 배출 시작과 해제는 TRAY OUT/WRITE COMPLETE를 함께 바꾼다.
+    plc.SetValue(PC_D_IROCV_TRAY_OUT,1);
+    CHECK(plc.GetValue(PC_D_IROCV_TRAY_OUT)==1 && plc.GetValue(PC_D_IROCV_COMPLETE)==1);
+    plc.SetValue(PC_D_IROCV_COMPLETE,0); // PLC의 READ COMPLETE 응답과 같은 호출.
+    CHECK(plc.GetValue(PC_D_IROCV_TRAY_OUT)==1 && plc.GetValue(PC_D_IROCV_COMPLETE)==1);
+    plc.SetValue(PC_D_IROCV_TRAY_OUT,0);
+    CHECK(plc.GetValue(PC_D_IROCV_TRAY_OUT)==0 && plc.GetValue(PC_D_IROCV_COMPLETE)==0);
+
     Online();TTotalForm initial;
     initial.UpdateAutoInspectionMode();
     CHECK(!initial.automatic.Enabled);CHECK(initial.IsAutoInspectionBlocked());CHECK(initial.resets==0);

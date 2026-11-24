@@ -345,8 +345,7 @@ bool __fastcall TForm_PLCInterface::TryWriteTestWord(int address, int value, Ans
 		&& address < PC_D_INTERFACE_START_DEV_NUM1 + PC_D_INTERFACE_LEN1)
 	{
 		area = "PC INTERFACE";
-		Mod_PLC->SetDouble(Mod_PLC->pc_Interface_Data,
-			address - PC_D_INTERFACE_START_DEV_NUM1, value);
+		Mod_PLC->SetValue(address - PC_D_INTERFACE_START_DEV_NUM1, value);
 		return true;
 	}
 

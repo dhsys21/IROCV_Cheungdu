@@ -647,6 +647,5 @@ void __fastcall TTotalForm::ProcessManualTrayOut()
 
         Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
         Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
-        Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
 
 }
