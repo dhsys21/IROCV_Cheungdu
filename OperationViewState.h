@@ -35,6 +35,10 @@ public:
     {
         switch(command)
         {
+            // 공운전모드
+            case CMD_CYCLE_PROBE_CLOSE: return CloseRequest;
+            case CMD_CYCLE_PROBE_OPEN: return OpenRequest;
+            case CMD_CYCLE_TRAY_OUT: return OutRequest;
             case CMD_TRAY_IN: return TrayIn;
             case CMD_READ_TRAY_ID: return TrayId;
             case CMD_READ_CELL_DATA: return CellData;
@@ -84,11 +88,13 @@ public:
             case STEP_WAIT_START_DELAY: return CellData;
             case STEP_WAIT_CELL_SERIAL:
             case STEP_WAIT_CELL_SERIAL_ERROR: return CloseRequest;
+            case STEP_CYCLE_WAIT_PROBE_CLOSE: // 공운전모드
             case STEP_WAIT_PROBE_CLOSE:
             case STEP_WAIT_REMEASURE_PROBE_CLOSE:
                 // WAIT는 요청 단계이며 PLC 완료를 뜻하지 않는다.
                 return valid && closed && trayPresent ? CloseConfirmed : CloseRequest;
             case STEP_WAIT_MEASURE_COMPLETE: return Measure;
+            case STEP_CYCLE_WAIT_PROBE_OPEN: // 공운전모드
             case STEP_WAIT_PROBE_OPEN: return valid && opened ? OpenConfirmed : OpenRequest;
             case STEP_WAIT_TRAY_OUT: return valid && !trayPresent ? OutConfirmed : OutRequest;
             default: return -1; // 오류·운영자 선택 대기 중에는 진행 타일을 끈다.
@@ -112,6 +118,24 @@ public:
     {
         switch(command)
         {
+            // 공운전모드
+            case CMD_CYCLE_PROBE_CLOSE:
+                Reset();
+                state[Ready] = state[TrayIn] = Done;
+                state[TrayId] = state[CellData] = Skipped;
+                state[CloseRequest] = Done;
+                state[CloseConfirmed] = Waiting;
+                break;
+            case CMD_CYCLE_PROBE_OPEN:
+                state[CloseConfirmed] = Done;
+                for(int i = Measure; i < OpenRequest; ++i) state[i] = Skipped;
+                state[OpenRequest] = Done;
+                state[OpenConfirmed] = Waiting;
+                break;
+            case CMD_CYCLE_TRAY_OUT:
+                state[OpenConfirmed] = state[OutRequest] = Done;
+                state[OutConfirmed] = Waiting;
+                break;
             case CMD_TRAY_IN:
                 Reset(); state[Ready] = state[TrayIn] = Done;
                 state[TrayId] = Waiting; break;

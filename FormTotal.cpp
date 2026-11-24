@@ -136,7 +136,7 @@ void __fastcall TTotalForm::btnSaveConfigClick(TObject *Sender)
 		WriteSystemInfo();
 		WriteRemeasureInfo();
         ReadSystemInfo();
-                ApplyConnectionSettings(true, true);
+        ApplyConnectionSettings(true, true);
 		pnlConfig->Visible = false;
 	}
 }

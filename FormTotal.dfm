@@ -2899,9 +2899,9 @@ object TotalForm: TTotalForm
       TMSStyle = 8
     end
     object localCali: TAdvSmoothButton
-      Left = 194
+      Left = 178
       Top = 6
-      Width = 104
+      Width = 122
       Height = 40
       Appearance.GlowPercentage = 50
       Appearance.PictureAlignment = taCenter
@@ -2938,23 +2938,21 @@ object TotalForm: TTotalForm
       OnClick = localCaliClick
       TMSStyle = 8
     end
-    object chkCycle: TCheckBox
-      Left = 338
-      Top = 864
-      Width = 130
-      Height = 25
-      Caption = 'TEST MODE'
+    object cbCycle: TCheckBox
+      Left = 107
+      Top = 6
+      Width = 65
+      Height = 36
+      Caption = 'Cycle'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlue
-      Font.Height = -17
+      Font.Height = -13
       Font.Name = 'Tahoma'
       Font.Style = [fsBold]
       ParentFont = False
       ParentShowHint = False
       ShowHint = False
       TabOrder = 11
-      Visible = False
-      OnMouseUp = chkBypassMouseUp
     end
     object chkBypass: TCheckBox
       Left = 478
@@ -6085,6 +6083,7 @@ object TotalForm: TTotalForm
       Height = 46
       Caption = 'CELL SERIAL'
       TabOrder = 0
+      Visible = False
       object chkCellSerialContinuousRead: TCheckBox
         Left = 10
         Top = 18
@@ -6092,8 +6091,10 @@ object TotalForm: TTotalForm
         Height = 20
         Hint = 'Save to apply. Changes during inspection apply to the next tray.'
         Caption = 'Continuous read (PLC keeps data until TRAY OUT)'
+        Checked = True
         ParentShowHint = False
         ShowHint = True
+        State = cbChecked
         TabOrder = 0
       end
     end

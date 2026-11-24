@@ -239,7 +239,10 @@ static void DelayAndPause()
     f.data.cellCount = 0;
     for(int i = 0; i < 10; ++i) CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
     CHECK(f.seq.GetStep() == STEP_WAIT_START_DELAY);
+    // 공운전모드: 진행 중인 트레이의 검사 경로는 바꾸지 않는다.
     f.data.cycleMode = true;
+    CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
+    f.data.cellCount = 1;
     CHECK(f.seq.RunAutoStep(f.data) == CMD_PROBE_CLOSE_AND_READ_CELL_SERIAL);
     CHECK(f.seq.RunAutoStep(f.data) == CMD_NONE);
     unsigned int before = f.seq.GetWaitCount();
@@ -339,8 +342,44 @@ static void ContinuousSerialAtResult()
     CHECK(f.seq.RunAutoStep(f.data) == CMD_TRAY_OUT);
 }
 
+// 공운전모드: 트레이와 프로브 입력으로만 진행하고 다음 트레이에서 모드를 다시 선택한다.
+static void CycleModeUsesOnlyTrayAndProbeSignals()
+{
+    TAutoInspectionSequence sequence;
+    TAutoInspectionData data;
+    data.cycleMode = true;
+    data.ngCount = 99;
+    CHECK(sequence.RunAutoStep(data) == CMD_NONE);
+
+    data.trayIn = true;
+    CHECK(sequence.RunAutoStep(data) == CMD_CYCLE_PROBE_CLOSE);
+    CHECK(sequence.GetStep() == STEP_CYCLE_WAIT_PROBE_CLOSE);
+    data.cycleMode = false;
+    data.probeOpen = true;
+    CHECK(sequence.RunAutoStep(data) == CMD_NONE);
+
+    data.probeOpen = false;
+    data.probeClosed = true;
+    CHECK(sequence.RunAutoStep(data) == CMD_CYCLE_PROBE_OPEN);
+    CHECK(sequence.GetStep() == STEP_CYCLE_WAIT_PROBE_OPEN);
+    CHECK(sequence.RunAutoStep(data) == CMD_NONE);
+
+    data.probeClosed = false;
+    data.probeOpen = true;
+    CHECK(sequence.RunAutoStep(data) == CMD_CYCLE_TRAY_OUT);
+    CHECK(sequence.GetStep() == STEP_WAIT_TRAY_OUT);
+    CHECK(sequence.RunAutoStep(data) == CMD_NONE);
+
+    data.trayIn = false;
+    CHECK(sequence.RunAutoStep(data) == CMD_TRAY_OUT_COMPLETE);
+    CHECK(sequence.GetStep() == STEP_WAIT_TRAY_IN);
+    data.trayIn = true;
+    CHECK(sequence.RunAutoStep(data) == CMD_TRAY_IN);
+}
+
 int main()
 {
+    CycleModeUsesOnlyTrayAndProbeSignals();
     // 두 설정은 독립적이며 TRAY IN 후 고정한다.
     Fixture settings;
     CHECK(settings.seq.GetSetting().closedProbeRemeasureMaxNgCount == 49);

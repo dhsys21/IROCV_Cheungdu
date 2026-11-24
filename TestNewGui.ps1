@@ -60,7 +60,7 @@ function Image-Payloads([string]$text){
 }
 if(Compare-Object (Image-Payloads $originalText) (Image-Payloads $totalDfm)){throw 'Legacy image data changed during DFM migration'}
 $retiredProcessControls=@('flowChart','lblProcessInfo','lblRemeasureAlarmCheck',
- 'pReady','pTrayIn','pBarcode','pMeasure','pFinish','pProbeOpen','pTrayOut','pProbeDown','localTest','lblCellSerialReadMode')
+ 'pReady','pTrayIn','pBarcode','pMeasure','pFinish','pProbeOpen','pTrayOut','pProbeDown','localTest','lblCellSerialReadMode','chkCycle')
 foreach($name in $retiredProcessControls){
  if($nodes.ContainsKey($name)){throw "Retired process component remains: $name"}
 }
@@ -73,8 +73,15 @@ foreach($name in $original.Keys | Where-Object {$_ -notin $retiredProcessControl
 foreach($name in $nodes.Keys | Where-Object {!$original.ContainsKey($_)}){
  if($header -notmatch ('\b'+$nodes[$name].Type+'\s*\*\s*'+$name+'\s*;')){throw "Missing IDE field $name"}
 }
-foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','pnlOperationPcMode','pnlOperationPlcMode','localCali','chkCycle','chkBypass')){
+foreach($name in @('grpOperationProcess','grpOperationCurrent','grpOperationLog','pnlOperationPcMode','pnlOperationPlcMode','localCali','cbCycle','chkBypass')){
  if($nodes[$name].Parent -ne 'pback'){throw "Incorrect design parent: $name"}
+}
+$cycle = $nodes.cbCycle.Props
+if($cycle.Caption -ne "'Cycle'" -or $cycle.Visible -eq 'False' -or $cycle.Checked -eq 'True' -or
+   $cycle.Left -ne '107' -or $cycle.Top -ne '6'){throw 'Cycle checkbox design or default state'}
+$cali = $nodes.localCali.Props
+if([int]$cycle.Left + [int]$cycle.Width -gt [int]$cali.Left -or [int]$cali.Width -lt 120){
+ throw 'Cycle and CALIBRATION must fit side by side'
 }
 foreach($pair in @(@('btnConfig','btnReset'),@('btnManual','btnTrayOut'),@('btnAuto','btnRemeasureInfo'))){
  $top=$nodes[$pair[0]].Props;$bottom=$nodes[$pair[1]].Props

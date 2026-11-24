@@ -42,6 +42,12 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
         case STEP_WAIT_TRAY_IN:
             // 1. 투입 대기. BYPASS는 측정을 생략하고, 정상 투입은 트레이별 재측정 횟수를 초기화한다.
             if(!data.trayIn) return CMD_NONE;
+            // 공운전모드: 트레이 투입 시 이번 트레이의 경로를 결정한다.
+            if(data.cycleMode)
+            {
+                SetStep(STEP_CYCLE_WAIT_PROBE_CLOSE);
+                return CMD_CYCLE_PROBE_CLOSE;
+            }
             if(data.bypass)
             {
                 SetStep(STEP_WAIT_TRAY_OUT);
@@ -51,6 +57,17 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             automaticProbeRemeasure = false;
             SetStep(STEP_READ_TRAY_ID);
             return CMD_TRAY_IN;
+
+        // 공운전모드: 시리얼, 측정/충전, 결과 처리 없이 PLC 위치 확인으로 진행한다.
+        case STEP_CYCLE_WAIT_PROBE_CLOSE:
+            if(!data.trayIn || !data.probeClosed) return CMD_NONE;
+            SetStep(STEP_CYCLE_WAIT_PROBE_OPEN);
+            return CMD_CYCLE_PROBE_OPEN;
+
+        case STEP_CYCLE_WAIT_PROBE_OPEN:
+            if(!data.trayIn || !data.probeOpen) return CMD_NONE;
+            SetStep(STEP_WAIT_TRAY_OUT);
+            return CMD_CYCLE_TRAY_OUT;
 
         case STEP_READ_TRAY_ID:
             // 2. 일반 PLC 블록에서 유효한 ID가 준비되어야 화면/트레이에 적용한다.
@@ -64,9 +81,9 @@ TAutoInspectionCommand TAutoInspectionSequence::RunAutoStep(const TAutoInspectio
             return CMD_READ_CELL_DATA;
 
         case STEP_WAIT_START_DELAY:
-            // 4. Cycle 시험 외에는 존재 셀이 있어야 한다. 설정된 시작 지연 후 시리얼 모드를 분기한다.
+            // 4. 실제 셀이 있어야 한다. 지연이 끝난 뒤 시리얼 모드를 분기한다.
             if(waitCount < UINT_MAX) ++waitCount;
-            if(data.cellCount <= 0 && !data.cycleMode) return CMD_NONE;
+            if(data.cellCount <= 0) return CMD_NONE;
             if(waitCount <= sequenceSetting.startDelayCount) return CMD_NONE;
             // 상시 읽기는 투입 시 시리얼을 기다리거나 비교하지 않는다.
             if(data.cellSerialContinuousRead)
@@ -228,6 +245,9 @@ const char *TAutoInspectionSequence::GetStepName(TAutoInspectionStep step)
         case STEP_WAIT_PROBE_OPEN: return "STEP_WAIT_PROBE_OPEN";
         case STEP_WAIT_NG_ERROR: return "STEP_WAIT_NG_ERROR";
         case STEP_WAIT_TRAY_OUT: return "STEP_WAIT_TRAY_OUT";
+        // 공운전모드
+        case STEP_CYCLE_WAIT_PROBE_CLOSE: return "CYCLE_WAIT_PROBE_CLOSE";
+        case STEP_CYCLE_WAIT_PROBE_OPEN: return "CYCLE_WAIT_PROBE_OPEN";
         case STEP_ERROR_STOP: return "STEP_ERROR_STOP";
     }
     return "InvalidState";

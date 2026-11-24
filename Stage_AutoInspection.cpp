@@ -220,7 +220,7 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
     data.probeOpen = Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1;
     data.autoMode = stage.arl == nAuto;
     data.bypass = chkBypass->Checked;
-    data.cycleMode = chkCycle->Checked;
+    data.cycleMode = cbCycle->Checked; // 공운전모드
     data.cellSerialContinuousRead = cellSerialContinuousReadForTray;
     data.cellCount = tray.cell_count;
     data.ngCount = measurementNgCount;
@@ -240,15 +240,14 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
 }
 
 //---------------------------------------------------------------------------
-// PLC CELL DATA 25워드의 비트맵으로 400셀 유무와 개수를 읽는다. Cycle 모드는 전 채널 사용.
+// PLC CELL DATA 25워드의 비트맵으로 400셀 유무와 개수를 읽는다.
 void __fastcall TTotalForm::ReadAutoCellData()
 {
     tray.cell_count = 0;
     for(int channel = 0; channel < MAXCHANNEL; ++channel)
     {
-        tray.cell[channel] = chkCycle->Checked ? 1 :
-            Mod_PLC->GetData(Mod_PLC->plc_Interface_Data,
-                PLC_D_IROCV_TRAY_CELL_DATA + channel / 16, channel % 16);
+        tray.cell[channel] = Mod_PLC->GetData(Mod_PLC->plc_Interface_Data,
+            PLC_D_IROCV_TRAY_CELL_DATA + channel / 16, channel % 16);
         tray.cell_count += tray.cell[channel];
     }
     DisplayTrayInfo();
@@ -376,6 +375,28 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
                 "There is too many ng cells. Please check it.",
                 "Select [Tray Out] or [Restart]");
             break;
+        // 공운전모드: 투입, 닫힘, 열림 확인에 대응해 PLC 요청만 전환한다.
+        case CMD_CYCLE_PROBE_CLOSE:
+            CancelResultSave();
+            tray.trayid = "";
+            pTrayid->Caption = "";
+            editTrayId->Text = "";
+            Mod_PLC->SetValue(PC_D_IROCV_REMEASURE, 0);
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 1);
+            DisplayStatus(nIN);
+            WritePlcLog("Cycle", "PC_D_IROCV_PROB_CLOSE = 1");
+            break;
+
+        case CMD_CYCLE_PROBE_OPEN:
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
+            WritePlcLog("Cycle", "PC_D_IROCV_PROB_OPEN = 1");
+            break;
+
+        case CMD_CYCLE_TRAY_OUT:
+            Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
+            // 기존 배출 처리로 이어진다.
         case CMD_BYPASS_TRAY_OUT:
         case CMD_TRAY_OUT:
             // 자동 NG 판정은 시퀀스에서 끝냈으므로 여기서 반복하지 않는다.
@@ -387,7 +408,7 @@ void __fastcall TTotalForm::RunAutoInspectionCommand(TAutoInspectionCommand comm
                 "BYPASS TRAY OUT = 1" : "IROCV TRAY OUT = 1");
             break;
         case CMD_TRAY_OUT_COMPLETE:
-            DeleteTrayInfo(tray.trayid);
+            if(!tray.trayid.IsEmpty()) DeleteTrayInfo(tray.trayid);
             Mod_PLC->SetValue(PC_D_IROCV_TRAY_OUT, 0);
             Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
             Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
@@ -442,6 +463,13 @@ void __fastcall TTotalForm::DisplayAutoInspectionStep()
             break;
         case STEP_WAIT_CELL_SERIAL_ERROR:
             DisplayProcess("AutoInspection", " CELL SERIAL error - waiting for SAVE / CANCEL ... ", true);
+            break;
+        // 공운전모드
+        case STEP_CYCLE_WAIT_PROBE_CLOSE:
+            DisplayProcess("AutoInspection", " Waiting for PLC PROBE CLOSED ... ");
+            break;
+        case STEP_CYCLE_WAIT_PROBE_OPEN:
+            DisplayProcess("AutoInspection", " Waiting for PLC PROBE OPEN ... ");
             break;
         case STEP_WAIT_PROBE_CLOSE:
         case STEP_WAIT_REMEASURE_PROBE_CLOSE:

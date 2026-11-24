@@ -168,7 +168,8 @@ TOperationCommandLogScope::TOperationCommandLogScope(TTotalForm *owner, TAutoIns
 }
 void TOperationView::BeginCommand(TAutoInspectionCommand command)
 {
-    if(command == CMD_TRAY_IN || command == CMD_BYPASS_TRAY_OUT)
+    // 공운전모드도 트레이 단위로 운전 이력을 기록한다.
+    if(command == CMD_TRAY_IN || command == CMD_BYPASS_TRAY_OUT || command == CMD_CYCLE_PROBE_CLOSE)
     {
         timeline.BeginTray();
         commandLogTile = TOperationViewState::TrayIn;
@@ -242,7 +243,8 @@ void TOperationView::Reset()
 }
 void TOperationView::Command(TAutoInspectionCommand command)
 {
-    if(command == CMD_TRAY_IN || command == CMD_BYPASS_TRAY_OUT) cycleClock.Start(GetTickCount());
+    if(command == CMD_TRAY_IN || command == CMD_BYPASS_TRAY_OUT || command == CMD_CYCLE_PROBE_CLOSE)
+        cycleClock.Start(GetTickCount());
     if(command == CMD_TRAY_OUT_COMPLETE) FinishCycle();
     progress.Command(command);
     if(command == CMD_TRAY_IN) Append("PLC RX", "TRAY IN confirmed; new cycle.", TOperationViewState::TrayIn);
@@ -452,6 +454,7 @@ void TOperationView::Refresh()
             case STEP_READ_CELL_DATA: title = "Reading CELL DATA"; detail = "Reading channel occupancy from PLC CELL DATA."; break;
             case STEP_WAIT_START_DELAY: title = f->tray.cell_count > 0 ? "Measurement start delay" : "Waiting for CELL DATA"; detail = "CELL DATA: " + IntToStr(f->tray.cell_count) + " cells.\r\nStart delay: " + IntToStr((int)f->autoInspection.GetWaitCount()) + "/" + IntToStr((int)f->autoInspection.GetSetting().startDelayCount) + " timer ticks."; break;
             case STEP_WAIT_CELL_SERIAL: title = "Reading and verifying CELL SERIAL"; detail = "Waiting for all serial blocks, then comparing serial count with CELL DATA.\r\nProgress: " + IntToStr(chunks) + "/" + IntToStr(PLC_D_CELL_SERIAL_READCOUNT) + " blocks. CELL DATA: " + IntToStr(f->tray.cell_count); break;
+            case STEP_CYCLE_WAIT_PROBE_CLOSE: // 공운전모드
             case STEP_WAIT_PROBE_CLOSE:
             case STEP_WAIT_REMEASURE_PROBE_CLOSE:
                 title = "Waiting for PROBE DOWN";
@@ -459,6 +462,7 @@ void TOperationView::Refresh()
             case STEP_WAIT_MEASURE_COMPLETE:
                 title = f->tray.rem_mode ? "Remeasurement in progress" : "Measurement in progress";
                 detail = "Waiting for measurement responses / result processing."; break;
+            case STEP_CYCLE_WAIT_PROBE_OPEN: // 공운전모드
             case STEP_WAIT_PROBE_OPEN:
                 title = "Waiting for PROBE OPEN";
                 detail = "PC_D_IROCV_PROB_OPEN = " + IntToStr((int)Mod_PLC->GetValue(PC_D_IROCV_PROB_OPEN)) + " (output setting)\r\nPLC_D_IROCV_PROB_OPEN: " + IntToStr((int)Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN)) + " -> expected 1"; break;

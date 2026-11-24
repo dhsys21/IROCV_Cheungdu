@@ -243,7 +243,7 @@ __published:	// IDE 관리 컴포넌트
 	TAdvSmoothButton *btnTrayOut;
 	TPanel *Panel16;
 	TLabel *lblTrayInfo;
-	TCheckBox *chkCycle;
+	TCheckBox *cbCycle; // 공운전모드
 	TCheckBox *chkBypass;
 	TPanel *Panel6;
 	TPanel *Panel3;
@@ -539,7 +539,7 @@ private:
     unsigned long lastPlcAutoResetVersion;
     // 운전 모드에 따라 PLC AUTO READY 신호 설정: 자동=1, 수동=0. 값이 바뀔 때만 기록한다.
     void __fastcall SetAutoReadySignalToPLC();
-    // PLC CELL DATA 25워드의 비트맵으로 400셀 유무와 개수를 읽는다. Cycle 모드는 전 채널 사용.
+    // PLC CELL DATA 25워드의 비트맵으로 400셀 유무와 개수를 읽는다.
     void __fastcall ReadAutoCellData();
     // 셀 시리얼 4,010워드 분할 수신. 별도 시작·완료 핸드셰이크 없음.
     void __fastcall StartAutoCellSerialRead();

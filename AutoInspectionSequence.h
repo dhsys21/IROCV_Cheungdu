@@ -22,6 +22,9 @@ enum TAutoInspectionStep
     STEP_WAIT_PROBE_OPEN,              // 프로브 열림 대기
     STEP_WAIT_NG_ERROR,                // NG 오류: 배출 / 재시작 선택 대기
     STEP_WAIT_TRAY_OUT,                // 트레이 배출 완료 대기
+    // 공운전모드
+    STEP_CYCLE_WAIT_PROBE_CLOSE,
+    STEP_CYCLE_WAIT_PROBE_OPEN,
     STEP_ERROR_STOP                    // 예외 발생으로 자동 진행 정지
 };
 
@@ -42,7 +45,11 @@ enum TAutoInspectionCommand
     CMD_REMEASURE_START,                  // 전체/선택 재측정 시작
     CMD_NG_ERROR,                         // NG 개수 오류 표시
     CMD_TRAY_OUT,                         // 트레이 배출 요청
-    CMD_TRAY_OUT_COMPLETE                 // 배출 완료 후 출력 정리
+    CMD_TRAY_OUT_COMPLETE,                // 배출 완료 후 출력 정리
+    // 공운전모드
+    CMD_CYCLE_PROBE_CLOSE,
+    CMD_CYCLE_PROBE_OPEN,
+    CMD_CYCLE_TRAY_OUT
 };
 
 struct TAutoInspectionSetting
@@ -66,7 +73,7 @@ struct TAutoInspectionData
     bool trayIn; // PLC 트레이 도착 신호
     bool bypass; // BYPASS 사용 여부
     bool trayIdReady; // 트레이 ID 읽기 성공 여부
-    bool cycleMode; // 전 채널을 사용하는 Cycle 시험 모드
+    bool cycleMode; // 공운전모드
     bool cellSerialContinuousRead; // 이번 트레이 설정: true이면 결과 저장 때만 시리얼 검사
     bool serialComplete; // 분할 수신 전체 완료 여부(PLC 핸드셰이크 비트가 아님)
     bool probeClosed; // PLC 프로브 닫힘 확인
