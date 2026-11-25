@@ -403,6 +403,10 @@ void TOperationView::Refresh()
     const bool plcConnected = Connected(Mod_PLC->ClientSocket_PC) && Connected(Mod_PLC->ClientSocket_PLC);
     const bool valid = plcConnected && Mod_PLC->plcAutoMode.IsValid();
     const bool local = f->bLocal || f->stage.arl == nLocal;
+    const bool automatic = f->stage.arl == nAuto && !local;
+    const TColor selectedModeColor = static_cast<TColor>(RGB(0, 128, 255)); // 기존 AUTO 버튼 색상
+    f->btnAuto->Color = automatic ? selectedModeColor : clWhite;
+    f->btnManual->Color = local ? selectedModeColor : clWhite;
     ObserveSignals(valid);
     pcModePanel->Caption = UiText(local ? "PC: MANUAL" : "PC: AUTO");
     pcModePanel->Color = local ? clRed : clLime;
