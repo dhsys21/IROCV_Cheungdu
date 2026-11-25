@@ -25,6 +25,7 @@ struct Plc {
     int inputs[2],outputs[3];
     Plc(){inputs[0]=inputs[1]=outputs[0]=outputs[1]=0;}
     int GetPlcValue(int a){if(a<0||a>1)abort();return inputs[a];}
+    int GetValue(int a){return outputs[a];}
     void SetValue(int a,int v){outputs[a]=v;}
 } plc;
 Plc *Mod_PLC=&plc;
@@ -70,12 +71,36 @@ public:
     void __fastcall msaTimerTimer(TObject*);
     void __fastcall advMSAStartClick(TObject*);
     void __fastcall advMSAStopClick(TObject*);
+    void __fastcall btnProbeOpenClick(TObject*);
+    void __fastcall btnProbeClick(TObject*);
+    void __fastcall probetimerTimer(TObject*);
 };
 @@METHODS@@
 int checks=0;
 #define CHECK(x) do{++checks;if(!(x)){printf("FAIL line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
 int main(){
     TMeasureInfoForm f;
+    plc.outputs[PC_D_IROCV_PROB_CLOSE]=1;
+    plc.inputs[PLC_D_IROCV_PROB_CLOSE]=1;
+    f.btnProbeOpenClick(0);
+    CHECK(plc.outputs[PC_D_IROCV_PROB_CLOSE]==0&&plc.outputs[PC_D_IROCV_PROB_OPEN]==1);
+    CHECK(f.probetimer->Enabled&&total.stopped==0&&!total.waiting&&!total.complete);
+    f.probetimerTimer(0);
+    CHECK(f.probetimer->Enabled&&plc.outputs[PC_D_IROCV_PROB_OPEN]==1);
+    plc.inputs[PLC_D_IROCV_PROB_CLOSE]=0;
+    plc.inputs[PLC_D_IROCV_PROB_OPEN]=1;
+    f.probetimerTimer(0);
+    CHECK(!f.probetimer->Enabled&&plc.outputs[PC_D_IROCV_PROB_OPEN]==0);
+    f.btnProbeClick(0);
+    CHECK(f.probetimer->Enabled&&plc.outputs[PC_D_IROCV_PROB_CLOSE]==1);
+    f.probetimerTimer(0);
+    CHECK(f.probetimer->Enabled&&plc.outputs[PC_D_IROCV_PROB_CLOSE]==1);
+    plc.inputs[PLC_D_IROCV_PROB_OPEN]=0;
+    plc.inputs[PLC_D_IROCV_PROB_CLOSE]=1;
+    f.probetimerTimer(0);
+    CHECK(!f.probetimer->Enabled&&plc.outputs[PC_D_IROCV_PROB_CLOSE]==0);
+    plc.inputs[PLC_D_IROCV_PROB_CLOSE]=0;
+
     f.advMSAStartClick(0);
     CHECK(f.msaTimer->Enabled&&total.manual&&!total.autoTimer&&f.nStep==0);
     CHECK(plc.outputs[0]==1&&plc.outputs[1]==0&&!f.probetimer->Enabled);
@@ -113,5 +138,5 @@ int main(){
     total.tray.amf=true;total.complete=true;f.failWrite=true;
     try{f.msaTimerTimer(0);CHECK(false);}catch(...){}
     CHECK(!f.timer.Enabled&&f.nStep==-1&&total.tray.amf);
-    printf("PASS: %d MSA no-tray/start/stop/repeat/stale-signal/reentry checks\n",checks);
+    printf("PASS: %d manual probe and MSA checks\n",checks);
 }

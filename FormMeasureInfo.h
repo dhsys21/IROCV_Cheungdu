@@ -128,6 +128,7 @@ __published:	// IDE 관리 컴포넌트
 	void __fastcall btnInitClick(TObject *Sender);
 	void __fastcall btnStartManualInspectionClick(TObject *Sender);
 	void __fastcall btnStopClick(TObject *Sender);
+	void __fastcall btnProbeOpenClick(TObject *Sender);
 	void __fastcall btnProbeClick(TObject *Sender);
 	void __fastcall PanelDblClickk(TObject *Sender);
 	void __fastcall ChInfoMouseEnter(TObject *Sender);

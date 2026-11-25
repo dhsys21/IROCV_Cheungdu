@@ -254,6 +254,14 @@ void __fastcall TMeasureInfoForm::btnStopClick(TObject *Sender)
 	probetimer->Enabled = true;
 }
 //---------------------------------------------------------------------------
+void __fastcall TMeasureInfoForm::btnProbeOpenClick(TObject *Sender)
+{
+    // PROBE OPEN은 프로브만 올린다. 측정 종료(STOP) 처리는 별도 버튼에서 실행한다.
+    Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
+    Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
+    probetimer->Enabled = true;
+}
+//---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::btnProbeClick(TObject *Sender)
 {
 	Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
@@ -630,16 +638,19 @@ void __fastcall TMeasureInfoForm::MakeReportFile(AnsiString fn_data, AnsiString 
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::probetimerTimer(TObject *Sender)
 {
-	if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE)){
-		Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
-		probetimer->Enabled = false;
-	}
-
-	if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN)){
-		Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
+    // 반대 방향의 위치 신호가 남아 있어도 현재 요청에 대한 확인만 처리한다.
+    if(Mod_PLC->GetValue(PC_D_IROCV_PROB_OPEN) == 1 &&
+       Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1)
+    {
+        Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 0);
         probetimer->Enabled = false;
-	}
-
+    }
+    else if(Mod_PLC->GetValue(PC_D_IROCV_PROB_CLOSE) == 1 &&
+            Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1)
+    {
+        Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
+        probetimer->Enabled = false;
+    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TMeasureInfoForm::advBtnRemeasureClick(TObject *Sender)

@@ -1959,7 +1959,7 @@ object MeasureInfoForm: TMeasureInfoForm
         ParentFont = False
         TabOrder = 0
         Version = '2.1.1.5'
-        OnClick = btnStopClick
+        OnClick = btnProbeOpenClick
         TMSStyle = 8
       end
       object btnProbeClose: TAdvSmoothButton

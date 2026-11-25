@@ -8,8 +8,18 @@ $manual=[regex]::Match($form,'(?ms)^void __fastcall TTotalForm::btnManualClick\(
 foreach($rule in @('stage.arl = nLocal','bLocal = true','CmdSetManualMode(true)')) {
     if(!$manual.Contains($rule)){throw "MSA manual-mode entry changed: $rule"}
 }
+$measureDfm = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $PSScriptRoot 'FormMeasureInfo.dfm')
+foreach($binding in @(@('btnProbeOpen','btnProbeOpenClick'),@('btnStop','btnStopClick'))) {
+    $control = [regex]::Match($measureDfm,'(?ms)^      object '+$binding[0]+':.*?^      end')
+    if(!$control.Success -or $control.Value -notmatch ('(?m)^        OnClick = '+$binding[1]+'\s*$')){
+        throw "Incorrect event binding: $($binding[0])"
+    }
+}
 $methods=''
 foreach($entry in @(
+    @('FormMeasureInfo.cpp','TMeasureInfoForm','btnProbeOpenClick'),
+    @('FormMeasureInfo.cpp','TMeasureInfoForm','btnProbeClick'),
+    @('FormMeasureInfo.cpp','TMeasureInfoForm','probetimerTimer'),
     @('FormMeasureInfo.cpp','TMeasureInfoForm','msaTimerTimer'),
     @('FormMeasureInfo.cpp','TMeasureInfoForm','advMSAStartClick'),
     @('FormMeasureInfo.cpp','TMeasureInfoForm','advMSAStopClick'),
