@@ -47,6 +47,7 @@ struct DiagnosticStage {
 struct DiagnosticBase {DiagnosticStage *nForm[1];} diagnosticBase;
 DiagnosticBase *BaseForm=&diagnosticBase;
 const int PC_D_IROCV_COMPLETE=8,PC_D_IROCV_ERROR=2,PC_D_IROCV_MEASURING=6,PC_D_IROCV_PROB_OPEN=4;
+const int PC_D_IROCV_TRAY_OUT=3;
 const int nAuto=0, nLocal=2, nEND=10, Line=4, PC_D_IROCV_NG_COUNT=10, PC_D_IROCV_MEASURE_OK_NG=20, PC_D_IROCV_RESULT_CODE=0;
 struct TCustomWinSocket {
     AnsiString data;
@@ -267,6 +268,12 @@ int main(){
         clockTime+=RESULT_SERIAL_TIMEOUT_MS+1;
         manualSave.Timer_ResultSaveTimer(0);
         check(errorForm.shown==oldErrors&&manualSave.filesSaved==1);
+        plc.connected=true;
+        plc.transmitted=true;
+        clockTime+=RESULT_COMPLETE_DELAY_MS;
+        manualSave.Timer_ResultSaveTimer(0);
+        check(manualSave.resultSaveStep==RESULT_COMPLETE && plc.pc[PC_D_IROCV_COMPLETE]==0);
+        check(manualSave.completeNotifications==0 && plc.pc[PC_D_IROCV_TRAY_OUT]==0);
         manualSave.FinishMeasurement();
         check(manualSave.fileAttempts==2);
     }

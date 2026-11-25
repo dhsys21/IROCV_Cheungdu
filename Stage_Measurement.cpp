@@ -508,9 +508,13 @@ void __fastcall TTotalForm::ProcessResultSave(TObject *Sender)
                     static_cast<DWORD>(GetTickCount() - resultSaveStartTime) >= RESULT_COMPLETE_DELAY_MS)
             {
                 resultSaveStep = RESULT_COMPLETE; // 중복 타이머/AMF보다 먼저 완료 상태 확정.
-                Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
-                WritePlcLog("FinishMeasurement", "PLC results sent; COMPLETE = 1");
-                SetAutoMeasurementComplete();
+                // 수동 측정은 결과 저장과 전송까지만 완료한다. WRITE COMPLETE와 자동 TRAY OUT은 출력하지 않는다.
+                if(stage.arl == nAuto && !bLocal)
+                {
+                    Mod_PLC->SetValue(PC_D_IROCV_COMPLETE, 1);
+                    WritePlcLog("FinishMeasurement", "PLC results sent; COMPLETE = 1");
+                    SetAutoMeasurementComplete();
+                }
             }
         }
     }

@@ -224,7 +224,8 @@ TAutoInspectionData __fastcall TTotalForm::ReadAutoInspectionData()
     data.trayIn = Mod_PLC->GetPlcValue(PLC_D_IROCV_TRAY_IN) == 1;
     data.probeClosed = Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE) == 1;
     data.probeOpen = Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_OPEN) == 1;
-    data.autoMode = stage.arl == nAuto;
+    // 로컬 측정 중에는 자동 배출 경로가 TRAY OUT을 요청하지 않도록 한다.
+    data.autoMode = stage.arl == nAuto && !bLocal;
     data.bypass = chkBypass->Checked;
     data.cycleMode = cbCycle->Checked; // 공운전모드
     data.skipCellSerial = skipCellSerialForTray; // 테스트모드
