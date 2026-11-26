@@ -56,6 +56,7 @@ __fastcall TTotalForm::TTotalForm(TComponent* Owner)
     config.closedProbeRemeasureMaxNgCount = DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT;
     tray.ams = false; // 설정을 처음 읽을 때 진행 중인 측정으로 오인하지 않게 한다.
     measurementNgCount = 0;
+    isMsaMeasurement = false;
     showStartupChannelNumbers = true;
     memset(irValueReceived, 0, sizeof(irValueReceived));
     memset(ocvValueReceived, 0, sizeof(ocvValueReceived));

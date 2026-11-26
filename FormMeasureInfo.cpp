@@ -355,7 +355,7 @@ void __fastcall TMeasureInfoForm::msaTimerTimer(TObject *Sender)
 		case 1:
 			if(Mod_PLC->GetPlcValue(PLC_D_IROCV_PROB_CLOSE)){
 				Mod_PLC->SetValue(PC_D_IROCV_PROB_CLOSE, 0);
-				BaseForm->nForm[stage]->CmdStartMeasurement(); // 수동 경로: 트레이/시리얼 검사 없이 AMS 요청.
+				BaseForm->nForm[stage]->CmdStartMeasurement(true); // MSA 회차: 트레이 없이 AMS를 요청하고 최초 측정값을 사용한다.
 				nStep = 2;
 			}
 			else

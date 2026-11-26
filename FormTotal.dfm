@@ -6828,7 +6828,7 @@ object TotalForm: TTotalForm
         ParentShowHint = False
         ShowHint = True
         TabOrder = 6
-        Text = '49'
+        Text = '29'
       end
       object Panel2: TPanel
         Left = 291

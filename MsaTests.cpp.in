@@ -49,7 +49,7 @@ public:
     void ResetMeasurementData(){++resets;complete=false;}
     // 수동 버튼과 같이 PLC AUTO·TRAY와 독립적으로 동작한다.
     void btnManualClick(TObject*){manual=true;autoTimer=false;++manualCalls;}
-    void CmdStartMeasurement(){if(manual&&!waiting){++started;tray.ams=false;tray.amf=false;}}
+    void CmdStartMeasurement(bool forMsa){if(manual&&!waiting&&forMsa){++started;tray.ams=false;tray.amf=false;}}
     void SendData(AnsiString s){if(s.s=="STP")++stopped;}
     void WriteCommLog(AnsiString,AnsiString){}
     void __fastcall StopMsaMeasurement();

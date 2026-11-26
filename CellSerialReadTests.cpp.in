@@ -126,7 +126,7 @@ public:
     int Tag,filesSaved,trayFilesSaved,testSerialCount,reads,stops,serialWarnings;
     int fileAttempts,failFileAttempts,completeNotifications,measurementNgCount,acc_totaltray,acc_finalng;
     int acc_totaluse[MAXCHANNEL],acc_remeasure[MAXCHANNEL],chReverseMap[MAXCHANNEL+1];
-    bool cellSerialContinuousReadForTray,skipCellSerialForTray,trayResultCounted,bLocal,fileContainedSerial;
+    bool cellSerialContinuousReadForTray,skipCellSerialForTray,trayResultCounted,bLocal,fileContainedSerial,isMsaMeasurement;
     int trayFileLoads;
     int countedFinalIrNg;
     TResultSaveStep resultSaveStep;
@@ -137,7 +137,7 @@ public:
     Panel cells[MAXCHANNEL],ocvLegend;Panel *panel[MAXCHANNEL],*pocv;
     bool showStartupChannelNumbers;
     TColor clLine,clMeasureFail,clBadIr,clIrCheck,clOcvCheck,clBothCheck,clCellError,clNoCell;
-    struct {bool cell_serial_continuous_read;double ir_min,ir_max,ocv_min,ocv_max;}config;
+    struct {bool cell_serial_continuous_read;int closedProbeRemeasureMaxNgCount;double ir_min,ir_max,ocv_min,ocv_max;}config;
     struct {int cell_count,cell[MAXCHANNEL],measure_result[MAXCHANNEL],rem_mode;bool first;double after_value[MAXCHANNEL],ocv_value[MAXCHANNEL];AnsiString trayid,cell_serial[MAXCHANNEL];}tray;
     struct {int cell[MAXCHANNEL],pendingItems[MAXCHANNEL],waitingChannel,waitingItem,re_index,cnt_error;bool re_excute;}retest;
     bool irValueReceived[MAXCHANNEL],ocvValueReceived[MAXCHANNEL];
@@ -145,7 +145,7 @@ public:
       cellSerialContinuousReadForTray(false),skipCellSerialForTray(false),resultSaveStep(RESULT_IDLE),
       resultSaveStartTime(0),Timer_ResultSave(&timer),Panel_State(&statePanel){
         showStartupChannelNumbers=false;serialWarnings=0;
-        bLocal=false;fileContainedSerial=false;trayFileLoads=0;
+        bLocal=false;fileContainedSerial=false;isMsaMeasurement=false;trayFileLoads=0;
         stage.arl=nAuto;
         autoInspection.setting.closedProbeRemeasureMaxNgCount=49;
         clLine=1;clMeasureFail=2;clBadIr=3;clIrCheck=4;clOcvCheck=5;clBothCheck=6;clCellError=7;clNoCell=8;
@@ -153,6 +153,7 @@ public:
         fileAttempts=failFileAttempts=completeNotifications=measurementNgCount=acc_totaltray=acc_finalng=countedFinalIrNg=0;
         trayResultCounted=false;tray.first=true;tray.rem_mode=0;
         config.cell_serial_continuous_read=false;tray.cell_count=MAXCHANNEL;
+        config.closedProbeRemeasureMaxNgCount=DEFAULT_CLOSED_PROBE_REMEASURE_MAX_NG_COUNT;
         config.ir_min=10;config.ir_max=20;config.ocv_min=1000;config.ocv_max=3000;
         memset(&retest,0,sizeof(retest));retest.waitingChannel=-1;
         memset(acc_totaluse,0,sizeof(acc_totaluse));memset(acc_remeasure,0,sizeof(acc_remeasure));
@@ -171,12 +172,16 @@ public:
     void RecordOperationFileSave(bool) {} // 표시 전용 관찰자. 생산 동작에 영향 없음.
     void __fastcall SetRemeasureListAfter();
     void __fastcall SetRemeasureList();
+    void __fastcall ProcessMeasurementCompleteResponse();
     int __fastcall JudgeCellResult(int index);
     void __fastcall PrepareRemeasureItems();
     void __fastcall ExecuteRemeasure();
     void __fastcall UpdatePlcResults();
     void __fastcall UpdateCellDisplay(int index);
     void MakeData(int,AnsiString command,AnsiString param=""){lastCommand=command;}
+    void SendData(AnsiString){}
+    void DisplayProcess(AnsiString,AnsiString){}
+    void WriteCommLog(AnsiString,AnsiString){}
     void WritePlcLog(AnsiString type,AnsiString){if(type.s=="CELL SERIAL WARNING")++serialWarnings;}
     void DisplayStatus(int){}
     int ReadCellSerial(){
@@ -290,9 +295,30 @@ int main(){
         check(f.resultSaveStep==(retry?RESULT_IDLE:RESULT_WAIT_PLC_SEND));
     }
     TTotalForm manual;
-    manual.stage.arl=1;manual.tray.after_value[0]=999;
-    manual.SetRemeasureList();
-    check(manual.retest.waitingChannel==-1);
+    manual.stage.arl=nLocal;manual.bLocal=true;manual.tray.after_value[0]=999;
+    manual.config.closedProbeRemeasureMaxNgCount=1;
+    manual.autoInspection.setting.closedProbeRemeasureMaxNgCount=0;
+    manual.ProcessMeasurementCompleteResponse();
+    check(manual.retest.waitingChannel==0 && manual.lastCommand.s=="IR*");
+    check(manual.filesSaved==0 && manual.resultSaveStep==RESULT_IDLE);
+    manual.FinishMeasurement(); // STOP during individual retest.
+    check(manual.retest.waitingChannel==-1 && manual.retest.waitingItem==0 && manual.tray.rem_mode==0);
+    check(manual.lastCommand.s=="STP" && manual.filesSaved==1);
+    for(int limit=0;limit<=2;++limit) {
+        TTotalForm local;
+        local.stage.arl=nLocal;
+        local.config.closedProbeRemeasureMaxNgCount=limit;
+        local.tray.after_value[0]=local.tray.after_value[1]=999;
+        local.ProcessMeasurementCompleteResponse();
+        check(local.retest.waitingChannel==(limit==2?0:-1));
+        check(local.filesSaved==(limit==2?0:1));
+    }
+    TTotalForm msa;
+    msa.stage.arl=nLocal;msa.bLocal=true;msa.isMsaMeasurement=true;
+    msa.config.closedProbeRemeasureMaxNgCount=1;
+    msa.tray.after_value[0]=999;
+    msa.ProcessMeasurementCompleteResponse();
+    check(msa.retest.waitingChannel==-1 && msa.lastCommand.s=="STP" && msa.filesSaved==1);
     TMod_PLC p;
     receive(p,100,0);check(p.currentReadTask==nSTANDARD&&!p.IsCellSerialReadActive());
     p.StartCellSerialRead();serialRound(p,17,false);

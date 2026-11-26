@@ -508,6 +508,7 @@ private:
     TColor clMeasureFail;
     // 시작 화면 안내 번호 표시. 트레이 투입/측정 시작 이후에는 미수신 항목을 공란으로 유지한다.
     bool showStartupChannelNumbers;
+    bool isMsaMeasurement; // 전체 측정 시작 시 지정. MSA는 최초 측정값을 사용한다.
     // IR 실제 수신 여부: 수신한 채널만 측정값 표시.
     bool irValueReceived[MAXCHANNEL];
     // OCV 실제 수신 여부: IR과 별도로 수신한 채널만 측정값 표시.
@@ -685,7 +686,7 @@ public:
     // 수동 측정 초기화: 내부 값은 0, 화면은 수신 전까지 공란.
     void __fastcall ResetMeasurementData();
     // 전체 측정 시작: 표시·수신 플래그를 초기화하고 AMS 명령을 예약한다.
-    void __fastcall CmdStartMeasurement();
+    void __fastcall CmdStartMeasurement(bool forMsa = false);
     // 결과 마감: STP/프로브 열림 요청 → NG·결과 코드·값·파일 작성 → COMPLETE → 자동 단계 완료 통지.
     void __fastcall FinishMeasurement();
     // MSA 중단: 저장/자동모드 대기와 무관하게 STP와 프로브 열림을 요청한다.

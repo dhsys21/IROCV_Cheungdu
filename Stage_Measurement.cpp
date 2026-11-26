@@ -28,10 +28,12 @@ void __fastcall TTotalForm::ResetMeasurementData()
 
 //---------------------------------------------------------------------------
 // 전체 측정 시작: 표시·수신 플래그를 초기화하고 AMS 명령을 예약한다.
-void __fastcall TTotalForm::CmdStartMeasurement()
+void __fastcall TTotalForm::CmdStartMeasurement(bool forMsa)
 {
     if(IsAutoInspectionBlocked()) return;
     if(IsWaitingForResultSave()) return;
+    // MSA도 수동 모드에서 실행한다. 이 회차는 시작 명령에서 별도로 구분한다.
+    isMsaMeasurement = forMsa;
     resultSaveStep = RESULT_IDLE; // 새 측정에만 마감 중복 방지를 해제한다.
     showStartupChannelNumbers = false;
     InitializeCellDisplay();
@@ -43,22 +45,22 @@ void __fastcall TTotalForm::CmdStartMeasurement()
 }
 
 //---------------------------------------------------------------------------
-// AMF 수신 후 처리: 운전 모드에 따라 결과 마감 또는 기존 자동 개별 재측정을 수행한다.
+// AMF 수신 후 처리: 자동/수동은 같은 개별 재측정 경로를 사용한다.
 void __fastcall TTotalForm::ProcessMeasurementCompleteResponse()
 {
     if(IsAutoInspectionBlocked()) return;
     if(resultSaveStep != RESULT_IDLE || tray.rem_mode == 1) return; // 중복 AMF로 재측정을 다시 시작하지 않는다.
-	if(bLocal == true){
-		FinishMeasurement();
+    // MSA는 회차별 최초 측정값을 비교하므로 개별 재측정으로 값을 덮어쓰지 않는다.
+    if(isMsaMeasurement)
+    {
+        FinishMeasurement();
         DisplayProcess("AutoInspection_Measure", " AMF - Measure finished ... ");
-		WriteCommLog("IR/OCV STOP", "AMF - ResponseautoTestfinish()");
-	}
-	else
-	{
-		SendData("SEN");
+        WriteCommLog("IR/OCV STOP", "AMF - ResponseautoTestfinish()");
+        return;
+    }
 
-        SetRemeasureList();
-	}
+    SendData("SEN");
+    SetRemeasureList();
 }
 
 //---------------------------------------------------------------------------
@@ -238,16 +240,16 @@ void __fastcall TTotalForm::InsertOcvValue(int pos, float value)
 }
 
 //---------------------------------------------------------------------------
-// 전체 측정 후 재측정 대상 집계. SiteConfig.h의 개수 조건에 따라 개별 재측정 또는 결과 마감한다.
+// 전체 측정 후 Config의 프로브 닫힘 재측정 조건으로 개별 재측정 또는 결과 마감을 결정한다.
 void __fastcall TTotalForm::SetRemeasureList()
 {
     SetRemeasureListAfter();
-    // 1번: 프로브를 닫은 상태에서 불량 항목을 한 차례 재측정한다.
-    // 설정은 이번 트레이 시작 때 고정. 0=생략, N=NG 1~N개(설정값 포함)만 실행.
-    // 초과 시 여기서는 전체 재측정하지 않고 결과 마감으로 이동한다.
-    const int maxNgCount = autoInspection.GetSetting().closedProbeRemeasureMaxNgCount;
-    if(stage.arl == nAuto && retest.cnt_error > 0 &&
-       retest.cnt_error <= maxNgCount)
+    // 자동은 트레이 투입 시 확정한 값, 수동은 현재 Config에 적용된 값을 사용한다.
+    // 자동/수동 공통: 0은 생략, NG가 1~설정값이면 해당 셀의 IR·OCV를 각각 한 번 다시 측정한다.
+    const bool manual = bLocal || stage.arl == nLocal;
+    const int maxNgCount = manual ? config.closedProbeRemeasureMaxNgCount
+        : autoInspection.GetSetting().closedProbeRemeasureMaxNgCount;
+    if((manual || stage.arl == nAuto) && retest.cnt_error > 0 && retest.cnt_error <= maxNgCount)
     {
         // 2번 재개폐 횟수가 0이어도 이 재측정은 독립적으로 실행한다.
         PrepareRemeasureItems();
@@ -339,6 +341,10 @@ void __fastcall TTotalForm::FinishMeasurement()
     measurementClock.Stop(GetTickCount());
     // 같은 AMF/정지 통지가 반복되어도 저장/집계를 다시 실행하지 않는다.
     if(resultSaveStep != RESULT_IDLE) return;
+    // 재측정 중 수동 STOP을 누르면 늦게 도착한 응답으로 다음 채널을 시작하지 않는다.
+    tray.rem_mode = 0;
+    retest.waitingChannel = -1;
+    retest.waitingItem = 0;
     SetRemeasureListAfter();
     MakeData(1, "STP");
     Mod_PLC->SetValue(PC_D_IROCV_PROB_OPEN, 1);
