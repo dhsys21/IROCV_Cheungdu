@@ -54,13 +54,19 @@ inline Rect GridCell(int row, int column, int width, int height, bool axes,
     const int axisHeight = axes ? 1 + (height - 4) / (rows + 1) : 0;
     const int x0 = 2 + (StartsRight(corner) ? 0 : axisWidth);
     const int y0 = 2 + (StartsBottom(corner) ? 0 : axisHeight);
-    const int usableWidth = width - 4 - axisWidth;
-    const int usableHeight = height - 4 - axisHeight;
+    // 픽스처 경계는 화면 왼쪽부터 2열마다 1px, 10x10 경계는 왼쪽/위에서 10열/10행마다 1px를 더한다.
+    // 채널 1번 위치와 번호 증가 방향에 관계없이 고정하며, 10번째 열 뒤에는 두 경계가 겹친다.
+    const int fixtureColumns = 2;
+    const int blockSize = 10;
+    const int usableWidth = width - 4 - axisWidth - (columns - 1) / fixtureColumns - (columns - 1) / blockSize;
+    const int usableHeight = height - 4 - axisHeight - (rows - 1) / blockSize;
+    const int cellLeft = column * usableWidth / columns;
+    const int cellTop = row * usableHeight / rows;
     Rect r;
-    r.left = x0 + column * usableWidth / columns;
-    r.top = y0 + row * usableHeight / rows;
-    r.width = x0 + (column + 1) * usableWidth / columns - r.left - 1;
-    r.height = y0 + (row + 1) * usableHeight / rows - r.top - 1;
+    r.left = x0 + cellLeft + column / fixtureColumns + column / blockSize;
+    r.top = y0 + cellTop + row / blockSize;
+    r.width = (column + 1) * usableWidth / columns - cellLeft - 1;
+    r.height = (row + 1) * usableHeight / rows - cellTop - 1;
     return r;
 }
 // 두 안내 축이 만나는 범례 공간. 채널 1번과 같은 모서리에 놓는다.

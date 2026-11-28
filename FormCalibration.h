@@ -1,4 +1,11 @@
 #include "SiteConfig.h"
+#include "AdvSmoothButton.hpp"
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.Dialogs.hpp>
+#include <Vcl.ExtCtrls.hpp>
+#include <Vcl.Imaging.jpeg.hpp>
+#include <Vcl.StdCtrls.hpp>
 //---------------------------------------------------------------------------
 
 #ifndef FormCalibrationH

@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #include <vcl.h>
 #pragma hdrstop
@@ -10,6 +10,7 @@
 #pragma package(smart_init)
 #pragma link "AdvSmoothButton"
 #pragma link "AdvSmoothToggleButton"
+#pragma link "AdvSmoothButton"
 #pragma resource "*.dfm"
 TCaliForm *CaliForm;
 //---------------------------------------------------------------------------

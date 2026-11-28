@@ -87,8 +87,16 @@ void MathematicalCases(){
                 ChannelLayout::Rect b=ChannelLayout::GridCell(r,c,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);
                 CHECK(b.width>0 && b.height>0 && b.left>=2 && b.top>=2);
                 CHECK(b.left+b.width<=449 && b.top+b.height<=321);
-                if(c+1<cols){ChannelLayout::Rect n=ChannelLayout::GridCell(r,c+1,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);CHECK(b.left+b.width<n.left);}
-                if(r+1<rows){ChannelLayout::Rect n=ChannelLayout::GridCell(r+1,c,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);CHECK(b.top+b.height<n.top);}
+                if(c + 1 < cols){
+                    ChannelLayout::Rect next = ChannelLayout::GridCell(r,c+1,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);
+                    int expectedGap = 1 + ((c + 1) % 2 == 0) + ((c + 1) % 10 == 0);
+                    CHECK(next.left - (b.left + b.width) == expectedGap);
+                }
+                if(r + 1 < rows){
+                    ChannelLayout::Rect next = ChannelLayout::GridCell(r+1,c,451,323,axes!=0,rows,cols,(TChannelStartCorner)corner);
+                    int expectedGap = 1 + ((r + 1) % 10 == 0);
+                    CHECK(next.top - (b.top + b.height) == expectedGap);
+                }
                 if(axes){
                     ChannelLayout::Rect x=ChannelLayout::ColumnTitle(stepCol,451,323,rows,cols,(TChannelStartCorner)corner);
                     ChannelLayout::Rect y=ChannelLayout::RowTitle(stepRow,451,323,rows,cols,(TChannelStartCorner)corner);
